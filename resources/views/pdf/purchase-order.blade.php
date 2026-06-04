@@ -2,205 +2,591 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Purchase Order — E-Procurement BNI</title>
+    <title>Purchase Order — PO-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</title>
     <style>
+        /* ─── Reset & Base ─────────────────────────────── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            color: #333;
-            margin: 0;
-            padding: 20px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            color: #1a1a2e;
+            background: #fff;
+            line-height: 1.5;
         }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #006885;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+
+        /* ─── Document Wrapper ──────────────────────────── */
+        .page {
+            padding: 0;
+            max-width: 800px;
+            margin: 0 auto;
         }
-        .header h1 {
-            color: #F15A22;
-            font-size: 20px;
-            margin: 0;
+
+        /* ─── Header Band ───────────────────────────────── */
+        .header-band {
+            background: #006885;
+            padding: 0;
+            display: table;
+            width: 100%;
         }
-        .header h2 {
-            color: #006885;
-            font-size: 14px;
-            margin: 5px 0 0;
-            font-weight: normal;
+        .header-left {
+            display: table-cell;
+            width: 60%;
+            padding: 22px 28px;
+            vertical-align: middle;
+        }
+        .header-right {
+            display: table-cell;
+            width: 40%;
+            background: #F15A22;
+            padding: 22px 28px;
+            vertical-align: middle;
+            text-align: right;
+        }
+        .org-name {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .org-sub {
+            color: rgba(255,255,255,0.80);
+            font-size: 10px;
+            margin-top: 4px;
+            letter-spacing: 0.3px;
+        }
+        .doc-type {
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.85;
         }
         .po-number {
-            font-size: 16px;
+            color: #ffffff;
+            font-size: 20px;
             font-weight: bold;
-            color: #006885;
-            text-align: right;
-            margin-bottom: 20px;
+            letter-spacing: 1px;
+            margin-top: 4px;
         }
-        .section-title {
-            background-color: #006885;
-            color: white;
-            padding: 5px 10px;
-            font-weight: bold;
-            margin: 15px 0 8px;
-        }
-        table {
+
+        /* ─── Meta Strip ────────────────────────────────── */
+        .meta-strip {
+            background: #f0f7fa;
+            border-bottom: 2px solid #006885;
+            padding: 10px 28px;
+            display: table;
             width: 100%;
-            border-collapse: collapse;
         }
-        table td {
-            padding: 6px 10px;
-            border: 1px solid #ddd;
-            vertical-align: top;
+        .meta-item {
+            display: table-cell;
+            width: 25%;
+            padding-right: 16px;
         }
-        table td:first-child {
-            width: 35%;
+        .meta-label {
+            color: #006885;
+            font-size: 9px;
             font-weight: bold;
-            background-color: #f5f5f5;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
         }
-        .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 10px;
+        .meta-value {
             font-size: 11px;
             font-weight: bold;
+            color: #1a1a2e;
+            margin-top: 2px;
         }
-        .badge-capex { background-color: #0088FF; color: white; }
-        .badge-opex  { background-color: #34C759; color: white; }
-        .badge-cross-fund { background-color: #FFCC00; color: #333; }
-        .approval-log {
+
+        /* ─── Body Padding ──────────────────────────────── */
+        .body {
+            padding: 24px 28px;
+        }
+
+        /* ─── Section Header ────────────────────────────── */
+        .section-header {
+            display: table;
+            width: 100%;
+            margin-bottom: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #F15A22;
+            padding-left: 8px;
+        }
+        .section-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #006885;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ─── Two-column Info Grid ──────────────────────── */
+        .info-grid {
+            display: table;
+            width: 100%;
+            border: 1px solid #dce6eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .info-row {
+            display: table-row;
+        }
+        .info-row:nth-child(even) .info-key,
+        .info-row:nth-child(even) .info-val {
+            background: #f9fbfc;
+        }
+        .info-key {
+            display: table-cell;
+            width: 32%;
+            padding: 7px 12px;
+            font-weight: bold;
+            color: #4a5568;
+            background: #f4f8fa;
+            border-bottom: 1px solid #dce6eb;
+            border-right: 1px solid #dce6eb;
+            font-size: 10px;
+        }
+        .info-val {
+            display: table-cell;
+            padding: 7px 12px;
+            color: #1a1a2e;
+            border-bottom: 1px solid #dce6eb;
+            font-size: 11px;
+        }
+
+        /* ─── Amount Highlight ──────────────────────────── */
+        .amount-box {
+            background: linear-gradient(135deg, #006885 0%, #004d63 100%);
+            border-radius: 6px;
+            padding: 14px 20px;
+            margin: 16px 0;
+            display: table;
+            width: 100%;
+        }
+        .amount-label-cell {
+            display: table-cell;
+            color: rgba(255,255,255,0.75);
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            vertical-align: middle;
+        }
+        .amount-value-cell {
+            display: table-cell;
+            text-align: right;
+            vertical-align: middle;
+        }
+        .amount-value {
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .amount-type-badge {
+            display: inline-block;
+            background: #F15A22;
+            color: white;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+        }
+        .cross-fund-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 4px;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        /* ─── Approval Table ────────────────────────────── */
+        .approval-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 5px;
-        }
-        .approval-log th {
-            background-color: #006885;
-            color: white;
-            padding: 6px 10px;
-            text-align: left;
-        }
-        .approval-log td {
-            padding: 6px 10px;
-            border: 1px solid #ddd;
-        }
-        .footer {
-            margin-top: 30px;
-            border-top: 1px solid #ddd;
-            padding-top: 10px;
+            margin-top: 4px;
             font-size: 10px;
-            color: #999;
-            text-align: center;
         }
-        .amount {
-            font-size: 16px;
+        .approval-table thead tr {
+            background: #006885;
+        }
+        .approval-table thead th {
+            color: #ffffff;
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 9px;
             font-weight: bold;
-            color: #F15A22;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .approval-table tbody tr:nth-child(even) {
+            background: #f9fbfc;
+        }
+        .approval-table tbody td {
+            padding: 7px 10px;
+            border-bottom: 1px solid #e8eef2;
+            color: #1a1a2e;
+            vertical-align: top;
+        }
+        .action-pill {
+            display: inline-block;
+            padding: 1px 7px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+        .pill-green  { background: #e6f9f0; color: #1a7f53; }
+        .pill-red    { background: #fdecea; color: #c0392b; }
+        .pill-blue   { background: #e8f3fd; color: #0056a3; }
+        .pill-gray   { background: #f0f0f0; color: #555; }
+        .pill-orange { background: #fff3e6; color: #c0560a; }
+
+        /* ─── Signature Block ───────────────────────────── */
+        .signature-row {
+            display: table;
+            width: 100%;
+            margin-top: 28px;
+        }
+        .signature-cell {
+            display: table-cell;
+            width: 33.33%;
+            text-align: center;
+            padding: 0 10px;
+        }
+        .sig-role {
+            font-size: 9px;
+            color: #006885;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 4px;
+        }
+        .sig-name-box {
+            border: 1px solid #b0c8d4;
+            border-radius: 4px;
+            padding: 8px 10px;
+            min-height: 72px;
+            background: #f9fbfc;
+            position: relative;
+        }
+        .sig-name {
+            font-size: 10px;
+            font-weight: bold;
+            color: #1a1a2e;
+            margin-top: 44px;
+        }
+        .sig-title {
+            font-size: 9px;
+            color: #666;
+        }
+        .sig-stamp {
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 38px;
+            height: 38px;
+            border: 2px solid #006885;
+            border-radius: 50%;
+            opacity: 0.12;
+        }
+        .sig-approved-text {
+            position: absolute;
+            top: 8px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 7px;
+            color: #006885;
+            font-weight: bold;
+            opacity: 0.35;
+            letter-spacing: 1px;
+        }
+
+        /* ─── Footer ────────────────────────────────────── */
+        .footer-band {
+            margin-top: 24px;
+            background: #f0f7fa;
+            border-top: 2px solid #006885;
+            padding: 10px 28px;
+            display: table;
+            width: 100%;
+        }
+        .footer-left {
+            display: table-cell;
+            color: #006885;
+            font-size: 9px;
+            font-weight: bold;
+            vertical-align: middle;
+        }
+        .footer-right {
+            display: table-cell;
+            text-align: right;
+            color: #999;
+            font-size: 9px;
+            vertical-align: middle;
+        }
+
+        /* ─── Utility ───────────────────────────────────── */
+        .text-muted { color: #888; font-style: italic; }
+        .bold { font-weight: bold; }
+        .divider {
+            border: none;
+            border-top: 1px dashed #dce6eb;
+            margin: 16px 0;
         }
     </style>
 </head>
 <body>
+<div class="page">
 
-    {{-- ─── Header ─── --}}
-    <div class="header">
-        <h1>E-Procurement BNI</h1>
-        <h2>Divisi IT Infrastructure Management — BNI Pejompongan</h2>
+    {{-- ═══ HEADER BAND ═══ --}}
+    <div class="header-band">
+        <div class="header-left">
+            <div class="org-name">PT BANK NEGARA INDONESIA (Persero) Tbk</div>
+            <div class="org-sub">Divisi IT Infrastructure Management · Kantor Pejompongan, Jakarta</div>
+        </div>
+        <div class="header-right">
+            <div class="doc-type">Purchase Order</div>
+            <div class="po-number">PO-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</div>
+        </div>
     </div>
 
-    <div class="po-number">
-        PURCHASE ORDER — No. PO-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}
+    {{-- ═══ META STRIP ═══ --}}
+    <div class="meta-strip">
+        <div class="meta-item">
+            <div class="meta-label">Tanggal Terbit</div>
+            <div class="meta-value">{{ $generated_at->format('d/m/Y') }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">No. Tiket</div>
+            <div class="meta-value">#{{ str_pad($ticket->id, 4, '0', STR_PAD_LEFT) }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Klasifikasi</div>
+            <div class="meta-value">
+                {{ $ticket->expenditure_type ?? 'N/A' }}
+                @if($ticket->is_cross_fund) · Silang Dana @endif
+            </div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Status</div>
+            <div class="meta-value" style="color:#006885;">Disetujui &amp; Diterbitkan</div>
+        </div>
     </div>
 
-    {{-- ─── Procurement Details ─── --}}
-    <div class="section-title">DETAIL PENGADAAN</div>
-    <table>
-        <tr>
-            <td>Judul Pengadaan</td>
-            <td>{{ $ticket->title }}</td>
-        </tr>
-        <tr>
-            <td>Nama Item</td>
-            <td>{{ $ticket->item_name }}</td>
-        </tr>
-        <tr>
-            <td>Kategori</td>
-            <td>{{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</td>
-        </tr>
-        <tr>
-            <td>Deskripsi</td>
-            <td>{{ $ticket->description ?? '-' }}</td>
-        </tr>
-        <tr>
-            <td>Jumlah Unit</td>
-            <td>{{ number_format($ticket->quantity) }} unit</td>
-        </tr>
-        <tr>
-            <td>Vendor</td>
-            <td>{{ $ticket->vendor_name }}</td>
-        </tr>
-        <tr>
-            <td>Nominal Harga</td>
-            <td><span class="amount">{{ $ticket->formatted_amount }}</span></td>
-        </tr>
-        <tr>
-            <td>Klasifikasi Anggaran</td>
-            <td>
-                <span class="badge badge-{{ strtolower($ticket->expenditure_type) }}">
-                    {{ $ticket->expenditure_type }}
-                </span>
-                @if($ticket->is_cross_fund)
-                    <span class="badge badge-cross-fund">SILANG DANA</span>
+    {{-- ═══ BODY ═══ --}}
+    <div class="body">
+
+        {{-- ─── Nominal ─── --}}
+        <div class="amount-box">
+            <div class="amount-label-cell">
+                Total Nilai Pengadaan<br>
+                <span style="font-weight:normal;opacity:0.7;font-size:9px;">Termasuk pajak & biaya administrasi sesuai kontrak</span>
+            </div>
+            <div class="amount-value-cell">
+                <span class="amount-value">{{ $ticket->formatted_amount }}</span>
+                @if($ticket->expenditure_type)
+                    <span class="amount-type-badge">{{ $ticket->expenditure_type }}</span>
                 @endif
-            </td>
-        </tr>
-        <tr>
-            <td>Requester</td>
-            <td>{{ $ticket->user->name }}</td>
-        </tr>
-        <tr>
-            <td>Tanggal Pengajuan</td>
-            <td>{{ $ticket->created_at->format('d F Y, H:i') }}</td>
-        </tr>
-    </table>
+                @if($ticket->is_cross_fund)
+                    <span class="cross-fund-badge">⇄ Silang Dana</span>
+                @endif
+            </div>
+        </div>
 
-    {{-- ─── Approval Chain ─── --}}
-    <div class="section-title">RIWAYAT PERSETUJUAN</div>
-    <table class="approval-log">
-        <thead>
-            <tr>
-                <th>Tanggal</th>
-                <th>Actor</th>
-                <th>Aksi</th>
-                <th>Catatan</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($ticket->approvalLogs->sortBy('created_at') as $log)
-            <tr>
-                <td>{{ $log->created_at->format('d/m/Y H:i') }}</td>
-                <td>{{ $log->user->name }}<br><small>{{ $log->user->role_label }}</small></td>
-                <td>{{ $log->action_label }}</td>
-                <td>{{ $log->notes ?? '-' }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+        {{-- ─── Detail Pengadaan ─── --}}
+        <div class="section-header">
+            <div class="section-title">A. Informasi Pengadaan</div>
+        </div>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-key">Judul Pengadaan</div>
+                <div class="info-val"><strong>{{ $ticket->title }}</strong></div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Nama Item / Barang</div>
+                <div class="info-val">{{ $ticket->item_name }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Kategori</div>
+                <div class="info-val">{{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Deskripsi</div>
+                <div class="info-val">{{ $ticket->description ?: '-' }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Jumlah Unit</div>
+                <div class="info-val">{{ number_format($ticket->quantity) }} unit</div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Nama Vendor</div>
+                <div class="info-val"><strong>{{ $ticket->vendor_name }}</strong></div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Tanggal Pengajuan</div>
+                <div class="info-val">{{ $ticket->created_at->isoFormat('D MMMM Y, HH:mm') }} WIB</div>
+            </div>
+        </div>
 
-    {{-- ─── Generation Info ─── --}}
-    <div class="section-title">INFORMASI PENERBITAN</div>
-    <table>
-        <tr>
-            <td>Diterbitkan Oleh</td>
-            <td>{{ $generated_by->name }} ({{ $generated_by->role_label }})</td>
-        </tr>
-        <tr>
-            <td>Tanggal Terbit</td>
-            <td>{{ $generated_at->format('d F Y, H:i') }}</td>
-        </tr>
-    </table>
+        {{-- ─── Requester ─── --}}
+        <div class="section-header" style="margin-top:16px;">
+            <div class="section-title">B. Data Pengaju</div>
+        </div>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-key">Nama Pengaju</div>
+                <div class="info-val"><strong>{{ $ticket->user->name }}</strong></div>
+            </div>
+            @if($ticket->user->hrEmployee)
+            <div class="info-row">
+                <div class="info-key">NIP</div>
+                <div class="info-val">{{ $ticket->user->hrEmployee->nip }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Jabatan</div>
+                <div class="info-val">{{ $ticket->user->hrEmployee->position }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Divisi</div>
+                <div class="info-val">{{ $ticket->user->hrEmployee->division }}</div>
+            </div>
+            @endif
+        </div>
 
-    <div class="footer">
-        Dokumen ini diterbitkan secara otomatis oleh Sistem E-Procurement BNI.
-        Divisi IT Infrastructure Management — BNI Pejompongan.
+        {{-- ─── Riwayat Persetujuan ─── --}}
+        <div class="section-header" style="margin-top:16px;">
+            <div class="section-title">C. Rantai Persetujuan</div>
+        </div>
+        <table class="approval-table">
+            <thead>
+                <tr>
+                    <th style="width:14%">Tanggal</th>
+                    <th style="width:22%">Nama</th>
+                    <th style="width:16%">Jabatan</th>
+                    <th style="width:20%">Aksi</th>
+                    <th>Catatan</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($ticket->approvalLogs->sortBy('created_at') as $log)
+                @php
+                    $actionClass = match(true) {
+                        in_array($log->action, ['followed_up', 'approved', 'validated', 'po_issued']) => 'pill-green',
+                        in_array($log->action, ['rejected_document', 'declined'])                    => 'pill-red',
+                        in_array($log->action, ['submitted', 'revised'])                             => 'pill-blue',
+                        $log->action === 'cross_fund_requested'                                      => 'pill-orange',
+                        default                                                                       => 'pill-gray',
+                    };
+                @endphp
+                <tr>
+                    <td>{{ $log->created_at->format('d/m/Y') }}<br><span class="text-muted">{{ $log->created_at->format('H:i') }} WIB</span></td>
+                    <td><strong>{{ $log->user->name }}</strong></td>
+                    <td><span class="text-muted">{{ $log->user->role_label }}</span></td>
+                    <td><span class="action-pill {{ $actionClass }}">{{ $log->action_label }}</span></td>
+                    <td>{{ $log->notes ?: '-' }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        {{-- ─── Informasi Penerbitan ─── --}}
+        <div class="section-header" style="margin-top:16px;">
+            <div class="section-title">D. Informasi Penerbitan PO</div>
+        </div>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-key">Diterbitkan Oleh</div>
+                <div class="info-val"><strong>{{ $generated_by->name }}</strong> <span class="text-muted">({{ $generated_by->role_label }})</span></div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Tanggal &amp; Waktu Terbit</div>
+                <div class="info-val">{{ $generated_at->isoFormat('D MMMM Y, HH:mm') }} WIB</div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Nomor Referensi Sistem</div>
+                <div class="info-val" style="font-family:monospace; color:#006885;">EPR-{{ date('Y') }}-TKT{{ str_pad($ticket->id, 4, '0', STR_PAD_LEFT) }}-PO{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        {{-- ─── Tanda Tangan ─── --}}
+        <div class="signature-row">
+            {{-- Requester --}}
+            <div class="signature-cell">
+                <div class="sig-role">Dibuat oleh / Requester</div>
+                <div class="sig-name-box">
+                    <div class="sig-stamp"></div>
+                    <div class="sig-approved-text">APPROVED</div>
+                    <div class="sig-name">{{ $ticket->user->name }}</div>
+                    <div class="sig-title">
+                        @if($ticket->user->hrEmployee)
+                            {{ $ticket->user->hrEmployee->position }}
+                        @else
+                            Staff IT Infrastructure
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- PFA --}}
+            <div class="signature-cell">
+                <div class="sig-role">Diterbitkan oleh / PFA</div>
+                <div class="sig-name-box">
+                    <div class="sig-stamp"></div>
+                    <div class="sig-approved-text">APPROVED</div>
+                    <div class="sig-name">{{ $generated_by->name }}</div>
+                    <div class="sig-title">
+                        @if($generated_by->hrEmployee)
+                            {{ $generated_by->hrEmployee->position }}
+                        @else
+                            Staff Procurement &amp; Fixed Assets
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Division Head --}}
+            @php
+                $divHeadLog = $ticket->approvalLogs->filter(fn($l) => $l->action === 'approved')->sortByDesc('created_at')->first();
+            @endphp
+            <div class="signature-cell">
+                <div class="sig-role">Disetujui oleh / Division Head</div>
+                <div class="sig-name-box">
+                    <div class="sig-stamp"></div>
+                    <div class="sig-approved-text">APPROVED</div>
+                    @if($divHeadLog)
+                        <div class="sig-name">{{ $divHeadLog->user->name }}</div>
+                        <div class="sig-title">{{ $divHeadLog->user->role_label }}</div>
+                    @else
+                        <div class="sig-name" style="color:#888; font-weight:normal; font-style:italic;">—</div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+    </div>{{-- end .body --}}
+
+    {{-- ═══ FOOTER BAND ═══ --}}
+    <div class="footer-band">
+        <div class="footer-left">
+            PT Bank Negara Indonesia (Persero) Tbk &nbsp;·&nbsp; Divisi IT Infrastructure Management
+        </div>
+        <div class="footer-right">
+            Dokumen ini diterbitkan secara elektronik oleh Sistem E-Procurement BNI &nbsp;·&nbsp;
+            {{ $generated_at->format('d/m/Y H:i') }} WIB
+        </div>
     </div>
 
+</div>
 </body>
 </html>

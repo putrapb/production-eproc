@@ -69,9 +69,9 @@ class TicketController extends Controller
     {
         $user = $request->user();
 
-        // Upload izin prinsip PDF to Supabase Storage
+        // Upload izin prinsip PDF to local public storage
         $folder  = config('eprocurement.storage.izin_prinsip_folder', 'izin_prinsip');
-        $path    = $request->file('document')->store($folder, 's3');
+        $path    = $request->file('izin_prinsip')->store($folder, 'public');
 
         $ticket = Ticket::create([
             'user_id'     => $user->id,
@@ -116,10 +116,10 @@ class TicketController extends Controller
 
         // Delete old document from storage if exists
         if ($ticket->document_path) {
-            Storage::disk('s3')->delete($ticket->document_path);
+            Storage::disk('public')->delete($ticket->document_path);
         }
 
-        $path = $request->file('document')->store($folder, 's3');
+        $path = $request->file('izin_prinsip')->store($folder, 'public');
 
         $ticket->update([
             'document_path' => $path,
@@ -152,7 +152,7 @@ class TicketController extends Controller
         if ($request->action === 'accept') {
             $ticket->update(['status' => Ticket::STATUS_NEED_TO_VALIDATE]);
             $action  = ApprovalLog::ACTION_FOLLOWED_UP;
-            $message = 'Dokumen diterima. Tiket diteruskan ke Requester untuk Smart Validation.';
+            $message = 'Dokumen diterima. Silakan jalankan Smart Validation untuk mengklasifikasikan anggaran.';
         } else {
             $ticket->update(['status' => Ticket::STATUS_REVISION]);
             $action  = ApprovalLog::ACTION_REJECTED_DOCUMENT;
@@ -171,7 +171,7 @@ class TicketController extends Controller
     }
 
     /**
-     * Requester: Run Smart Validation (4-Gate Engine).
+     * Requester: Run Smart Validation (4-Gate Engine) after PFA accepts the document.
      */
     public function runSmartValidation(Request $request, Ticket $ticket): RedirectResponse
     {
@@ -312,7 +312,21 @@ class TicketController extends Controller
     private function ensureStatus(Ticket $ticket, string $expectedStatus): void
     {
         if ($ticket->status !== $expectedStatus) {
-            abort(422, "Aksi tidak dapat dilakukan pada status tiket saat ini: {$ticket->status}.");
+            $statusLabels = [
+                'pending_review'   => 'Menunggu Tinjauan PFA',
+                'need_to_validate' => 'Menunggu Smart Validation',
+                'pending_dept_head'=> 'Menunggu Department Head',
+                'pending_div_head' => 'Menunggu Division Head',
+                'approved'         => 'Disetujui',
+                'declined'         => 'Ditolak',
+                'revision'         => 'Perlu Revisi',
+                'po_generated'     => 'PO Diterbitkan',
+            ];
+            $label = $statusLabels[$ticket->status] ?? $ticket->status;
+
+            redirect()->route('tickets.show', $ticket)
+                ->with('error', "Aksi tidak dapat dilakukan. Status tiket saat ini adalah: {$label}.")
+                ->throwResponse();
         }
     }
 

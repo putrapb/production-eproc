@@ -1,0 +1,254 @@
+@extends('layouts.app')
+
+@section('title', 'Dashboard')
+
+@section('breadcrumb')
+  <span class="breadcrumb-active">Dashboard</span>
+@endsection
+
+@section('content')
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Dashboard</h1>
+    <p>Selamat datang, {{ auth()->user()->name }} — {{ auth()->user()->role_label }}</p>
+  </div>
+</div>
+
+<div class="page-content">
+
+  {{-- ─── STAT CARDS ─────────────────────────────── --}}
+  <div class="stat-grid">
+    @if(auth()->user()->isRequester())
+      @php $s = $ticketSummary; @endphp
+
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-secondary-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-secondary)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+        <div class="stat-card-label">Total Tiket</div>
+        <div class="stat-card-value">{{ $s['total'] ?? 0 }}</div>
+        <div class="stat-card-sub">Semua pengajuan saya</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-info-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-info)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
+        </div>
+        <div class="stat-card-label">Pending Review</div>
+        <div class="stat-card-value">{{ ($s['pending_review'] ?? 0) + ($s['need_to_validate'] ?? 0) + ($s['in_approval'] ?? 0) }}</div>
+        <div class="stat-card-sub">Sedang diproses</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-success-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-success)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="stat-card-label">Disetujui</div>
+        <div class="stat-card-value">{{ ($s['approved'] ?? 0) + ($s['po_generated'] ?? 0) }}</div>
+        <div class="stat-card-sub">Termasuk PO terbit</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-error-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-error)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        </div>
+        <div class="stat-card-label">Ditolak</div>
+        <div class="stat-card-value">{{ $s['declined'] ?? 0 }}</div>
+        <div class="stat-card-sub">Butuh tindak lanjut</div>
+      </div>
+
+    @elseif(auth()->user()->isPfa())
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-info-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-info)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
+        </div>
+        <div class="stat-card-label">Menunggu Review</div>
+        <div class="stat-card-value">{{ $ticketSummary['pending_review'] ?? 0 }}</div>
+        <div class="stat-card-sub">Perlu ditinjau dokumen</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-success-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-success)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="stat-card-label">Siap Generate PO</div>
+        <div class="stat-card-value">{{ $ticketSummary['approved'] ?? 0 }}</div>
+        <div class="stat-card-sub">Disetujui Div Head</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-secondary-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-secondary)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+        <div class="stat-card-label">PO Diterbitkan</div>
+        <div class="stat-card-value">{{ $ticketSummary['po_generated'] ?? 0 }}</div>
+        <div class="stat-card-sub">Bulan ini</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-primary-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div class="stat-card-label">Total Tiket Aktif</div>
+        <div class="stat-card-value">{{ ($ticketSummary['pending_review'] ?? 0) + ($ticketSummary['approved'] ?? 0) }}</div>
+        <div class="stat-card-sub">Membutuhkan perhatian</div>
+      </div>
+
+    @elseif(auth()->user()->isDepartmentHead())
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-info-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-info)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
+        </div>
+        <div class="stat-card-label">Menunggu Persetujuan Saya</div>
+        <div class="stat-card-value">{{ $ticketSummary['pending_dept_head'] ?? 0 }}</div>
+        <div class="stat-card-sub">Perlu diteruskan</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-warning-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-warning-text)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v4M12 16h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        </div>
+        <div class="stat-card-label">Di Division Head</div>
+        <div class="stat-card-value">{{ $ticketSummary['pending_div_head'] ?? 0 }}</div>
+        <div class="stat-card-sub">Menunggu keputusan final</div>
+      </div>
+
+    @elseif(auth()->user()->isDivisionHead())
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-info-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-info)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
+        </div>
+        <div class="stat-card-label">Menunggu Keputusan Saya</div>
+        <div class="stat-card-value">{{ $ticketSummary['pending_div_head'] ?? 0 }}</div>
+        <div class="stat-card-sub">Perlu keputusan segera</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-success-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-success)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="stat-card-label">Disetujui</div>
+        <div class="stat-card-value">{{ $ticketSummary['approved'] ?? 0 }}</div>
+        <div class="stat-card-sub">Total persetujuan saya</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-error-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-error)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        </div>
+        <div class="stat-card-label">Ditolak</div>
+        <div class="stat-card-value">{{ $ticketSummary['declined'] ?? 0 }}</div>
+        <div class="stat-card-sub">Total penolakan saya</div>
+      </div>
+    @endif
+  </div>
+
+  {{-- ─── BOTTOM ROW: Budget + Recent Activity ────── --}}
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-xl);">
+
+    {{-- Budget Utilization Card --}}
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="heading-sm">Utilisasi Anggaran</div>
+          <div class="caption text-muted">Tahun {{ date('Y') }}</div>
+        </div>
+        <span class="badge badge-category">Fiskal {{ date('Y') }}</span>
+      </div>
+      <div class="card-body">
+        <div class="tab-group">
+          <button class="tab-btn active" onclick="switchTab('capex', this)">CAPEX</button>
+          <button class="tab-btn" onclick="switchTab('opex', this)">OPEX</button>
+        </div>
+
+        <div class="tab-pane active" id="tab-capex">
+          @foreach($budgetData as $category => $data)
+            @php $b = $data['capex']; @endphp
+            @if($b)
+              @php
+                $pct  = min($b['utilization_percentage'], 100);
+                $fill = $pct >= 90 ? 'critical' : ($pct >= 75 ? 'warn' : '');
+              @endphp
+              <div class="budget-row">
+                <div class="budget-row-header">
+                  <span class="budget-category-name">{{ config('eprocurement.categories.'.$category, $category) }}</span>
+                  <span class="budget-pct {{ $pct >= 90 ? 'text-primary' : '' }}">{{ number_format($pct, 1) }}%</span>
+                </div>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill {{ $fill }}" style="width:{{ $pct }}%"></div>
+                </div>
+                <div class="budget-amounts">
+                  <span>Terpakai: Rp {{ number_format($b['used_amount'] + $b['locked_amount'], 0, ',', '.') }}</span>
+                  <span>Limit: Rp {{ number_format($b['total_limit'], 0, ',', '.') }}</span>
+                </div>
+              </div>
+            @endif
+          @endforeach
+        </div>
+
+        <div class="tab-pane" id="tab-opex">
+          @foreach($budgetData as $category => $data)
+            @php $b = $data['opex']; @endphp
+            @if($b)
+              @php
+                $pct  = min($b['utilization_percentage'], 100);
+                $fill = $pct >= 90 ? 'critical' : ($pct >= 75 ? 'warn' : '');
+              @endphp
+              <div class="budget-row">
+                <div class="budget-row-header">
+                  <span class="budget-category-name">{{ config('eprocurement.categories.'.$category, $category) }}</span>
+                  <span class="budget-pct">{{ number_format($pct, 1) }}%</span>
+                </div>
+                <div class="progress-bar-track">
+                  <div class="progress-bar-fill {{ $fill }}" style="width:{{ $pct }}%"></div>
+                </div>
+                <div class="budget-amounts">
+                  <span>Terpakai: Rp {{ number_format($b['used_amount'] + $b['locked_amount'], 0, ',', '.') }}</span>
+                  <span>Limit: Rp {{ number_format($b['total_limit'], 0, ',', '.') }}</span>
+                </div>
+              </div>
+            @endif
+          @endforeach
+        </div>
+      </div>
+    </div>
+
+    {{-- Recent Activity Card --}}
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="heading-sm">Aktivitas Terkini</div>
+          <div class="caption text-muted">10 tiket terakhir diperbarui</div>
+        </div>
+        <a href="{{ route('tickets.index') }}" class="btn btn-ghost btn-sm">Lihat Semua</a>
+      </div>
+      <div style="overflow:hidden; border-radius:0 0 var(--radius-lg) var(--radius-lg);">
+        @forelse($recentTickets as $ticket)
+          <a href="{{ route('tickets.show', $ticket) }}" class="topbar-menu-item" style="padding:var(--space-md) var(--space-lg); text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); border-bottom:1px solid var(--color-hairline-soft);">
+            <span class="badge badge-{{ str_replace('_','-',$ticket->status) }}" style="flex-shrink:0; font-size:11px; padding:3px 8px;">
+              {{ $ticket->status_label }}
+            </span>
+            <div style="flex:1; min-width:0;">
+              <div class="label-md text-ink truncate">{{ $ticket->title }}</div>
+              <div class="caption text-muted">{{ $ticket->formatted_amount }} · {{ $ticket->updated_at->diffForHumans() }}</div>
+            </div>
+            <svg width="14" height="14" fill="none" stroke="var(--color-muted-soft)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </a>
+        @empty
+          <div class="empty-state" style="padding:var(--space-xxl) var(--space-xl);">
+            <div class="empty-state-icon">📋</div>
+            <h3>Belum ada tiket</h3>
+            <p>Aktivitas pengadaan akan muncul di sini.</p>
+          </div>
+        @endforelse
+      </div>
+    </div>
+  </div>
+
+</div>
+
+@push('scripts')
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+</script>
+@endpush
+@endsection

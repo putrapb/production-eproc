@@ -45,6 +45,12 @@ class User extends Authenticatable
         return $this->belongsTo(HrEmployee::class, 'hr_employee_id');
     }
 
+    /** Alias for hrEmployee — shorter template syntax. */
+    public function employee(): BelongsTo
+    {
+        return $this->hrEmployee();
+    }
+
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'user_id');

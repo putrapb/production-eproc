@@ -234,4 +234,31 @@ class Ticket extends Model
     {
         return 'Rp ' . number_format($this->amount, 0, ',', '.');
     }
+
+    // ─────────────────────────────────────────────
+    // Column Alias Accessors (for template readability)
+    // ─────────────────────────────────────────────
+
+    public function getIzinPrinsipPathAttribute(): ?string
+    {
+        return $this->attributes['document_path'] ?? null;
+    }
+
+    public function getPoPathAttribute(): ?string
+    {
+        return $this->attributes['document_po_path'] ?? null;
+    }
+
+    public function getValidatedAtAttribute(): ?\Illuminate\Support\Carbon
+    {
+        // Use the approval log timestamp when ticket was validated
+        $log = $this->approvalLogs()->where('action', 'validated')->first();
+        return $log?->created_at;
+    }
+
+    public function getPoGeneratedAtAttribute(): ?\Illuminate\Support\Carbon
+    {
+        $log = $this->approvalLogs()->where('action', 'po_generated')->first();
+        return $log?->created_at;
+    }
 }

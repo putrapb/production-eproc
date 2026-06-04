@@ -60,13 +60,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/tickets/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
         Route::put('/tickets/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
 
-        // Smart Validation
+        // Smart Validation — Requester triggers this after PFA accepts the document
         Route::post('/tickets/{ticket}/validate', [TicketController::class, 'runSmartValidation'])->name('tickets.validate');
 
-        // Cross-fund confirmation
+        // Cross-fund confirmation — Requester confirms silang dana when over-budget
         Route::post('/tickets/{ticket}/cross-fund', [TicketController::class, 'applyCrossFund'])->name('tickets.cross-fund');
+    });
 
-        // Download PO
+    // PO Download — Requester and PFA only
+    Route::middleware('role:requester,pfa')->group(function () {
         Route::get('/tickets/{ticket}/download-po', [PurchaseOrderController::class, 'download'])->name('tickets.download-po');
     });
 

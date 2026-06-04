@@ -19,16 +19,16 @@ class UpdateTicketDocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'document' => ['required', 'file', 'mimes:pdf', 'max:10240'], // 10 MB
+            'izin_prinsip' => ['required', 'file', 'mimes:pdf', 'max:10240'], // 10 MB
         ];
     }
 
     public function messages(): array
     {
         return [
-            'document.required' => 'Dokumen izin prinsip wajib diunggah.',
-            'document.mimes'    => 'Dokumen harus dalam format PDF.',
-            'document.max'      => 'Ukuran dokumen maksimal 10 MB.',
+            'izin_prinsip.required' => 'Dokumen izin prinsip wajib diunggah.',
+            'izin_prinsip.mimes'    => 'Dokumen harus dalam format PDF.',
+            'izin_prinsip.max'      => 'Ukuran dokumen maksimal 10 MB.',
         ];
     }
 }

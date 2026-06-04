@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Storage::fake('s3');
+    Storage::fake('local');
 });
 
 test('requester can create a ticket which starts at pending_review', function () {
@@ -24,7 +24,7 @@ test('requester can create a ticket which starts at pending_review', function ()
         'quantity'    => 2,
         'vendor_name' => 'PT Dell Indonesia',
         'amount'      => 350_000_000,
-        'document'    => UploadedFile::fake()->create('izin_prinsip.pdf', 500, 'application/pdf'),
+        'izin_prinsip' => UploadedFile::fake()->create('izin_prinsip.pdf', 500, 'application/pdf'),
     ]);
 
     $response->assertRedirect(route('tickets.index'));
@@ -60,7 +60,7 @@ test('requester can re-upload document and ticket returns to pending_review', fu
     $ticket    = Ticket::factory()->revision()->create(['user_id' => $requester->id]);
 
     $this->actingAs($requester)->put("/tickets/{$ticket->id}", [
-        'document' => UploadedFile::fake()->create('izin_prinsip_v2.pdf', 200, 'application/pdf'),
+        'izin_prinsip' => UploadedFile::fake()->create('izin_prinsip_v2.pdf', 200, 'application/pdf'),
     ]);
 
     expect($ticket->fresh()->status)->toBe(Ticket::STATUS_PENDING_REVIEW);
