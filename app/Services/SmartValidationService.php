@@ -1,0 +1,285 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\ApprovalLog;
+use App\Models\Budget;
+use App\Models\Ticket;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * SmartValidationService
+ *
+ * Executes the 4-Gate validation engine sequentially.
+ * Each gate runs only if the previous gate passed.
+ *
+ * Gate 1 — Duplicate Check
+ * Gate 2 — Nominal Validation
+ * Gate 3 — CAPEX/OPEX Auto-Classification
+ * Gate 4 — Budget Availability + Temporary Lock
+ */
+class SmartValidationService
+{
+    /**
+     * Run the 4-gate validation engine.
+     *
+     * @return array{
+     *   success: bool,
+     *   gate: int,
+     *   message: string,
+     *   over_budget: bool,
+     *   classified_type: string|null,
+     *   available_balance: float|null,
+     * }
+     */
+    public function run(Ticket $ticket, User $requester): array
+    {
+        // Guard: ticket must be in 'need_to_validate' status
+        if (! $ticket->isNeedToValidate()) {
+            return $this->fail(0, 'Tiket tidak dalam status yang dapat divalidasi.');
+        }
+
+        // ─────────────── GATE 1: Duplicate Check ───────────────
+        $gate1 = $this->gate1DuplicateCheck($ticket, $requester);
+        if (! $gate1['passed']) {
+            return $this->fail(1, $gate1['message']);
+        }
+
+        // ─────────────── GATE 2: Nominal Validation ───────────────
+        $gate2 = $this->gate2NominalValidation($ticket);
+        if (! $gate2['passed']) {
+            return $this->fail(2, $gate2['message']);
+        }
+
+        // ─────────────── GATE 3: CAPEX/OPEX Classification ───────────────
+        $classifiedType = $this->gate3Classification($ticket);
+        DB::transaction(function () use ($ticket, $classifiedType) {
+            $ticket->update(['expenditure_type' => $classifiedType]);
+        });
+
+        // ─────────────── GATE 4: Budget Availability ───────────────
+        $gate4 = $this->gate4BudgetCheck($ticket, $classifiedType);
+
+        if ($gate4['over_budget']) {
+            // Return over-budget info — caller will display cross-fund popup
+            return [
+                'success'           => false,
+                'gate'              => 4,
+                'message'           => 'Saldo anggaran tidak mencukupi.',
+                'over_budget'       => true,
+                'classified_type'   => $classifiedType,
+                'available_balance' => $gate4['available_balance'],
+            ];
+        }
+
+        // All gates passed — lock budget and advance ticket
+        DB::transaction(function () use ($ticket, $classifiedType, $requester) {
+            $budget = Budget::findForTicket(
+                $classifiedType,
+                $ticket->category,
+                now()->year
+            );
+
+            $budget->lock((float) $ticket->amount);
+
+            $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
+
+            ApprovalLog::create([
+                'ticket_id' => $ticket->id,
+                'user_id'   => $requester->id,
+                'action'    => ApprovalLog::ACTION_VALIDATED,
+                'notes'     => "Klasifikasi: {$classifiedType}. Saldo dikunci sementara.",
+            ]);
+        });
+
+        return [
+            'success'           => true,
+            'gate'              => 4,
+            'message'           => 'Validasi berhasil. Tiket diteruskan ke Department Head.',
+            'over_budget'       => false,
+            'classified_type'   => $classifiedType,
+            'available_balance' => null,
+        ];
+    }
+
+    /**
+     * Apply cross-fund: flag ticket, lock alternate budget, advance to pending_dept_head.
+     *
+     * When OPEX is over-budget → try CAPEX of same category, and vice versa.
+     *
+     * @return array{success: bool, message: string}
+     */
+    public function applyCrossFund(Ticket $ticket, User $requester): array
+    {
+        $originalType    = $ticket->expenditure_type;
+        $alternativeType = $originalType === Ticket::TYPE_OPEX
+            ? Ticket::TYPE_CAPEX
+            : Ticket::TYPE_OPEX;
+
+        $budget = Budget::findForTicket($alternativeType, $ticket->category, now()->year);
+
+        if (! $budget || $budget->available_balance < (float) $ticket->amount) {
+            return [
+                'success' => false,
+                'message' => 'Saldo anggaran alternatif juga tidak mencukupi. Pengajuan tidak dapat dilanjutkan.',
+            ];
+        }
+
+        DB::transaction(function () use ($ticket, $alternativeType, $budget, $requester) {
+            $ticket->update([
+                'expenditure_type' => $alternativeType,
+                'is_cross_fund'    => true,
+                'status'           => Ticket::STATUS_PENDING_DEPT_HEAD,
+            ]);
+
+            $budget->lock((float) $ticket->amount);
+
+            ApprovalLog::create([
+                'ticket_id' => $ticket->id,
+                'user_id'   => $requester->id,
+                'action'    => ApprovalLog::ACTION_CROSS_FUND_REQUESTED,
+                'notes'     => "Silang dana dari {$ticket->expenditure_type} ke {$alternativeType}. Saldo dikunci sementara.",
+            ]);
+        });
+
+        return [
+            'success' => true,
+            'message' => 'Silang dana berhasil diajukan. Tiket diteruskan ke Department Head.',
+        ];
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // Gate Implementations
+    // ──────────────────────────────────────────────────────────
+
+    /**
+     * Gate 1 — Duplicate Check
+     *
+     * Checks if an identical active ticket (same item_name + same user) exists.
+     * Tickets with status 'declined' are excluded from the check.
+     */
+    private function gate1DuplicateCheck(Ticket $ticket, User $requester): array
+    {
+        $duplicate = Ticket::where('user_id', $requester->id)
+            ->where('item_name', $ticket->item_name)
+            ->where('id', '!=', $ticket->id)
+            ->whereNotIn('status', [Ticket::STATUS_DECLINED])
+            ->exists();
+
+        if ($duplicate) {
+            return [
+                'passed'  => false,
+                'message' => 'Pengajuan serupa sudah tersedia dalam sistem.',
+            ];
+        }
+
+        return ['passed' => true, 'message' => ''];
+    }
+
+    /**
+     * Gate 2 — Nominal Validation
+     *
+     * Validates the submitted amount for anomalies.
+     */
+    private function gate2NominalValidation(Ticket $ticket): array
+    {
+        $amount = (float) $ticket->amount;
+
+        if ($amount <= 0) {
+            return [
+                'passed'  => false,
+                'message' => 'Nominal harga tidak wajar atau tidak valid. Nilai harus lebih dari 0.',
+            ];
+        }
+
+        // Reasonableness upper bound: 99 billion (configurable via config if needed)
+        $maxReasonable = 99_000_000_000;
+        if ($amount > $maxReasonable) {
+            return [
+                'passed'  => false,
+                'message' => 'Nominal harga tidak wajar atau tidak valid. Nilai terlalu besar.',
+            ];
+        }
+
+        return ['passed' => true, 'message' => ''];
+    }
+
+    /**
+     * Gate 3 — CAPEX/OPEX Auto-Classification
+     *
+     * Classification rules (no fail state — always resolves to CAPEX or OPEX):
+     *
+     *  - hardware or software AND amount >= capitalization_threshold → CAPEX
+     *  - hardware or software AND amount < capitalization_threshold  → OPEX
+     *  - services                                                    → OPEX
+     *  - office_supplies                                             → OPEX
+     *  - others                                                      → OPEX
+     */
+    private function gate3Classification(Ticket $ticket): string
+    {
+        $threshold = (float) config('eprocurement.capitalization_threshold', 200_000_000);
+        $amount    = (float) $ticket->amount;
+        $category  = $ticket->category;
+
+        $capexEligibleCategories = [
+            Ticket::CATEGORY_HARDWARE,
+            Ticket::CATEGORY_SOFTWARE,
+        ];
+
+        if (in_array($category, $capexEligibleCategories) && $amount >= $threshold) {
+            return Ticket::TYPE_CAPEX;
+        }
+
+        return Ticket::TYPE_OPEX;
+    }
+
+    /**
+     * Gate 4 — Budget Availability Check
+     *
+     * Returns over_budget = true if available_balance < ticket amount.
+     * Does NOT lock budget here — locking is done in run() after this returns.
+     */
+    private function gate4BudgetCheck(Ticket $ticket, string $expenditureType): array
+    {
+        $budget = Budget::findForTicket($expenditureType, $ticket->category, now()->year);
+
+        if (! $budget) {
+            return [
+                'over_budget'       => true,
+                'available_balance' => 0.0,
+            ];
+        }
+
+        $available = $budget->available_balance;
+        $amount    = (float) $ticket->amount;
+
+        if ($amount > $available) {
+            return [
+                'over_budget'       => true,
+                'available_balance' => $available,
+            ];
+        }
+
+        return [
+            'over_budget'       => false,
+            'available_balance' => $available,
+        ];
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // Internal Helpers
+    // ──────────────────────────────────────────────────────────
+
+    private function fail(int $gate, string $message): array
+    {
+        return [
+            'success'           => false,
+            'gate'              => $gate,
+            'message'           => $message,
+            'over_budget'       => false,
+            'classified_type'   => null,
+            'available_balance' => null,
+        ];
+    }
+}

@@ -2,44 +2,90 @@
 
 namespace Database\Factories;
 
+use App\Models\HrEmployee;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends Factory<User>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
+    protected $model = User::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
+        $hrEmployee = HrEmployee::factory()->requester()->create();
+
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'hr_employee_id'   => $hrEmployee->id,
+            'name'             => $hrEmployee->name,
+            'email'            => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'password'         => Hash::make('password'),
+            'role'             => 'requester',
+            'remember_token'   => Str::random(10),
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
+    // ─── State Methods ───
+
+    public function unverified(): self
     {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+        return $this->state(['email_verified_at' => null]);
+    }
+
+    public function requester(): self
+    {
+        return $this->state(function () {
+            $hr = HrEmployee::factory()->requester()->create();
+
+            return [
+                'hr_employee_id' => $hr->id,
+                'name'           => $hr->name,
+                'role'           => 'requester',
+            ];
+        });
+    }
+
+    public function pfa(): self
+    {
+        return $this->state(function () {
+            $hr = HrEmployee::factory()->pfa()->create();
+
+            return [
+                'hr_employee_id' => $hr->id,
+                'name'           => $hr->name,
+                'role'           => 'pfa',
+            ];
+        });
+    }
+
+    public function departmentHead(): self
+    {
+        return $this->state(function () {
+            $hr = HrEmployee::factory()->departmentHead()->create();
+
+            return [
+                'hr_employee_id' => $hr->id,
+                'name'           => $hr->name,
+                'role'           => 'department_head',
+            ];
+        });
+    }
+
+    public function divisionHead(): self
+    {
+        return $this->state(function () {
+            $hr = HrEmployee::factory()->divisionHead()->create();
+
+            return [
+                'hr_employee_id' => $hr->id,
+                'name'           => $hr->name,
+                'role'           => 'division_head',
+            ];
+        });
     }
 }
