@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('title', 255);
             $table->string('item_name');
-            $table->enum('category', ['hardware', 'software', 'services', 'office_supplies', 'others']);
+            $table->enum('category', ['infrastruktur_utama', 'lisensi_sistem', 'layanan_pemeliharaan', 'perlengkapan_operasional']);
             $table->text('description')->nullable();
             $table->integer('quantity');
             $table->string('vendor_name');

@@ -19,7 +19,7 @@ test('requester can create a ticket which starts at pending_review', function ()
     $response = $this->actingAs($requester)->post('/tickets', [
         'title'       => 'Pengadaan Server Rack',
         'item_name'   => 'Server Rack Dell PowerEdge',
-        'category'    => 'hardware',
+        'category'    => 'infrastruktur_utama',
         'description' => 'Server rack untuk data center',
         'quantity'    => 2,
         'vendor_name' => 'PT Dell Indonesia',

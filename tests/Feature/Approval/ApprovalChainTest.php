@@ -20,12 +20,12 @@ test('department head can forward ticket to division head', function () {
 test('division head can approve ticket — budget permanently deducted', function () {
     $divHead = User::factory()->divisionHead()->create();
     $ticket  = Ticket::factory()->pendingDivHead()->create([
-        'category'         => 'hardware',
+        'category'         => 'infrastruktur_utama',
         'amount'           => 50_000_000,
         'expenditure_type' => 'OPEX',
     ]);
 
-    $budget = Budget::factory()->opex()->forCategory('hardware')
+    $budget = Budget::factory()->opex()->forCategory('infrastruktur_utama')
         ->withLimit(1_000_000_000)
         ->create(['locked_amount' => 50_000_000]);
 
@@ -40,12 +40,12 @@ test('division head can approve ticket — budget permanently deducted', functio
 test('division head can decline ticket — temporary lock is released', function () {
     $divHead = User::factory()->divisionHead()->create();
     $ticket  = Ticket::factory()->pendingDivHead()->create([
-        'category'         => 'software',
+        'category'         => 'lisensi_sistem',
         'amount'           => 100_000_000,
         'expenditure_type' => 'OPEX',
     ]);
 
-    $budget = Budget::factory()->opex()->forCategory('software')
+    $budget = Budget::factory()->opex()->forCategory('lisensi_sistem')
         ->withLimit(1_000_000_000)
         ->create(['locked_amount' => 100_000_000]);
 

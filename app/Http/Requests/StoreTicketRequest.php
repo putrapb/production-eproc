@@ -16,7 +16,7 @@ class StoreTicketRequest extends FormRequest
         return [
             'title'       => ['required', 'string', 'max:255'],
             'item_name'   => ['required', 'string', 'max:255'],
-            'category'    => ['required', 'in:hardware,software,services,office_supplies,others'],
+            'category'    => ['required', 'in:infrastruktur_utama,lisensi_sistem,layanan_pemeliharaan,perlengkapan_operasional'],
             'description' => ['nullable', 'string'],
             'quantity'    => ['required', 'integer', 'min:1'],
             'vendor_name' => ['required', 'string', 'max:255'],
@@ -31,7 +31,7 @@ class StoreTicketRequest extends FormRequest
             'title.required'       => 'Judul pengadaan wajib diisi.',
             'item_name.required'   => 'Nama item wajib diisi.',
             'category.required'    => 'Kategori pengadaan wajib dipilih.',
-            'category.in'          => 'Kategori pengadaan tidak valid.',
+            'category.in'          => 'Kategori pengadaan tidak valid. Pilih salah satu: Infrastruktur Utama, Lisensi Sistem, Layanan Pemeliharaan, atau Perlengkapan Operasional.',
             'quantity.required'    => 'Jumlah unit wajib diisi.',
             'quantity.min'         => 'Jumlah unit minimal 1.',
             'vendor_name.required' => 'Nama vendor wajib diisi.',

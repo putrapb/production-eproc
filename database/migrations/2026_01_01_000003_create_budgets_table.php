@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('budgets', function (Blueprint $table) {
             $table->id();
             $table->enum('expenditure_type', ['CAPEX', 'OPEX']);
-            $table->enum('category', ['hardware', 'software', 'services', 'office_supplies', 'others']);
+            $table->enum('category', ['infrastruktur_utama', 'lisensi_sistem', 'layanan_pemeliharaan', 'perlengkapan_operasional']);
             $table->integer('fiscal_year');
             $table->decimal('total_limit', 15, 2);
             $table->decimal('locked_amount', 15, 2)->default(0);

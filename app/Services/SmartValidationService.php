@@ -247,9 +247,16 @@ class SmartValidationService
         $amount    = (float) $ticket->amount;
         $category  = $ticket->category;
 
+        // CAPEX-eligible asset classes:
+        //   infrastruktur_utama  (formerly hardware)  → CAPEX if >= threshold
+        //   lisensi_sistem       (formerly software)   → CAPEX if >= threshold
+        //
+        // Always OPEX:
+        //   layanan_pemeliharaan     (formerly services)
+        //   perlengkapan_operasional (formerly office_supplies)
         $capexEligibleCategories = [
-            Ticket::CATEGORY_HARDWARE,
-            Ticket::CATEGORY_SOFTWARE,
+            Ticket::CATEGORY_INFRASTRUKTUR_UTAMA,
+            Ticket::CATEGORY_LISENSI_SISTEM,
         ];
 
         if (in_array($category, $capexEligibleCategories) && $amount >= $threshold) {

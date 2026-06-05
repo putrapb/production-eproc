@@ -15,7 +15,12 @@ class TicketFactory extends Factory
 
     public function definition(): array
     {
-        $categories = ['hardware', 'software', 'services', 'office_supplies', 'others'];
+        $categories = [
+            'infrastruktur_utama',
+            'lisensi_sistem',
+            'layanan_pemeliharaan',
+            'perlengkapan_operasional',
+        ];
 
         return [
             'user_id'         => User::factory()->requester(),
@@ -94,20 +99,30 @@ class TicketFactory extends Factory
 
     // ─── Category States ───
 
-    public function hardware(): self
+    public function infrastrukturUtama(): self
     {
-        return $this->state(['category' => 'hardware']);
+        return $this->state(['category' => 'infrastruktur_utama']);
     }
 
-    public function software(): self
+    public function lisensiSistem(): self
     {
-        return $this->state(['category' => 'software']);
+        return $this->state(['category' => 'lisensi_sistem']);
     }
 
-    public function services(): self
+    public function layananPemeliharaan(): self
     {
-        return $this->state(['category' => 'services']);
+        return $this->state(['category' => 'layanan_pemeliharaan']);
     }
+
+    public function perlengkapanOperasional(): self
+    {
+        return $this->state(['category' => 'perlengkapan_operasional']);
+    }
+
+    // Legacy aliases kept for any remaining test references
+    public function hardware(): self { return $this->infrastrukturUtama(); }
+    public function software(): self { return $this->lisensiSistem(); }
+    public function services(): self { return $this->layananPemeliharaan(); }
 
     // ─── Amount States ───
 

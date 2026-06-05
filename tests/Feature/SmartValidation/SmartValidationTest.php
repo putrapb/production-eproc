@@ -43,11 +43,11 @@ test('gate 1 passes when only declined duplicates exist', function () {
     $ticket = Ticket::factory()->needToValidate()->create([
         'user_id'   => $requester->id,
         'item_name' => 'Server Rack Dell PowerEdge',
-        'category'  => 'services',
+        'category'  => 'layanan_pemeliharaan',
         'amount'    => 5_000_000,
     ]);
 
-    Budget::factory()->opex()->forCategory('services')->withLimit(1_000_000_000)->create();
+    Budget::factory()->opex()->forCategory('layanan_pemeliharaan')->withLimit(1_000_000_000)->create();
 
     $result = app(SmartValidationService::class)->run($ticket, $requester);
 
@@ -89,11 +89,11 @@ test('gate 3 classifies hardware above threshold as CAPEX', function () {
     $requester = User::factory()->requester()->create();
     $ticket    = Ticket::factory()->needToValidate()->create([
         'user_id'  => $requester->id,
-        'category' => 'hardware',
+        'category' => 'infrastruktur_utama',
         'amount'   => 350_000_000, // Above 200M threshold
     ]);
 
-    Budget::factory()->capex()->forCategory('hardware')->withLimit(2_000_000_000)->create();
+    Budget::factory()->capex()->forCategory('infrastruktur_utama')->withLimit(2_000_000_000)->create();
 
     $result = app(SmartValidationService::class)->run($ticket, $requester);
 
@@ -104,11 +104,11 @@ test('gate 3 classifies hardware below threshold as OPEX', function () {
     $requester = User::factory()->requester()->create();
     $ticket    = Ticket::factory()->needToValidate()->create([
         'user_id'  => $requester->id,
-        'category' => 'hardware',
+        'category' => 'infrastruktur_utama',
         'amount'   => 50_000_000, // Below 200M threshold
     ]);
 
-    Budget::factory()->opex()->forCategory('hardware')->withLimit(2_000_000_000)->create();
+    Budget::factory()->opex()->forCategory('infrastruktur_utama')->withLimit(2_000_000_000)->create();
 
     $result = app(SmartValidationService::class)->run($ticket, $requester);
 
@@ -119,11 +119,11 @@ test('gate 3 always classifies services as OPEX', function () {
     $requester = User::factory()->requester()->create();
     $ticket    = Ticket::factory()->needToValidate()->create([
         'user_id'  => $requester->id,
-        'category' => 'services',
-        'amount'   => 500_000_000, // High amount, but services → always OPEX
+        'category' => 'layanan_pemeliharaan',
+        'amount'   => 500_000_000, // High amount, but layanan_pemeliharaan → always OPEX
     ]);
 
-    Budget::factory()->opex()->forCategory('services')->withLimit(2_000_000_000)->create();
+    Budget::factory()->opex()->forCategory('layanan_pemeliharaan')->withLimit(2_000_000_000)->create();
 
     $result = app(SmartValidationService::class)->run($ticket, $requester);
 
@@ -136,11 +136,11 @@ test('gate 4 locks budget and advances ticket when balance is sufficient', funct
     $requester = User::factory()->requester()->create();
     $ticket    = Ticket::factory()->needToValidate()->create([
         'user_id'  => $requester->id,
-        'category' => 'software',
+        'category' => 'lisensi_sistem',
         'amount'   => 50_000_000, // Below CAPEX threshold → OPEX
     ]);
 
-    $budget = Budget::factory()->opex()->forCategory('software')
+    $budget = Budget::factory()->opex()->forCategory('lisensi_sistem')
         ->withLimit(1_000_000_000)->create();
 
     $result = app(SmartValidationService::class)->run($ticket, $requester);
@@ -154,11 +154,11 @@ test('gate 4 returns over_budget when balance is insufficient', function () {
     $requester = User::factory()->requester()->create();
     $ticket    = Ticket::factory()->needToValidate()->create([
         'user_id'  => $requester->id,
-        'category' => 'software',
+        'category' => 'lisensi_sistem',
         'amount'   => 950_000_000,
     ]);
 
-    Budget::factory()->opex()->forCategory('software')->almostExhausted()->create();
+    Budget::factory()->opex()->forCategory('lisensi_sistem')->almostExhausted()->create();
     // Only 20M remaining, ticket needs 950M
 
     $result = app(SmartValidationService::class)->run($ticket, $requester);

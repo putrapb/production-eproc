@@ -43,11 +43,10 @@ return [
     |--------------------------------------------------------------------------
     */
     'categories' => [
-        'hardware'       => 'Hardware',
-        'software'       => 'Software',
-        'services'       => 'Services',
-        'office_supplies' => 'Office Supplies',
-        'others'         => 'Others',
+        'infrastruktur_utama'      => 'Infrastruktur Utama',
+        'lisensi_sistem'           => 'Lisensi Sistem',
+        'layanan_pemeliharaan'     => 'Layanan Pemeliharaan',
+        'perlengkapan_operasional' => 'Perlengkapan Operasional',
     ],
 
     /*

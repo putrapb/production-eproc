@@ -16,7 +16,7 @@ class BudgetFactory extends Factory
     {
         return [
             'expenditure_type' => $this->faker->randomElement(['CAPEX', 'OPEX']),
-            'category'         => $this->faker->randomElement(['hardware', 'software', 'services', 'office_supplies', 'others']),
+            'category'         => $this->faker->randomElement(['infrastruktur_utama', 'lisensi_sistem', 'layanan_pemeliharaan', 'perlengkapan_operasional']),
             'fiscal_year'      => now()->year,
             'total_limit'      => 1_000_000_000.00,
             'locked_amount'    => 0.00,

@@ -28,11 +28,11 @@ class Ticket extends Model
     // Category Constants
     // ─────────────────────────────────────────────
 
-    const CATEGORY_HARDWARE       = 'hardware';
-    const CATEGORY_SOFTWARE       = 'software';
-    const CATEGORY_SERVICES       = 'services';
-    const CATEGORY_OFFICE_SUPPLIES = 'office_supplies';
-    const CATEGORY_OTHERS         = 'others';
+    // Asset class categories (4 corporate standard classes)
+    const CATEGORY_INFRASTRUKTUR_UTAMA      = 'infrastruktur_utama';      // Server, network, devices
+    const CATEGORY_LISENSI_SISTEM           = 'lisensi_sistem';           // Software licenses, SaaS
+    const CATEGORY_LAYANAN_PEMELIHARAAN     = 'layanan_pemeliharaan';     // Maintenance, managed services
+    const CATEGORY_PERLENGKAPAN_OPERASIONAL = 'perlengkapan_operasional'; // Stationery, operational supplies
 
     // ─────────────────────────────────────────────
     // Expenditure Type Constants
