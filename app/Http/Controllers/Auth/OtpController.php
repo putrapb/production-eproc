@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OtpMail;
 use App\Models\OtpVerification;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class OtpController extends Controller
@@ -82,13 +84,11 @@ class OtpController extends Controller
 
         $otp = OtpVerification::generate($email);
 
-        \Illuminate\Support\Facades\Mail::raw(
-            "Kode OTP verifikasi akun E-Procurement BNI Anda: {$otp->otp_code}\n\nKode ini berlaku selama " . config('eprocurement.otp_ttl_minutes', 10) . " menit.",
-            function ($message) use ($email) {
-                $message->to($email)
-                    ->subject('[E-Procurement BNI] Kode Verifikasi OTP — Kirim Ulang');
-            }
-        );
+        Mail::to($email)->send(new OtpMail(
+            otpCode:    $otp->otp_code,
+            ttlMinutes: config('eprocurement.otp_ttl_minutes', 10),
+            isResend:   true,
+        ));
 
         return back()->with('info', 'Kode OTP baru telah dikirim ke email Anda.');
     }

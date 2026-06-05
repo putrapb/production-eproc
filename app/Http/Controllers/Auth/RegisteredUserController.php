@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OtpMail;
 use App\Models\HrEmployee;
 use App\Models\OtpVerification;
 use App\Models\User;
@@ -77,17 +78,14 @@ class RegisteredUserController extends Controller
             'email_verified_at' => null,
         ]);
 
-        // Step 6: Generate and send OTP
+        // Step 6: Generate and send OTP via queued Mailable
         $otp = OtpVerification::generate(strtolower($request->email));
 
-        // Send OTP via mail — falls back to log driver in development
-        Mail::raw(
-            "Kode OTP verifikasi akun E-Procurement BNI Anda: {$otp->otp_code}\n\nKode ini berlaku selama " . config('eprocurement.otp_ttl_minutes', 10) . " menit.",
-            function ($message) use ($request) {
-                $message->to($request->email)
-                    ->subject('[E-Procurement BNI] Kode Verifikasi OTP');
-            }
-        );
+        Mail::to($request->email)->send(new OtpMail(
+            otpCode:    $otp->otp_code,
+            ttlMinutes: config('eprocurement.otp_ttl_minutes', 10),
+            isResend:   false,
+        ));
 
         // Step 7: Redirect to OTP verification, passing email in session
         $request->session()->put('otp_email', strtolower($request->email));

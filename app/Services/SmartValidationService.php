@@ -58,30 +58,33 @@ class SmartValidationService
             $ticket->update(['expenditure_type' => $classifiedType]);
         });
 
-        // ─────────────── GATE 4: Budget Availability ───────────────
-        $gate4 = $this->gate4BudgetCheck($ticket, $classifiedType);
-
-        if ($gate4['over_budget']) {
-            // Return over-budget info — caller will display cross-fund popup
-            return [
-                'success'           => false,
-                'gate'              => 4,
-                'message'           => 'Saldo anggaran tidak mencukupi.',
-                'over_budget'       => true,
-                'classified_type'   => $classifiedType,
-                'available_balance' => $gate4['available_balance'],
-            ];
-        }
-
-        // All gates passed — lock budget and advance ticket
-        DB::transaction(function () use ($ticket, $classifiedType, $requester) {
+        // ─────────────── GATE 4: Budget Availability + Atomic Lock ───────────────
+        //
+        // IMPORTANT: The budget check AND the lock MUST happen inside a single
+        // DB::transaction. The lockForUpdate() inside Budget::findForTicket()
+        // acquires a row-level exclusive lock — this serializes concurrent requests
+        // so two simultaneous validations cannot both pass the saldo check before
+        // either one has committed its lock (preventing double-spending).
+        $gate4Result = DB::transaction(function () use ($ticket, $classifiedType, $requester) {
             $budget = Budget::findForTicket(
                 $classifiedType,
                 $ticket->category,
                 now()->year
             );
 
-            $budget->lock((float) $ticket->amount);
+            if (! $budget) {
+                return ['over_budget' => true, 'available_balance' => 0.0, 'committed' => false];
+            }
+
+            $available = $budget->available_balance;
+            $amount    = (float) $ticket->amount;
+
+            if ($amount > $available) {
+                return ['over_budget' => true, 'available_balance' => $available, 'committed' => false];
+            }
+
+            // Saldo mencukupi — lock budget dan advance ticket dalam transaksi yang sama
+            $budget->lock($amount);
 
             $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
 
@@ -91,7 +94,21 @@ class SmartValidationService
                 'action'    => ApprovalLog::ACTION_VALIDATED,
                 'notes'     => "Klasifikasi: {$classifiedType}. Saldo dikunci sementara.",
             ]);
+
+            return ['over_budget' => false, 'available_balance' => $available, 'committed' => true];
         });
+
+        if ($gate4Result['over_budget']) {
+            // Return over-budget info — caller will display cross-fund popup
+            return [
+                'success'           => false,
+                'gate'              => 4,
+                'message'           => 'Saldo anggaran tidak mencukupi.',
+                'over_budget'       => true,
+                'classified_type'   => $classifiedType,
+                'available_balance' => $gate4Result['available_balance'],
+            ];
+        }
 
         return [
             'success'           => true,
@@ -117,16 +134,15 @@ class SmartValidationService
             ? Ticket::TYPE_CAPEX
             : Ticket::TYPE_OPEX;
 
-        $budget = Budget::findForTicket($alternativeType, $ticket->category, now()->year);
+        // Wrap entire check + lock in a single atomic transaction to prevent
+        // concurrent cross-fund requests from double-spending the alternate budget.
+        $result = DB::transaction(function () use ($ticket, $alternativeType, $requester) {
+            $budget = Budget::findForTicket($alternativeType, $ticket->category, now()->year);
 
-        if (! $budget || $budget->available_balance < (float) $ticket->amount) {
-            return [
-                'success' => false,
-                'message' => 'Saldo anggaran alternatif juga tidak mencukupi. Pengajuan tidak dapat dilanjutkan.',
-            ];
-        }
+            if (! $budget || $budget->available_balance < (float) $ticket->amount) {
+                return ['success' => false];
+            }
 
-        DB::transaction(function () use ($ticket, $alternativeType, $budget, $requester) {
             $ticket->update([
                 'expenditure_type' => $alternativeType,
                 'is_cross_fund'    => true,
@@ -141,7 +157,16 @@ class SmartValidationService
                 'action'    => ApprovalLog::ACTION_CROSS_FUND_REQUESTED,
                 'notes'     => "Silang dana dari {$ticket->expenditure_type} ke {$alternativeType}. Saldo dikunci sementara.",
             ]);
+
+            return ['success' => true];
         });
+
+        if (! $result['success']) {
+            return [
+                'success' => false,
+                'message' => 'Saldo anggaran alternatif juga tidak mencukupi. Pengajuan tidak dapat dilanjutkan.',
+            ];
+        }
 
         return [
             'success' => true,
@@ -235,14 +260,18 @@ class SmartValidationService
     }
 
     /**
-     * Gate 4 — Budget Availability Check
+     * Gate 4 — Budget Availability Check (read-only, used only for over-budget response preview)
      *
-     * Returns over_budget = true if available_balance < ticket amount.
-     * Does NOT lock budget here — locking is done in run() after this returns.
+     * NOTE: This method is NO LONGER called in the main run() flow.
+     * The atomic check+lock is handled directly in the DB::transaction block above.
+     * Kept here for potential standalone use in cross-fund pre-check scenarios.
      */
     private function gate4BudgetCheck(Ticket $ticket, string $expenditureType): array
     {
-        $budget = Budget::findForTicket($expenditureType, $ticket->category, now()->year);
+        $budget = Budget::where('expenditure_type', $expenditureType)
+            ->where('category', $ticket->category)
+            ->where('fiscal_year', now()->year)
+            ->first(); // Read-only preview — no lockForUpdate needed here
 
         if (! $budget) {
             return [

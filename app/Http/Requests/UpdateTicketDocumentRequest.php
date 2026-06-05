@@ -19,7 +19,7 @@ class UpdateTicketDocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'izin_prinsip' => ['required', 'file', 'mimes:pdf', 'max:10240'], // 10 MB
+            'izin_prinsip' => ['required', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'], // 10 MB, double-validated MIME
         ];
     }
 
@@ -28,6 +28,7 @@ class UpdateTicketDocumentRequest extends FormRequest
         return [
             'izin_prinsip.required' => 'Dokumen izin prinsip wajib diunggah.',
             'izin_prinsip.mimes'    => 'Dokumen harus dalam format PDF.',
+            'izin_prinsip.mimetypes' => 'Tipe file tidak valid. Hanya file PDF asli yang diperbolehkan.',
             'izin_prinsip.max'      => 'Ukuran dokumen maksimal 10 MB.',
         ];
     }

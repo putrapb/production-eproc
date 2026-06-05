@@ -21,7 +21,7 @@ class StoreTicketRequest extends FormRequest
             'quantity'    => ['required', 'integer', 'min:1'],
             'vendor_name' => ['required', 'string', 'max:255'],
             'amount'      => ['required', 'numeric', 'min:1', 'max:99999999999999.99'],
-            'izin_prinsip' => ['required', 'file', 'mimes:pdf', 'max:10240'], // 10 MB
+            'izin_prinsip' => ['required', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'], // 10 MB, double-validated MIME
         ];
     }
 
@@ -39,6 +39,7 @@ class StoreTicketRequest extends FormRequest
             'amount.min'           => 'Nominal harga harus lebih dari 0.',
             'izin_prinsip.required' => 'Dokumen izin prinsip wajib diunggah.',
             'izin_prinsip.mimes'    => 'Dokumen harus dalam format PDF.',
+            'izin_prinsip.mimetypes' => 'Tipe file tidak valid. Hanya file PDF asli yang diperbolehkan.',
             'izin_prinsip.max'      => 'Ukuran dokumen maksimal 10 MB.',
         ];
     }
