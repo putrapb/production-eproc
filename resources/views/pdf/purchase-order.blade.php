@@ -342,6 +342,35 @@
             border-top: 1px dashed #dce6eb;
             margin: 16px 0;
         }
+
+        /* ─── Items Table ───────────────────────────────── */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 10px;
+            border: 1px solid #dce6eb;
+        }
+        .items-table th {
+            background: #006885;
+            color: #ffffff;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 1px solid #dce6eb;
+            letter-spacing: 0.5px;
+        }
+        .items-table td {
+            padding: 8px 12px;
+            border: 1px solid #dce6eb;
+            color: #1a1a2e;
+            vertical-align: top;
+        }
+        .items-table tbody tr:nth-child(even) {
+            background: #f9fbfc;
+        }
     </style>
 </head>
 <body>
@@ -406,26 +435,12 @@
         <div class="section-header">
             <div class="section-title">A. Informasi Pengadaan</div>
         </div>
-        <div class="info-grid">
+        
+        <!-- Metadata Pengadaan -->
+        <div class="info-grid" style="margin-bottom: 8px;">
             <div class="info-row">
                 <div class="info-key">Judul Pengadaan</div>
                 <div class="info-val"><strong>{{ $ticket->title }}</strong></div>
-            </div>
-            <div class="info-row">
-                <div class="info-key">Nama Item / Barang</div>
-                <div class="info-val">{{ $ticket->item_name }}</div>
-            </div>
-            <div class="info-row">
-                <div class="info-key">Kategori</div>
-                <div class="info-val">{{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</div>
-            </div>
-            <div class="info-row">
-                <div class="info-key">Deskripsi</div>
-                <div class="info-val">{{ $ticket->description ?: '-' }}</div>
-            </div>
-            <div class="info-row">
-                <div class="info-key">Jumlah Unit</div>
-                <div class="info-val">{{ number_format($ticket->quantity) }} unit</div>
             </div>
             <div class="info-row">
                 <div class="info-key">Nama Vendor</div>
@@ -436,6 +451,31 @@
                 <div class="info-val">{{ $ticket->created_at->isoFormat('D MMMM Y, HH:mm') }} WIB</div>
             </div>
         </div>
+
+        <!-- Tabel Detail Barang -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 45%;">Deskripsi</th>
+                    <th style="width: 25%;">Kategori</th>
+                    <th style="width: 15%; text-align: center;">Jumlah</th>
+                    <th style="width: 15%; text-align: right;">Harga</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <strong>{{ $ticket->item_name }}</strong>
+                        @if($ticket->description)
+                            <br><span style="font-size: 8px; color: #666; font-style: italic;">{{ $ticket->description }}</span>
+                        @endif
+                    </td>
+                    <td>{{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</td>
+                    <td style="text-align: center;">{{ number_format($ticket->quantity) }} unit</td>
+                    <td style="text-align: right;">{{ $ticket->formatted_amount }}</td>
+                </tr>
+            </tbody>
+        </table>
 
         {{-- ─── Requester ─── --}}
         <div class="section-header" style="margin-top:16px;">

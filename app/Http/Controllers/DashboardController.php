@@ -79,16 +79,12 @@ class DashboardController extends Controller
         $year       = now()->year;
         $result     = [];
 
-        foreach ($categories as $category) {
-            $capex = Budget::where('expenditure_type', 'CAPEX')
-                ->where('category', $category)
-                ->where('fiscal_year', $year)
-                ->first();
+        // N+1 Query Fix: Fetch all budgets for the year in a single query
+        $budgets = Budget::where('fiscal_year', $year)->get();
 
-            $opex = Budget::where('expenditure_type', 'OPEX')
-                ->where('category', $category)
-                ->where('fiscal_year', $year)
-                ->first();
+        foreach ($categories as $category) {
+            $capex = $budgets->first(fn($b) => $b->expenditure_type === 'CAPEX' && $b->category === $category);
+            $opex  = $budgets->first(fn($b) => $b->expenditure_type === 'OPEX'  && $b->category === $category);
 
             $result[$category] = [
                 'capex' => $capex ? [

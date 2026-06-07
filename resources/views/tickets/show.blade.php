@@ -143,17 +143,19 @@
             <div class="detail-field-label">Izin Prinsip</div>
             <div class="detail-field-value">
               @if($ticket->izin_prinsip_path)
-                <div style="display:flex; align-items:center; gap:var(--space-sm);">
-                  <div style="width:36px; height:36px; background:var(--color-error-soft); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--color-error);">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  </div>
-                  <div>
-                    <div class="label-md">Izin Prinsip — Tiket #{{ str_pad($ticket->id, 4, '0', STR_PAD_LEFT) }}</div>
-                    <div class="caption text-muted">PDF · Diunggah {{ $ticket->created_at->format('d M Y') }}</div>
-                  </div>
-                  <a href="{{ Storage::url($ticket->izin_prinsip_path) }}" target="_blank" class="btn btn-ghost btn-sm" style="margin-left:auto;">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    Buka
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-md);">
+                  <a href="{{ route('tickets.document', $ticket) }}" target="_blank" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-sm) var(--space-md); border:1px solid var(--color-hairline); border-radius:var(--radius-md); transition:background 0.2s;">
+                    <div style="width:36px; height:36px; background:var(--color-error-soft); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--color-error);">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div>
+                      <div class="label-md text-ink">Izin Prinsip — Tiket #{{ str_pad($ticket->id, 4, '0', STR_PAD_LEFT) }}</div>
+                      <div class="caption text-muted">Klik untuk melihat file (PDF) · Diunggah {{ $ticket->created_at->format('d M Y') }}</div>
+                    </div>
+                  </a>
+                  <a href="{{ route('tickets.document', ['ticket' => $ticket->id, 'download' => 1]) }}" class="btn btn-ghost btn-sm">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                    Download
                   </a>
                 </div>
               @else
@@ -168,22 +170,24 @@
           <div class="detail-field">
             <div class="detail-field-label">Purchase Order</div>
             <div class="detail-field-value">
-              <div style="display:flex; align-items:center; gap:var(--space-sm);">
-                <div style="width:36px; height:36px; background:var(--color-success-soft); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--color-success-text);">
-                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 12l2 2 4-4"/></svg>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-md);">
+                  <a href="{{ route('tickets.download-po', $ticket) }}" target="_blank" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-sm) var(--space-md); border:1px solid var(--color-hairline); border-radius:var(--radius-md); transition:background 0.2s;">
+                    <div style="width:36px; height:36px; background:var(--color-success-soft); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--color-success-text);">
+                      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 12l2 2 4-4"/></svg>
+                    </div>
+                    <div>
+                      <div class="label-md text-ink">Purchase Order — PO-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</div>
+                      <div class="caption text-muted">Klik untuk melihat file (PDF) · Diterbitkan {{ $ticket->po_generated_at?->format('d M Y') }}</div>
+                    </div>
+                  </a>
+                  {{-- Download hanya untuk Requester dan PFA --}}
+                  @if($user->isRequester() || $user->isPfa())
+                  <a href="{{ route('tickets.download-po', ['ticket' => $ticket->id, 'download' => 1]) }}" class="btn btn-ghost btn-sm">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Unduh PO
+                  </a>
+                  @endif
                 </div>
-                <div>
-                  <div class="label-md">Purchase Order — PO-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</div>
-                  <div class="caption text-muted">PDF · Diterbitkan {{ $ticket->po_generated_at?->format('d M Y') }}</div>
-                </div>
-                {{-- Download hanya untuk Requester dan PFA --}}
-                @if($user->isRequester() || $user->isPfa())
-                <a href="{{ route('tickets.download-po', $ticket) }}" class="btn btn-ghost btn-sm" style="margin-left:auto;">
-                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Unduh PO
-                </a>
-                @endif
-              </div>
             </div>
           </div>
           @endif
@@ -325,7 +329,7 @@
 
     {{-- REQUESTER & PFA: Unduh PO (when po_generated) --}}
     @if(($user->isRequester() || $user->isPfa()) && $status === 'po_generated' && $ticket->po_path)
-      <a href="{{ route('tickets.download-po', $ticket) }}" class="btn btn-orient">
+      <a href="{{ route('tickets.download-po', ['ticket' => $ticket->id, 'download' => 1]) }}" class="btn btn-orient">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Unduh Purchase Order
       </a>

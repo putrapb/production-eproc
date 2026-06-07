@@ -10,6 +10,7 @@ use App\Models\Ticket;
 use App\Services\SmartValidationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -24,7 +25,7 @@ class TicketController extends Controller
     {
         $user = $request->user();
 
-        $tickets = Ticket::with(['user'])
+        $tickets = Ticket::with(['user', 'approvalLogs.user'])
             ->forRole($user)
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
@@ -102,6 +103,10 @@ class TicketController extends Controller
      */
     public function edit(Ticket $ticket, Request $request): View|RedirectResponse
     {
+        if (auth()->user()->isRequester()) {
+            abort_if($ticket->user_id !== auth()->id(), 403);
+        }
+
         $this->ensureStatus($ticket, Ticket::STATUS_REVISION);
 
         return view('tickets.edit', compact('ticket'));
@@ -112,6 +117,10 @@ class TicketController extends Controller
      */
     public function update(UpdateTicketDocumentRequest $request, Ticket $ticket): RedirectResponse
     {
+        if (auth()->user()->isRequester()) {
+            abort_if($ticket->user_id !== auth()->id(), 403);
+        }
+
         $folder = config('eprocurement.storage.izin_prinsip_folder', 'izin_prinsip');
 
         // Delete old document from storage if exists
@@ -175,6 +184,10 @@ class TicketController extends Controller
      */
     public function runSmartValidation(Request $request, Ticket $ticket): RedirectResponse
     {
+        if (auth()->user()->isRequester()) {
+            abort_if($ticket->user_id !== auth()->id(), 403);
+        }
+
         $this->ensureStatus($ticket, Ticket::STATUS_NEED_TO_VALIDATE);
 
         $user   = $request->user();
@@ -203,6 +216,10 @@ class TicketController extends Controller
      */
     public function applyCrossFund(Request $request, Ticket $ticket): RedirectResponse
     {
+        if (auth()->user()->isRequester()) {
+            abort_if($ticket->user_id !== auth()->id(), 403);
+        }
+
         $this->ensureStatus($ticket, Ticket::STATUS_NEED_TO_VALIDATE);
 
         $user   = $request->user();
@@ -255,54 +272,81 @@ class TicketController extends Controller
 
         $user = $request->user();
 
-        if ($request->action === 'approve') {
-            // Release temporary lock, apply permanent deduction
-            $budget = Budget::findForTicket(
-                $ticket->expenditure_type,
-                $ticket->category,
-                now()->year
-            );
+        $message = DB::transaction(function () use ($request, $ticket, $user) {
+            if ($request->action === 'approve') {
+                // Release temporary lock, apply permanent deduction
+                $budget = Budget::findForTicket(
+                    $ticket->expenditure_type,
+                    $ticket->category,
+                    now()->year
+                );
 
-            if ($budget) {
-                $budget->permanentDeduct((float) $ticket->amount);
+                if ($budget) {
+                    $budget->permanentDeduct((float) $ticket->amount);
+                }
+
+                $ticket->update(['status' => Ticket::STATUS_APPROVED]);
+
+                ApprovalLog::create([
+                    'ticket_id' => $ticket->id,
+                    'user_id'   => $user->id,
+                    'action'    => ApprovalLog::ACTION_APPROVED,
+                    'notes'     => $request->notes,
+                ]);
+
+                return 'Pengadaan disetujui. PFA dapat menerbitkan Purchase Order.';
+            } else {
+                // Release temporary lock — no permanent deduction
+                $budget = Budget::findForTicket(
+                    $ticket->expenditure_type,
+                    $ticket->category,
+                    now()->year
+                );
+
+                if ($budget) {
+                    $budget->unlock((float) $ticket->amount);
+                }
+
+                $ticket->update(['status' => Ticket::STATUS_DECLINED]);
+
+                ApprovalLog::create([
+                    'ticket_id' => $ticket->id,
+                    'user_id'   => $user->id,
+                    'action'    => ApprovalLog::ACTION_DECLINED,
+                    'notes'     => $request->notes,
+                ]);
+
+                return 'Pengadaan ditolak. Saldo anggaran dilepas.';
             }
-
-            $ticket->update(['status' => Ticket::STATUS_APPROVED]);
-
-            ApprovalLog::create([
-                'ticket_id' => $ticket->id,
-                'user_id'   => $user->id,
-                'action'    => ApprovalLog::ACTION_APPROVED,
-                'notes'     => $request->notes,
-            ]);
-
-            $message = 'Pengadaan disetujui. PFA dapat menerbitkan Purchase Order.';
-        } else {
-            // Release temporary lock — no permanent deduction
-            $budget = Budget::findForTicket(
-                $ticket->expenditure_type,
-                $ticket->category,
-                now()->year
-            );
-
-            if ($budget) {
-                $budget->unlock((float) $ticket->amount);
-            }
-
-            $ticket->update(['status' => Ticket::STATUS_DECLINED]);
-
-            ApprovalLog::create([
-                'ticket_id' => $ticket->id,
-                'user_id'   => $user->id,
-                'action'    => ApprovalLog::ACTION_DECLINED,
-                'notes'     => $request->notes,
-            ]);
-
-            $message = 'Pengadaan ditolak. Saldo anggaran dilepas.';
-        }
+        });
 
         return redirect()->route('tickets.show', $ticket)
             ->with('success', $message);
+    }
+
+    /**
+     * Stream the Izin Prinsip document inline (for PDF preview).
+     */
+    public function streamDocument(Ticket $ticket, Request $request)
+    {
+        $this->authorizeView($ticket, $request->user());
+
+        if (!$ticket->document_path || !Storage::disk('public')->exists($ticket->document_path)) {
+            abort(404, 'Dokumen tidak ditemukan.');
+        }
+
+        $path = Storage::disk('public')->path($ticket->document_path);
+
+        if ($request->query('download')) {
+            return response()->download($path, 'Izin_Prinsip_' . $ticket->id . '.pdf');
+        }
+
+        $headers = [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="izin-prinsip.pdf"'
+        ];
+
+        return response()->file($path, $headers);
     }
 
     // ──────────────────────────────────────────────────────────

@@ -65,8 +65,12 @@ class PurchaseOrderController extends Controller
      * Requester & PFA: Download PO PDF as attachment.
      * Route is protected by role:requester,pfa middleware.
      */
-    public function download(Request $request, Ticket $ticket): Response|RedirectResponse
+    public function download(Request $request, Ticket $ticket): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response|RedirectResponse
     {
+        if ($request->user()->isRequester()) {
+            abort_if($ticket->user_id !== auth()->id(), 403);
+        }
+
         if (! $ticket->isPoGenerated()) {
             return redirect()->route('tickets.show', $ticket)
                 ->with('error', 'Purchase Order belum tersedia untuk tiket ini.');
@@ -82,13 +86,19 @@ class PurchaseOrderController extends Controller
                 ->with('error', 'File Purchase Order tidak dapat diakses. Hubungi administrator.');
         }
 
-        $content  = Storage::disk('public')->get($ticket->document_po_path);
+        $path = Storage::disk('public')->path($ticket->document_po_path);
         $filename = 'PO-' . str_pad($ticket->id, 6, '0', STR_PAD_LEFT) . '.pdf';
 
-        return response($content, 200, [
+        if ($request->query('download')) {
+            return response()->download($path, $filename);
+        }
+
+        $headers = [
             'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
             'Cache-Control'       => 'no-cache, must-revalidate',
-        ]);
+        ];
+
+        return response()->file($path, $headers);
     }
 }

@@ -25,8 +25,8 @@ Route::middleware('guest')->group(function () {
 
     // OTP Verification (after registration)
     Route::get('/verify-otp', [OtpController::class, 'show'])->name('otp.show');
-    Route::post('/verify-otp', [OtpController::class, 'verify'])->name('otp.verify');
-    Route::post('/verify-otp/resend', [OtpController::class, 'resend'])->name('otp.resend');
+    Route::post('/verify-otp', [OtpController::class, 'verify'])->name('otp.verify')->middleware('throttle:5,1');
+    Route::post('/verify-otp/resend', [OtpController::class, 'resend'])->name('otp.resend')->middleware('throttle:1,1');
 });
 
 // ─────────────────────────────────────────────────────────────
@@ -74,6 +74,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Ticket detail — all roles (AFTER /create route)
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
+    Route::get('/tickets/{ticket}/document', [TicketController::class, 'streamDocument'])->name('tickets.document');
 
     // [PFA only] Document review + PO generation
     Route::middleware('role:pfa')->group(function () {
