@@ -39,7 +39,7 @@ class PurchaseOrderController extends Controller
 
         // Save to local public storage
         $folder   = config('eprocurement.storage.purchase_orders_folder', 'purchase_orders');
-        $filename = "PO-{$ticket->id}-" . now()->format('YmdHis') . '.pdf';
+        $filename = "PO-{$ticket->id}-" . \Illuminate\Support\Str::random(16) . '.pdf';
         $path     = $folder . '/' . $filename;
 
         Storage::disk('public')->put($path, $pdfContent);
