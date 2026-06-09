@@ -1,39 +1,59 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('password.store') }}">
-        @csrf
+@extends('layouts.guest')
 
-        <!-- Password Reset Token -->
-        <input type="hidden" name="token" value="{{ $request->route('token') }}">
+@section('title', 'Atur Ulang Password')
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+@section('content')
+<div style="text-align:center; margin-bottom:var(--space-lg);">
+  <div style="width:64px; height:64px; background:var(--color-info-soft); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto var(--space-md);">
+    <svg width="28" height="28" fill="none" stroke="var(--color-info)" stroke-width="1.8" viewBox="0 0 24 24">
+      <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+    </svg>
+  </div>
+  <div class="auth-form-title" style="margin-bottom:var(--space-xs);">Reset Password</div>
+  <div class="auth-form-subtitle">
+    Masukkan kode OTP yang dikirim ke:<br>
+    <strong style="color:var(--color-ink);">{{ $email }}</strong>
+  </div>
+</div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+@if($errors->any())
+<div class="alert alert-error mb-md">
+  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+  <div>{{ $errors->first() }}</div>
+</div>
+@endif
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+<form method="POST" action="{{ route('password.store') }}" id="otp-reset-form">
+  @csrf
 
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
-                                name="password_confirmation" required autocomplete="new-password" />
+  <div class="form-group">
+    <label class="form-label" for="otp_code">Kode OTP</label>
+    <input type="text" id="otp_code" name="otp_code"
+      class="form-control {{ $errors->has('otp_code') ? 'is-invalid' : '' }}"
+      placeholder="Masukkan 6 digit OTP" required maxlength="6" autofocus>
+    @error('otp_code') <div class="form-error">{{ $message }}</div> @enderror
+  </div>
 
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
+  <div class="form-group">
+    <label class="form-label" for="password">Password Baru</label>
+    <input type="password" id="password" name="password"
+      class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
+      placeholder="Minimal 8 karakter" required autocomplete="new-password">
+    @error('password') <div class="form-error">{{ $message }}</div> @enderror
+  </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Reset Password') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+  <div class="form-group">
+    <label class="form-label" for="password_confirmation">Konfirmasi Password Baru</label>
+    <input type="password" id="password_confirmation" name="password_confirmation"
+      class="form-control" placeholder="Ulangi password baru" required autocomplete="new-password">
+  </div>
+
+  <button type="submit" class="btn btn-primary w-full" style="justify-content:center;">
+    Reset Password
+  </button>
+</form>
+
+<div style="text-align:center; margin-top:var(--space-xl); font-size:13px; color:var(--color-muted);">
+  Kembali ke <a href="{{ route('login') }}" style="color:var(--color-primary); font-weight:600;">Halaman Masuk</a>
+</div>
+@endsection

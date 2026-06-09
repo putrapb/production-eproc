@@ -42,6 +42,7 @@
   <div class="form-group">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
       <label class="form-label" for="password" style="margin:0">Password</label>
+      <a href="{{ route('password.request') }}" style="font-size:12px; color:var(--color-primary); font-weight:500;">Lupa Password?</a>
     </div>
     <div style="position:relative;">
       <input
