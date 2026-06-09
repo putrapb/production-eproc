@@ -137,6 +137,35 @@
     @endif
   </div>
 
+  {{-- ─── CHARTS ROW ─────────────────────────────── --}}
+  <div style="display:grid; grid-template-columns: 2fr 1fr; gap:var(--space-xl); margin-bottom:var(--space-xl);">
+    {{-- Trend Chart --}}
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="heading-sm">Tren Pengajuan Pengadaan</div>
+          <div class="caption text-muted">Nominal pengajuan tiket per bulan pada tahun {{ date('Y') }}</div>
+        </div>
+      </div>
+      <div class="card-body" style="position: relative; height: 320px;">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    {{-- Composition Chart --}}
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="heading-sm">Komposisi Penggunaan Anggaran</div>
+          <div class="caption text-muted">Berdasarkan Asset Class (CAPEX & OPEX Terpakai/Terkunci)</div>
+        </div>
+      </div>
+      <div class="card-body" style="position: relative; height: 320px; display: flex; align-items: center; justify-content: center; padding-bottom: 20px;">
+        <canvas id="compositionChart"></canvas>
+      </div>
+    </div>
+  </div>
+
   {{-- ─── BOTTOM ROW: Budget + Recent Activity ────── --}}
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-xl);">
 
@@ -157,50 +186,54 @@
 
         <div class="tab-pane active" id="tab-capex">
           @foreach($budgetData as $category => $data)
-            @php $b = $data['capex']; @endphp
-            @if($b)
-              @php
-                $pct  = min($b['utilization_percentage'], 100);
-                $fill = $pct >= 90 ? 'critical' : ($pct >= 75 ? 'warn' : '');
-              @endphp
-              <div class="budget-row">
-                <div class="budget-row-header">
-                  <span class="budget-category-name">{{ config('eprocurement.categories.'.$category, $category) }}</span>
-                  <span class="budget-pct {{ $pct >= 90 ? 'text-primary' : '' }}">{{ number_format($pct, 1) }}%</span>
+            @if(in_array($category, ['infrastruktur_utama', 'lisensi_sistem']))
+              @php $b = $data['capex']; @endphp
+              @if($b)
+                @php
+                  $pct  = min($b['utilization_percentage'], 100);
+                  $fill = $pct >= 90 ? 'critical' : ($pct >= 75 ? 'warn' : '');
+                @endphp
+                <div class="budget-row">
+                  <div class="budget-row-header">
+                    <span class="budget-category-name">{{ config('eprocurement.categories.'.$category, $category) }}</span>
+                    <span class="budget-pct {{ $pct >= 90 ? 'text-primary' : '' }}">{{ number_format($pct, 1) }}%</span>
+                  </div>
+                  <div class="progress-bar-track">
+                    <div class="progress-bar-fill {{ $fill }}" style="width:{{ $pct }}%"></div>
+                  </div>
+                  <div class="budget-amounts">
+                    <span>Terpakai: Rp {{ number_format($b['used_amount'] + $b['locked_amount'], 0, ',', '.') }}</span>
+                    <span>Limit: Rp {{ number_format($b['total_limit'], 0, ',', '.') }}</span>
+                  </div>
                 </div>
-                <div class="progress-bar-track">
-                  <div class="progress-bar-fill {{ $fill }}" style="width:{{ $pct }}%"></div>
-                </div>
-                <div class="budget-amounts">
-                  <span>Terpakai: Rp {{ number_format($b['used_amount'] + $b['locked_amount'], 0, ',', '.') }}</span>
-                  <span>Limit: Rp {{ number_format($b['total_limit'], 0, ',', '.') }}</span>
-                </div>
-              </div>
+              @endif
             @endif
           @endforeach
         </div>
 
         <div class="tab-pane" id="tab-opex">
           @foreach($budgetData as $category => $data)
-            @php $b = $data['opex']; @endphp
-            @if($b)
-              @php
-                $pct  = min($b['utilization_percentage'], 100);
-                $fill = $pct >= 90 ? 'critical' : ($pct >= 75 ? 'warn' : '');
-              @endphp
-              <div class="budget-row">
-                <div class="budget-row-header">
-                  <span class="budget-category-name">{{ config('eprocurement.categories.'.$category, $category) }}</span>
-                  <span class="budget-pct">{{ number_format($pct, 1) }}%</span>
+            @if(in_array($category, ['layanan_pemeliharaan', 'perlengkapan_operasional']))
+              @php $b = $data['opex']; @endphp
+              @if($b)
+                @php
+                  $pct  = min($b['utilization_percentage'], 100);
+                  $fill = $pct >= 90 ? 'critical' : ($pct >= 75 ? 'warn' : '');
+                @endphp
+                <div class="budget-row">
+                  <div class="budget-row-header">
+                    <span class="budget-category-name">{{ config('eprocurement.categories.'.$category, $category) }}</span>
+                    <span class="budget-pct">{{ number_format($pct, 1) }}%</span>
+                  </div>
+                  <div class="progress-bar-track">
+                    <div class="progress-bar-fill {{ $fill }}" style="width:{{ $pct }}%"></div>
+                  </div>
+                  <div class="budget-amounts">
+                    <span>Terpakai: Rp {{ number_format($b['used_amount'] + $b['locked_amount'], 0, ',', '.') }}</span>
+                    <span>Limit: Rp {{ number_format($b['total_limit'], 0, ',', '.') }}</span>
+                  </div>
                 </div>
-                <div class="progress-bar-track">
-                  <div class="progress-bar-fill {{ $fill }}" style="width:{{ $pct }}%"></div>
-                </div>
-                <div class="budget-amounts">
-                  <span>Terpakai: Rp {{ number_format($b['used_amount'] + $b['locked_amount'], 0, ',', '.') }}</span>
-                  <span>Limit: Rp {{ number_format($b['total_limit'], 0, ',', '.') }}</span>
-                </div>
-              </div>
+              @endif
             @endif
           @endforeach
         </div>
@@ -242,6 +275,7 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -249,6 +283,102 @@ function switchTab(name, btn) {
   btn.classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+  // Chart.js Default Font Styling
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.color = '#6B7080';
+
+  // 1. Trend Chart (Line / Bar)
+  const trendCtx = document.getElementById('trendChart').getContext('2d');
+  new Chart(trendCtx, {
+    type: 'line',
+    data: {
+      labels: @json($chartData['trend']['labels']),
+      datasets: [{
+        label: 'Total Nilai (Rupiah)',
+        data: @json($chartData['trend']['data']),
+        borderColor: '#006885',
+        backgroundColor: 'rgba(0, 104, 133, 0.08)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: '#F15A22',
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#F15A22',
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#EDF0F3' },
+          ticks: {
+            callback: function(value) {
+              if (value >= 1e9) return 'Rp ' + (value / 1e9).toFixed(1) + ' M';
+              if (value >= 1e6) return 'Rp ' + (value / 1e6).toFixed(0) + ' Jt';
+              return 'Rp ' + value.toLocaleString('id-ID');
+            }
+          }
+        },
+        x: {
+          grid: { display: false }
+        }
+      }
+    }
+  });
+
+  // 2. Composition Chart (Doughnut)
+  const compCtx = document.getElementById('compositionChart').getContext('2d');
+  new Chart(compCtx, {
+    type: 'doughnut',
+    data: {
+      labels: @json($chartData['composition']['labels']),
+      datasets: [{
+        data: @json($chartData['composition']['data']),
+        backgroundColor: [
+          '#006885', // infrastruktur_utama - Orient
+          '#F15A22', // lisensi_sistem - Flamingo
+          '#494E5C', // layanan_pemeliharaan - Trout
+          '#0088FF'  // perlengkapan_operasional - Blue
+        ],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            padding: 15,
+            font: { size: 11 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const val = context.raw;
+              return context.label + ': Rp ' + val.toLocaleString('id-ID');
+            }
+          }
+        }
+      },
+      cutout: '60%'
+    }
+  });
+});
 </script>
 @endpush
 @endsection

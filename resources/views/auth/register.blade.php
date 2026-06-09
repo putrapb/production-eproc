@@ -3,6 +3,10 @@
 @section('title', 'Daftar Akun')
 
 @section('content')
+<div style="display: flex; justify-content: center; margin-bottom: var(--space-lg);">
+  <img src="{{ asset('images/bni-logo.png') }}" alt="Logo BNI" class="h-10 w-auto" style="height: 40px; width: auto;">
+</div>
+
 <div class="auth-form-title">Daftar Akun</div>
 <div class="auth-form-subtitle">Gunakan NIP dan email korporat BNI Anda untuk mendaftar.</div>
 

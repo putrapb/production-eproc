@@ -34,7 +34,46 @@ class DashboardController extends Controller
         // ─── Budget Utilization (all roles see this) ───
         $budgetData = $this->buildBudgetUtilization();
 
-        return view('dashboard.index', compact('ticketSummary', 'recentTickets', 'budgetData', 'user'));
+        // ─── Chart Data (Trend & Composition) ───
+        $year = now()->year;
+        $monthlyTickets = Ticket::whereYear('created_at', $year)->get();
+        
+        $trendMonths = [];
+        $trendTotals = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $date = \Carbon\Carbon::create($year, $m, 1);
+            $monthName = $date->isoFormat('MMMM');
+            $trendMonths[] = $monthName;
+            
+            $total = $monthlyTickets->filter(fn($t) => $t->created_at->month === $m)->sum('amount');
+            $trendTotals[] = (float) $total;
+        }
+
+        $budgets = Budget::where('fiscal_year', $year)->get();
+        $compositionCategories = [];
+        $compositionValues = [];
+        $categories = ['infrastruktur_utama', 'lisensi_sistem', 'layanan_pemeliharaan', 'perlengkapan_operasional'];
+        
+        foreach ($categories as $category) {
+            $categoryBudgets = $budgets->where('category', $category);
+            $totalUsed = $categoryBudgets->sum(fn($b) => (float)$b->used_amount + (float)$b->locked_amount);
+            
+            $compositionCategories[] = config('eprocurement.categories.' . $category, strtoupper(str_replace('_', ' ', $category)));
+            $compositionValues[] = $totalUsed;
+        }
+
+        $chartData = [
+            'trend' => [
+                'labels' => $trendMonths,
+                'data'   => $trendTotals,
+            ],
+            'composition' => [
+                'labels' => $compositionCategories,
+                'data'   => $compositionValues,
+            ],
+        ];
+
+        return view('dashboard.index', compact('ticketSummary', 'recentTickets', 'budgetData', 'user', 'chartData'));
     }
 
     private function buildTicketSummary($user): array

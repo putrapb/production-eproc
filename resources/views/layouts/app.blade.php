@@ -19,8 +19,8 @@
   <aside class="sidebar" id="sidebar">
 
     <!-- Logo Area -->
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-icon">BNI</div>
+    <div class="sidebar-logo" style="display: flex; align-items: center; gap: var(--space-sm); border-bottom: 1px solid var(--color-secondary-active);">
+      <img src="{{ asset('images/bni-logo.png') }}" alt="Logo BNI" class="h-8 w-auto" style="height: 32px; width: auto; background: #fff; border-radius: var(--radius-sm); padding: 4px; flex-shrink: 0;">
       <div class="sidebar-logo-text">
         E-Procurement
         <span>IT Infrastructure</span>

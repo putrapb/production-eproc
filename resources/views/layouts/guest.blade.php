@@ -12,8 +12,8 @@
 
 <div class="auth-shell">
   <!-- ─── LEFT BRAND PANEL ─────────────────────── -->
-  <div class="auth-brand-panel">
-    <div class="auth-brand-logo">BNI</div>
+  <div class="auth-brand-panel" style="background: linear-gradient(rgba(0, 104, 133, 0.6), rgba(0, 104, 133, 0.6)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat; background-blend-mode: multiply; background-color: #006885;">
+    <img src="{{ asset('images/bni-logo.png') }}" alt="Logo BNI" class="h-12 w-auto" style="height: 48px; width: auto; background: #fff; padding: 6px; border-radius: var(--radius-md); box-shadow: var(--shadow-md); margin-bottom: var(--space-xl); flex-shrink: 0;">
 
     <div>
       <div class="auth-brand-title">E-Procurement</div>
@@ -65,7 +65,7 @@
   </div>
 
   <!-- ─── RIGHT FORM PANEL ────────────────────── -->
-  <div class="auth-form-panel">
+  <div class="auth-form-panel flex flex-col justify-center min-h-screen" style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
     <div class="auth-form-card">
       @yield('content')
     </div>

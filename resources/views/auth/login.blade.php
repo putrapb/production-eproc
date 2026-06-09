@@ -3,6 +3,10 @@
 @section('title', 'Masuk')
 
 @section('content')
+<div style="display: flex; justify-content: center; margin-bottom: var(--space-lg);">
+  <img src="{{ asset('images/bni-logo.png') }}" alt="Logo BNI" class="h-10 w-auto" style="height: 40px; width: auto;">
+</div>
+
 <div class="auth-form-title">Selamat Datang</div>
 <div class="auth-form-subtitle">Masuk dengan akun korporat BNI Anda.</div>
 
