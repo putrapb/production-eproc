@@ -138,7 +138,7 @@
   </div>
 
   {{-- ─── CHARTS ROW ─────────────────────────────── --}}
-  <div style="display:grid; grid-template-columns: 2fr 1fr; gap:var(--space-xl); margin-bottom:var(--space-xl);">
+  <div class="dashboard-grid dashboard-grid-2-1">
     {{-- Trend Chart --}}
     <div class="card">
       <div class="card-header">
@@ -167,7 +167,7 @@
   </div>
 
   {{-- ─── BOTTOM ROW: Budget + Recent Activity ────── --}}
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-xl);">
+  <div class="dashboard-grid dashboard-grid-1-1">
 
     {{-- Budget Utilization Card --}}
     <div class="card">

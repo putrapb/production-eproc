@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\AuditLogController;
 use Illuminate\Support\Facades\Route;
 
 // ─────────────────────────────────────────────────────────────
@@ -98,5 +99,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // [Division Head only] Final decision
     Route::middleware('role:division_head')->group(function () {
         Route::post('/tickets/{ticket}/decide', [TicketController::class, 'decide'])->name('tickets.decide');
+    });
+
+    // [PFA & Division Head only] Audit Logs
+    Route::middleware('role:pfa,division_head')->group(function () {
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     });
 });

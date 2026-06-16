@@ -37,8 +37,10 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'nip'      => ['required', 'string', 'max:20'],
-            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email', 'ends_with:@bni.co.id'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'email.ends_with' => 'Email harus menggunakan domain korporat BNI (@bni.co.id).',
         ]);
 
         // Step 1: Validate NIP against HR database

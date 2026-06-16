@@ -155,14 +155,15 @@
 
 <!-- ─── SCRIPTS ──────────────────────────────── -->
 <script>
-// ── Sidebar toggle ──────────────────────────────
 function openSidebar() {
   document.getElementById('sidebar').classList.add('open');
   document.getElementById('sidebar-backdrop').classList.add('open');
+  document.body.classList.add('sidebar-open');
 }
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebar-backdrop').classList.remove('open');
+  document.body.classList.remove('sidebar-open');
 }
 
 // ── Avatar menu toggle ──────────────────────────
@@ -172,7 +173,7 @@ function toggleAvatarMenu() {
 document.addEventListener('click', function(e) {
   const btn  = document.getElementById('avatar-btn');
   const menu = document.getElementById('avatar-menu');
-  if (!btn.contains(e.target)) menu.classList.remove('open');
+  if (btn && menu && !btn.contains(e.target)) menu.classList.remove('open');
 });
 
 // ── Toast system ────────────────────────────────

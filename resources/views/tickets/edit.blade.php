@@ -84,7 +84,7 @@
         <hr class="divider">
 
         <div style="display:flex; justify-content:flex-end; gap:var(--space-sm);">
-          <a href="{{ route('tickets.show', $ticket) }}" class="btn btn-secondary">Batal</a>
+          <a href="{{ route('tickets.show', $ticket) }}" class="btn btn-danger">Batalkan</a>
           <button type="submit" class="btn btn-primary">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Kirim Ulang Dokumen

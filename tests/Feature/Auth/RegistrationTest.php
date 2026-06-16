@@ -64,3 +64,17 @@ test('registration is rejected if NIP already has an account', function () {
 
     $response->assertSessionHasErrors('nip');
 });
+
+test('registration is rejected if email is not from corporate domain', function () {
+    HrEmployee::factory()->requester()->create(['nip' => '9900000004']);
+
+    $response = $this->post('/register', [
+        'nip'                   => '9900000004',
+        'email'                 => 'bademail@gmail.com',
+        'password'              => 'password123',
+        'password_confirmation' => 'password123',
+    ]);
+
+    $response->assertSessionHasErrors('email');
+    expect(User::where('email', 'bademail@gmail.com')->exists())->toBeFalse();
+});
