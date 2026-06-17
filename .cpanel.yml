@@ -4,11 +4,15 @@ deployment:
     - export PATH=/usr/local/bin:/usr/bin:/bin
     # 1. Salin file dari folder public di git ke folder public_html cPanel
     - /bin/cp -R public/* /home/procurem/public_html/
+    - /bin/cp public/.htaccess /home/procurem/public_html/
     
-    # 2. Jalankan migrasi database
-    - /usr/local/bin/php artisan migrate --force
+    # 2. Sesuaikan path autoload dan bootstrap di public_html/index.php secara otomatis
+    - sed -i "s|__DIR__.'/../|__DIR__.'/../repositories/production-eproc/|g" /home/procurem/public_html/index.php
     
-    # 3. Bersihkan cache di server
-    - /usr/local/bin/php artisan view:clear
-    - /usr/local/bin/php artisan config:clear
-    - /usr/local/bin/php artisan route:clear
+    # 3. Jalankan migrasi database
+    - /usr/local/bin/ea-php83 artisan migrate --force
+    
+    # 4. Bersihkan cache di server
+    - /usr/local/bin/ea-php83 artisan view:clear
+    - /usr/local/bin/ea-php83 artisan config:clear
+    - /usr/local/bin/ea-php83 artisan route:clear

@@ -10,6 +10,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\DeployController;
 use Illuminate\Support\Facades\Route;
 
 // ─────────────────────────────────────────────────────────────
@@ -17,6 +18,9 @@ use Illuminate\Support\Facades\Route;
 // ─────────────────────────────────────────────────────────────
 
 Route::get('/', fn () => redirect()->route('login'));
+
+// Post-deployment webhook (called by GitHub Actions CI/CD)
+Route::get('/api/deploy/post-update', [DeployController::class, 'postUpdate'])->name('deploy.post-update');
 
 // Authentication
 Route::middleware('guest')->group(function () {

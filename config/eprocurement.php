@@ -59,4 +59,7 @@ return [
         'purchase_orders_folder' => 'purchase_orders',
     ],
 
+    /* Secure webhook token for post-deployment updates */
+    'deploy_token' => env('DEPLOY_TOKEN'),
+
 ];
