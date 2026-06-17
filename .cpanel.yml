@@ -3,7 +3,7 @@ deployment:
   tasks:
     - export PATH=/usr/local/bin:/usr/bin:/bin
     # 1. Salin file dari folder public di git ke folder public_html cPanel
-    - /bin/cp -R public/* /home/username_cpanel/public_html/
+    - /bin/cp -R public/* /home/procurem/public_html/
     
     # 2. Jalankan migrasi database
     - /usr/local/bin/php artisan migrate --force
