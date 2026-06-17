@@ -1,0 +1,14 @@
+---
+deployment:
+  tasks:
+    - export PATH=/usr/local/bin:/usr/bin:/bin
+    # 1. Salin file dari folder public di git ke folder public_html cPanel
+    - /bin/cp -R public/* /home/username_cpanel/public_html/
+    
+    # 2. Jalankan migrasi database
+    - /usr/local/bin/php artisan migrate --force
+    
+    # 3. Bersihkan cache di server
+    - /usr/local/bin/php artisan view:clear
+    - /usr/local/bin/php artisan config:clear
+    - /usr/local/bin/php artisan route:clear
