@@ -37,13 +37,13 @@ class BudgetSeeder extends Seeder
             [
                 'expenditure_type' => 'CAPEX',
                 'category'         => 'infrastruktur_utama',
-                'total_limit'      => 250_000_000_000.00, // Rp 250 Miliar
+                'total_limit'      => 146_250_000_000.00, // Rp 146,25 Miliar
                 // Server, network equipment, storage, data center infrastructure
             ],
             [
                 'expenditure_type' => 'CAPEX',
                 'category'         => 'lisensi_sistem',
-                'total_limit'      => 100_000_000_000.00, // Rp 100 Miliar
+                'total_limit'      => 146_250_000_000.00, // Rp 146,25 Miliar
                 // Enterprise software licenses, ERP, core banking integrations
             ],
             [
@@ -71,13 +71,13 @@ class BudgetSeeder extends Seeder
             [
                 'expenditure_type' => 'OPEX',
                 'category'         => 'layanan_pemeliharaan',
-                'total_limit'      => 150_000_000_000.00, // Rp 150 Miliar
+                'total_limit'      => 146_250_000_000.00, // Rp 146,25 Miliar
                 // Managed services, outsourcing, AMC, cloud subscriptions
             ],
             [
                 'expenditure_type' => 'OPEX',
                 'category'         => 'perlengkapan_operasional',
-                'total_limit'      => 40_000_000_000.00, // Rp 40 Miliar
+                'total_limit'      => 146_250_000_000.00, // Rp 146,25 Miliar
                 // Operational supplies, stationery, minor accessories
             ],
         ];
