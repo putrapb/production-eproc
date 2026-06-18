@@ -115,7 +115,7 @@
         <hr class="divider">
 
         {{-- SECTION: Dokumen --}}
-        <div class="detail-section-title">Dokumen Izin Prinsip</div>
+        <div class="detail-section-title">Dokumen Pendukung</div>
 
         <div class="form-group">
           <label class="form-label">Unggah Dokumen PDF <span class="required">*</span></label>
