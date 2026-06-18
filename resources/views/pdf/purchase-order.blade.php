@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Purchase Order — PO-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</title>
+    <title>Purchase Order | PO-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</title>
     <style>
         /* ─── Reset & Base ─────────────────────────────── */
         * { margin: 0; padding: 0; box-sizing: border-box; }

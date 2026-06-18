@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>@yield('title', 'Masuk') — E-Procurement BNI</title>
+  <title>@yield('title', 'Masuk') | E-Procurement BNI</title>
   <meta name="description" content="Login Sistem E-Procurement IT Infrastructure Management BNI">
   <link rel="stylesheet" href="{{ asset('css/app.css') }}">
   @stack('styles')
