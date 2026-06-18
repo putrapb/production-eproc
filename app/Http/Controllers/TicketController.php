@@ -235,6 +235,30 @@ class TicketController extends Controller
     }
 
     /**
+     * Requester: Cancel (drop) ticket when it is in need_to_validate status.
+     */
+    public function cancel(Request $request, Ticket $ticket): RedirectResponse
+    {
+        if (auth()->user()->isRequester()) {
+            abort_if($ticket->user_id !== auth()->id(), 403);
+        }
+
+        $this->ensureStatus($ticket, Ticket::STATUS_NEED_TO_VALIDATE);
+
+        $ticket->update(['status' => Ticket::STATUS_DECLINED]);
+
+        ApprovalLog::create([
+            'ticket_id' => $ticket->id,
+            'user_id'   => $request->user()->id,
+            'action'    => 'declined',
+            'notes'     => $request->notes ?? 'Dibatalkan oleh Requester karena tidak mengajukan silang dana / hasil peninjauan internal.',
+        ]);
+
+        return redirect()->route('tickets.show', $ticket)
+            ->with('success', 'Tiket pengadaan berhasil dibatalkan (Declined).');
+    }
+
+    /**
      * Department Head: Forward ticket to Division Head.
      */
     public function forward(Request $request, Ticket $ticket): RedirectResponse

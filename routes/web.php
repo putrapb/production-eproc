@@ -79,6 +79,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Cross-fund confirmation — Requester confirms silang dana when over-budget
         Route::post('/tickets/{ticket}/cross-fund', [TicketController::class, 'applyCrossFund'])->name('tickets.cross-fund');
+
+        // Cancel/drop ticket — Requester cancels/declines ticket when in need_to_validate status
+        Route::post('/tickets/{ticket}/cancel', [TicketController::class, 'cancel'])->name('tickets.cancel');
     });
 
     // PO Download — Requester and PFA only

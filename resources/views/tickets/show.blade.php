@@ -316,6 +316,10 @@
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         Jalankan Smart Validation
       </button>
+      <button onclick="openModal('modal-cancel-ticket')" class="btn btn-danger">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        Batalkan Tiket
+      </button>
     @endif
 
 
@@ -441,6 +445,32 @@
 </div>
 @endif
 
+{{-- Modal: Cancel Ticket (Requester) --}}
+@if($user->isRequester() && $status === 'need_to_validate')
+<div class="modal-overlay" id="modal-cancel-ticket">
+  <div class="modal-card">
+    <div class="modal-icon danger">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+    </div>
+    <div class="modal-title">Batalkan Tiket Pengadaan?</div>
+    <div class="modal-body">
+      Apakah Anda yakin ingin membatalkan pengajuan ini? Status tiket akan diubah menjadi <strong>Ditolak (Declined)</strong> dan proses pengadaan akan dihentikan.
+    </div>
+    <form method="POST" action="{{ route('tickets.cancel', $ticket) }}">
+      @csrf
+      <div class="form-group" style="margin-top: 15px; text-align: left;">
+        <label class="form-label">Alasan Pembatalan <span class="required">*</span></label>
+        <textarea name="notes" class="form-control" rows="3" placeholder="Wajib diisi — jelaskan alasan pembatalan..." required></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="closeModal('modal-cancel-ticket')" class="btn btn-secondary">Kembali</button>
+        <button type="submit" class="btn btn-danger">Ya, Batalkan Tiket</button>
+      </div>
+    </form>
+  </div>
+</div>
+@endif
+
 {{-- Modal: Generate PO (PFA) --}}
 @if($user->isPfa() && $status === 'approved')
 <div class="modal-overlay" id="modal-generate-po">
@@ -552,13 +582,20 @@
     <div class="modal-body">
       Saldo anggaran {{ $ticket->expenditure_type }} untuk kategori ini tidak mencukupi nominal pengajuan. Anda dapat mengajukan <strong>Silang Dana</strong> untuk menggunakan saldo anggaran kategori lain sebagai penopang.
     </div>
-    <form method="POST" action="{{ route('tickets.cross-fund', $ticket) }}">
-      @csrf
-      <div class="modal-footer">
-        <button type="button" onclick="closeModal('modal-cross-fund')" class="btn btn-ghost">Batal</button>
+    <div class="modal-footer" style="display: flex; gap: var(--space-sm); justify-content: flex-end; margin-top: var(--space-md);">
+      <button type="button" onclick="closeModal('modal-cross-fund')" class="btn btn-secondary">Tutup</button>
+      
+      <form method="POST" action="{{ route('tickets.cancel', $ticket) }}" style="display: inline; margin: 0;">
+        @csrf
+        <input type="hidden" name="notes" value="Dibatalkan oleh Requester - Tidak mengajukan Silang Dana setelah saldo tidak mencukupi.">
+        <button type="submit" class="btn btn-danger">Batalkan Tiket</button>
+      </form>
+
+      <form method="POST" action="{{ route('tickets.cross-fund', $ticket) }}" style="display: inline; margin: 0;">
+        @csrf
         <button type="submit" class="btn btn-primary">Ajukan Silang Dana</button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 </div>
 @endif
