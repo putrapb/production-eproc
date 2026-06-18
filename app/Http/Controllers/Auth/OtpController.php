@@ -18,14 +18,23 @@ class OtpController extends Controller
      */
     public function show(Request $request): View|RedirectResponse
     {
-        // If no OTP email in session, redirect back to register
-        if (! $request->session()->has('otp_email')) {
-            return redirect()->route('register')
-                ->with('error', 'Sesi verifikasi tidak valid. Silakan daftar ulang.');
+        if (auth()->check()) {
+            $user = auth()->user();
+            if ($user->hasVerifiedEmail()) {
+                return redirect()->route('dashboard');
+            }
+            $email = $user->email;
+        } else {
+            // If no OTP email in session, redirect back to register
+            if (! $request->session()->has('otp_email')) {
+                return redirect()->route('register')
+                    ->with('error', 'Sesi verifikasi tidak valid. Silakan daftar ulang.');
+            }
+            $email = $request->session()->get('otp_email');
         }
 
         return view('auth.verify-otp', [
-            'email' => $request->session()->get('otp_email'),
+            'email' => $email,
         ]);
     }
 
@@ -38,7 +47,11 @@ class OtpController extends Controller
             'otp_code' => ['required', 'string', 'size:6'],
         ]);
 
-        $email = $request->session()->get('otp_email');
+        if (auth()->check()) {
+            $email = auth()->user()->email;
+        } else {
+            $email = $request->session()->get('otp_email');
+        }
 
         if (! $email) {
             return redirect()->route('register')
@@ -66,6 +79,11 @@ class OtpController extends Controller
         // Clear OTP session
         $request->session()->forget('otp_email');
 
+        if (auth()->check()) {
+            return redirect()->route('dashboard')
+                ->with('success', 'Akun Anda berhasil diverifikasi.');
+        }
+
         return redirect()->route('login')
             ->with('success', 'Akun Anda berhasil diverifikasi. Silakan login.');
     }
@@ -75,7 +93,11 @@ class OtpController extends Controller
      */
     public function resend(Request $request): RedirectResponse
     {
-        $email = $request->session()->get('otp_email');
+        if (auth()->check()) {
+            $email = auth()->user()->email;
+        } else {
+            $email = $request->session()->get('otp_email');
+        }
 
         if (! $email) {
             return redirect()->route('register')
