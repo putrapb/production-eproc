@@ -115,9 +115,9 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
-    'to' => [
+    'to' => env('MAIL_TO_ADDRESS') ? [
         'address' => env('MAIL_TO_ADDRESS'),
         'name' => env('MAIL_TO_NAME'),
-    ],
+    ] : null,
 
 ];
