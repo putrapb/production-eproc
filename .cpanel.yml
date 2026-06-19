@@ -2,18 +2,19 @@
 deployment:
   tasks:
     - export PATH=/usr/local/bin:/usr/bin:/bin
-    # 1. Salin file dari folder public di git ke folder public_html cPanel
-    - /bin/cp -R public/* /home/procurem/public_html/
-    - /bin/cp public/.htaccess /home/procurem/public_html/
+    # 1. Salin file dari folder public di git ke folder public_html cPanel (kecuali folder storage untuk mencegah lock)
+    - /bin/rsync -av --exclude='storage' public/ /home/procurem/public_html/
     
     # 2. Sesuaikan path autoload dan bootstrap di public_html/index.php secara otomatis
     - sed -i "s|__DIR__.'/../|__DIR__.'/../repositories/production-eproc/|g" /home/procurem/public_html/index.php
     
-    # 3. Buat symlink storage agar file PDF dapat diakses via URL (fix 403 pada preview PDF)
+    # 3. Buat symlink storage dan salin folder fisik (fix 403 PDF dengan memperbaiki permission)
     - /usr/local/bin/ea-php83 artisan storage:link --force
     - /bin/rm -rf /home/procurem/public_html/storage
     - /bin/mkdir -p /home/procurem/public_html/storage
     - /bin/cp -R storage/app/public/. /home/procurem/public_html/storage/
+    - chmod -R 755 /home/procurem/public_html/storage
+    - find /home/procurem/public_html/storage -type f -exec chmod 644 {} \;
 
     # 4. Jalankan migrasi database
     - /usr/local/bin/ea-php83 artisan migrate --force
