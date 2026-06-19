@@ -47,6 +47,7 @@ class Ticket extends Model
         'item_name',
         'category',
         'description',
+        'pic_name',
         'quantity',
         'vendor_name',
         'amount',

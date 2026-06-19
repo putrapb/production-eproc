@@ -97,7 +97,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getRoleLabelAttribute(): string
     {
         return match ($this->role) {
-            'requester'       => 'IT Infrastructure PM',
+            'requester'       => 'IT Infrastructure Project Management',
             'pfa'             => 'Procurement & Fixed Assets',
             'department_head' => 'Department Head',
             'division_head'   => 'Division Head',

@@ -456,10 +456,11 @@
         <table class="items-table">
             <thead>
                 <tr>
-                    <th style="width: 45%;">Deskripsi</th>
-                    <th style="width: 25%;">Kategori</th>
-                    <th style="width: 15%; text-align: center;">Jumlah</th>
-                    <th style="width: 15%; text-align: right;">Harga</th>
+                    <th style="width: 40%;">Deskripsi</th>
+                    <th style="width: 20%;">PIC</th>
+                    <th style="width: 20%;">Kategori</th>
+                    <th style="width: 10%; text-align: center;">Jumlah</th>
+                    <th style="width: 10%; text-align: right;">Harga</th>
                 </tr>
             </thead>
             <tbody>
@@ -467,9 +468,10 @@
                     <td>
                         <strong>{{ $ticket->item_name }}</strong>
                         @if($ticket->description)
-                            <br><span style="font-size: 8px; color: #666; font-style: italic;">{{ $ticket->description }}</span>
+                            <br><span style="font-size: 8px; color: #666; font-style: italic; white-space: pre-wrap; word-break: break-word; display: block; margin-top: 2px;">{{ $ticket->description }}</span>
                         @endif
                     </td>
+                    <td style="white-space: pre-wrap; word-break: break-word; vertical-align: top;">{{ $ticket->pic_name ?? '-' }}</td>
                     <td>{{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</td>
                     <td style="text-align: center;">{{ number_format($ticket->quantity) }} unit</td>
                     <td style="text-align: right;">{{ $ticket->formatted_amount }}</td>

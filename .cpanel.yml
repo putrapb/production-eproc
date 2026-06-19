@@ -9,10 +9,14 @@ deployment:
     # 2. Sesuaikan path autoload dan bootstrap di public_html/index.php secara otomatis
     - sed -i "s|__DIR__.'/../|__DIR__.'/../repositories/production-eproc/|g" /home/procurem/public_html/index.php
     
-    # 3. Jalankan migrasi database
+    # 3. Buat symlink storage agar file PDF dapat diakses via URL (fix 403 pada preview PDF)
+    - /usr/local/bin/ea-php83 artisan storage:link --force
+    - /bin/cp -R storage/app/public /home/procurem/public_html/storage
+
+    # 4. Jalankan migrasi database
     - /usr/local/bin/ea-php83 artisan migrate --force
     
-    # 4. Bersihkan cache di server
+    # 5. Bersihkan cache di server
     - /usr/local/bin/ea-php83 artisan view:clear
     - /usr/local/bin/ea-php83 artisan config:clear
     - /usr/local/bin/ea-php83 artisan route:clear

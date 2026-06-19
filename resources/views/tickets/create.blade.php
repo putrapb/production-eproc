@@ -52,14 +52,27 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="description">Deskripsi <span class="required">*</span></label>
-          <textarea id="description" name="description"
-            class="form-control {{ $errors->has('description') ? 'is-invalid' : '' }}"
-            placeholder="Jelaskan kebutuhan dan spesifikasi item yang diajukan..."
-            required>{{ old('description') }}</textarea>
-          @error('description') <div class="form-error">{{ $message }}</div> @enderror
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="description">Deskripsi <span class="required">*</span></label>
+            <textarea id="description" name="description"
+              class="form-control {{ $errors->has('description') ? 'is-invalid' : '' }}"
+              placeholder="Jelaskan kebutuhan dan spesifikasi item yang diajukan..."
+              required>{{ old('description') }}</textarea>
+            @error('description') <div class="form-error">{{ $message }}</div> @enderror
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pic_name">PIC (Person In Charge)</label>
+            <input type="text" id="pic_name" name="pic_name"
+              class="form-control {{ $errors->has('pic_name') ? 'is-invalid' : '' }}"
+              value="{{ old('pic_name') }}"
+              placeholder="Nama penanggung jawab pengadaan ini"
+              maxlength="255">
+            @error('pic_name') <div class="form-error">{{ $message }}</div> @enderror
+          </div>
         </div>
+
 
         <div class="form-row">
           <div class="form-group">

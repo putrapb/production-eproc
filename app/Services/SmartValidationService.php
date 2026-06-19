@@ -58,13 +58,15 @@ class SmartValidationService
             $ticket->update(['expenditure_type' => $classifiedType]);
         });
 
-        // ─────────────── GATE 4: Budget Availability + Atomic Lock ───────────────
+        // ─────────────── GATE 4: Monthly Budget Limit + Atomic Lock ───────────────
         //
-        // IMPORTANT: The budget check AND the lock MUST happen inside a single
-        // DB::transaction. The lockForUpdate() inside Budget::findForTicket()
-        // acquires a row-level exclusive lock — this serializes concurrent requests
-        // so two simultaneous validations cannot both pass the saldo check before
-        // either one has committed its lock (preventing double-spending).
+        // Budget check uses a 3-tier monthly rule:
+        //  - Tier 1: amount <= monthly_limit (annual/12) → pass normally
+        //  - Tier 2: monthly_limit < amount <= monthly_limit * 1.30 → pass with tolerance (10–30% over)
+        //  - Tier 3: amount > monthly_limit * 1.30 → mandatory cross-fund (> 30% over monthly limit)
+        //
+        // NOTE: CAPEX/OPEX classification (Gate 3, threshold Rp 200 juta) is SEPARATE
+        // from this cross-fund monthly logic. Gate 3 only classifies; Gate 4 checks budget.
         $gate4Result = DB::transaction(function () use ($ticket, $classifiedType, $requester) {
             $budget = Budget::findForTicket(
                 $classifiedType,
@@ -73,37 +75,62 @@ class SmartValidationService
             );
 
             if (! $budget) {
-                return ['over_budget' => true, 'available_balance' => 0.0, 'committed' => false];
+                return ['status' => 'over_budget', 'available_balance' => 0.0, 'committed' => false];
             }
 
-            $available = $budget->available_balance;
-            $amount    = (float) $ticket->amount;
+            $available    = $budget->available_balance;
+            $amount       = (float) $ticket->amount;
+            $totalLimit   = (float) $budget->total_limit;
 
+            // Monthly limit = annual budget / 12
+            $monthlyLimit = $totalLimit > 0 ? $totalLimit / 12 : 0.0;
+
+            // Tier 3: amount exceeds monthly_limit by more than 30% → mandatory cross-fund
+            if ($monthlyLimit > 0 && $amount > $monthlyLimit * 1.30) {
+                return [
+                    'status'           => 'over_budget',
+                    'available_balance' => $available,
+                    'monthly_limit'    => $monthlyLimit,
+                    'committed'        => false,
+                ];
+            }
+
+            // Tier 1 & 2: amount within monthly_limit or within 10–30% tolerance
+            // Still check annual available balance to prevent overspending the yearly budget
             if ($amount > $available) {
-                return ['over_budget' => true, 'available_balance' => $available, 'committed' => false];
+                return [
+                    'status'           => 'over_budget',
+                    'available_balance' => $available,
+                    'monthly_limit'    => $monthlyLimit,
+                    'committed'        => false,
+                ];
             }
 
-            // Saldo mencukupi — lock budget dan advance ticket dalam transaksi yang sama
+            // Saldo mencukupi dan dalam batas bulanan (atau toleransi 10–30%) — kunci saldo
             $budget->lock($amount);
 
             $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
+
+            $toleranceNote = ($monthlyLimit > 0 && $amount > $monthlyLimit)
+                ? ' (Kelebihan pagu bulanan dalam batas toleransi 10–30%.)'
+                : '';
 
             ApprovalLog::create([
                 'ticket_id' => $ticket->id,
                 'user_id'   => $requester->id,
                 'action'    => ApprovalLog::ACTION_VALIDATED,
-                'notes'     => "Klasifikasi: {$classifiedType}. Saldo dikunci sementara.",
+                'notes'     => "Klasifikasi: {$classifiedType}. Saldo dikunci sementara.{$toleranceNote}",
             ]);
 
-            return ['over_budget' => false, 'available_balance' => $available, 'committed' => true];
+            return ['status' => 'ok', 'available_balance' => $available, 'committed' => true];
         });
 
-        if ($gate4Result['over_budget']) {
+        if ($gate4Result['status'] === 'over_budget') {
             // Return over-budget info — caller will display cross-fund popup
             return [
                 'success'           => false,
                 'gate'              => 4,
-                'message'           => 'Saldo anggaran tidak mencukupi.',
+                'message'           => 'Pengajuan melebihi batas anggaran bulanan (> 30% dari pagu bulan ini). Silang dana diperlukan.',
                 'over_budget'       => true,
                 'classified_type'   => $classifiedType,
                 'available_balance' => $gate4Result['available_balance'],
@@ -118,6 +145,7 @@ class SmartValidationService
             'classified_type'   => $classifiedType,
             'available_balance' => null,
         ];
+
     }
 
     /**

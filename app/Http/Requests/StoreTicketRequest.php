@@ -18,10 +18,11 @@ class StoreTicketRequest extends FormRequest
             'item_name'   => ['required', 'string', 'max:255'],
             'category'    => ['required', 'in:infrastruktur_utama,lisensi_sistem,layanan_pemeliharaan,perlengkapan_operasional'],
             'description' => ['nullable', 'string'],
+            'pic_name'    => ['nullable', 'string', 'max:255'],
             'quantity'    => ['required', 'integer', 'min:1'],
             'vendor_name' => ['required', 'string', 'max:255'],
             'amount'      => ['required', 'numeric', 'min:1', 'max:99999999999999.99'],
-            'izin_prinsip' => ['required', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'], // 10 MB, double-validated MIME
+            'izin_prinsip' => ['required', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'],
         ];
     }
 

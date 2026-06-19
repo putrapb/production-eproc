@@ -80,6 +80,7 @@ class TicketController extends Controller
             'item_name'   => $request->item_name,
             'category'    => $request->category,
             'description' => $request->description,
+            'pic_name'    => $request->pic_name,
             'quantity'    => $request->quantity,
             'vendor_name' => $request->vendor_name,
             'amount'      => $request->amount,

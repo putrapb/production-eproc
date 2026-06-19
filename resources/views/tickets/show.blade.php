@@ -73,6 +73,11 @@
               <div class="detail-field-value">{{ $ticket->description ?? '-' }}</div>
             </div>
             <div class="detail-field">
+              <div class="detail-field-label">PIC (Person In Charge)</div>
+              <div class="detail-field-value">{{ $ticket->pic_name ?? '-' }}</div>
+            </div>
+
+            <div class="detail-field">
               <div class="detail-field-label">Kategori</div>
               <div class="detail-field-value">
                 <span class="badge badge-category">{{ config('eprocurement.categories.'.$ticket->category, $ticket->category) }}</span>
