@@ -79,7 +79,7 @@ class SmartValidationService
             }
 
             $available    = $budget->available_balance;
-            $amount       = (float) $ticket->amount;
+            $amount       = $ticket->total_amount;
             $totalLimit   = (float) $budget->total_limit;
 
             // Monthly limit = annual budget / 12
@@ -167,7 +167,7 @@ class SmartValidationService
         $result = DB::transaction(function () use ($ticket, $alternativeType, $requester) {
             $budget = Budget::findForTicket($alternativeType, $ticket->category, now()->year);
 
-            if (! $budget || $budget->available_balance < (float) $ticket->amount) {
+            if (! $budget || $budget->available_balance < $ticket->total_amount) {
                 return ['success' => false];
             }
 
@@ -177,7 +177,7 @@ class SmartValidationService
                 'status'           => Ticket::STATUS_PENDING_DEPT_HEAD,
             ]);
 
-            $budget->lock((float) $ticket->amount);
+            $budget->lock($ticket->total_amount);
 
             ApprovalLog::create([
                 'ticket_id' => $ticket->id,
@@ -237,7 +237,7 @@ class SmartValidationService
      */
     private function gate2NominalValidation(Ticket $ticket): array
     {
-        $amount = (float) $ticket->amount;
+        $amount = $ticket->total_amount;
 
         if ($amount <= 0) {
             return [
@@ -272,7 +272,7 @@ class SmartValidationService
     private function gate3Classification(Ticket $ticket): string
     {
         $threshold = (float) config('eprocurement.capitalization_threshold', 200_000_000);
-        $amount    = (float) $ticket->amount;
+        $amount    = $ticket->total_amount;
         $category  = $ticket->category;
 
         // CAPEX-eligible asset classes:
@@ -316,7 +316,7 @@ class SmartValidationService
         }
 
         $available = $budget->available_balance;
-        $amount    = (float) $ticket->amount;
+        $amount    = $ticket->total_amount;
 
         if ($amount > $available) {
             return [

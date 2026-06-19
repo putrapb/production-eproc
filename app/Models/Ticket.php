@@ -236,6 +236,22 @@ class Ticket extends Model
         return 'Rp ' . number_format($this->amount, 0, ',', '.');
     }
 
+    /**
+     * Get total amount (amount * quantity).
+     */
+    public function getTotalAmountAttribute(): float
+    {
+        return (float) $this->amount * $this->quantity;
+    }
+
+    /**
+     * Get formatted total amount in Rupiah.
+     */
+    public function getFormattedTotalAmountAttribute(): string
+    {
+        return 'Rp ' . number_format($this->total_amount, 0, ',', '.');
+    }
+
     // ─────────────────────────────────────────────
     // Column Alias Accessors (for template readability)
     // ─────────────────────────────────────────────

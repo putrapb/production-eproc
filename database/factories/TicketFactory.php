@@ -28,7 +28,7 @@ class TicketFactory extends Factory
             'item_name'       => $this->faker->words(3, true),
             'category'        => $this->faker->randomElement($categories),
             'description'     => $this->faker->paragraph(),
-            'quantity'        => $this->faker->numberBetween(1, 50),
+            'quantity'        => 1,
             'vendor_name'     => $this->faker->company(),
             'amount'          => $this->faker->randomFloat(2, 1_000_000, 500_000_000),
             'expenditure_type' => null,

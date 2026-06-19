@@ -45,7 +45,7 @@ class DashboardController extends Controller
             $monthName = $date->isoFormat('MMMM');
             $trendMonths[] = $monthName;
             
-            $total = $monthlyTickets->filter(fn($t) => $t->created_at->month === $m)->sum('amount');
+            $total = $monthlyTickets->filter(fn($t) => $t->created_at->month === $m)->sum(fn($t) => $t->total_amount);
             $trendTotals[] = (float) $total;
         }
 

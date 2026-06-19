@@ -421,7 +421,7 @@
                 <span style="font-weight:normal;opacity:0.7;font-size:9px;">Termasuk pajak & biaya administrasi sesuai kontrak</span>
             </div>
             <div class="amount-value-cell">
-                <span class="amount-value">{{ $ticket->formatted_amount }}</span>
+                <span class="amount-value">{{ $ticket->formatted_total_amount }}</span>
                 @if($ticket->expenditure_type)
                     <span class="amount-type-badge">{{ $ticket->expenditure_type }}</span>
                 @endif
@@ -456,11 +456,12 @@
         <table class="items-table">
             <thead>
                 <tr>
-                    <th style="width: 40%;">Deskripsi</th>
-                    <th style="width: 20%;">PIC</th>
+                    <th style="width: 35%;">Deskripsi</th>
+                    <th style="width: 15%;">PIC</th>
                     <th style="width: 20%;">Kategori</th>
                     <th style="width: 10%; text-align: center;">Jumlah</th>
-                    <th style="width: 10%; text-align: right;">Harga</th>
+                    <th style="width: 10%; text-align: right;">Harga Satuan</th>
+                    <th style="width: 10%; text-align: right;">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -475,6 +476,7 @@
                     <td>{{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</td>
                     <td style="text-align: center;">{{ number_format($ticket->quantity) }} unit</td>
                     <td style="text-align: right;">{{ $ticket->formatted_amount }}</td>
+                    <td style="text-align: right;">{{ $ticket->formatted_total_amount }}</td>
                 </tr>
             </tbody>
         </table>

@@ -92,8 +92,12 @@
               <div class="detail-field-value">{{ $ticket->vendor_name }}</div>
             </div>
             <div class="detail-field">
-              <div class="detail-field-label">Nominal Harga</div>
-              <div class="detail-field-value large">{{ $ticket->formatted_amount }}</div>
+              <div class="detail-field-label">Nominal Harga (Satuan)</div>
+              <div class="detail-field-value">{{ $ticket->formatted_amount }}</div>
+            </div>
+            <div class="detail-field">
+              <div class="detail-field-label">Total Harga</div>
+              <div class="detail-field-value large">{{ $ticket->formatted_total_amount }}</div>
             </div>
           </div>
         </div>

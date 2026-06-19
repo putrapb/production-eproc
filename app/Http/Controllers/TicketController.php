@@ -307,7 +307,7 @@ class TicketController extends Controller
                 );
 
                 if ($budget) {
-                    $budget->permanentDeduct((float) $ticket->amount);
+                    $budget->permanentDeduct($ticket->total_amount);
                 }
 
                 $ticket->update(['status' => Ticket::STATUS_APPROVED]);
@@ -329,7 +329,7 @@ class TicketController extends Controller
                 );
 
                 if ($budget) {
-                    $budget->unlock((float) $ticket->amount);
+                    $budget->unlock($ticket->total_amount);
                 }
 
                 $ticket->update(['status' => Ticket::STATUS_DECLINED]);
