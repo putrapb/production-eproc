@@ -86,7 +86,7 @@
               <span class="badge badge-category">{{ config('eprocurement.categories.'.$ticket->category, $ticket->category) }}</span>
             </td>
             <td>
-              <span class="table-amount">{{ $ticket->formatted_amount }}</span>
+              <span class="table-amount">{{ $ticket->formatted_total_amount }}</span>
               @if($ticket->expenditure_type)
                 <br><span class="badge badge-{{ strtolower($ticket->expenditure_type) }}" style="margin-top:4px; font-size:10px; padding:2px 8px;">{{ $ticket->expenditure_type }}</span>
               @endif
