@@ -149,7 +149,7 @@
         </div>
         <div class="card-body">
           <div class="detail-field">
-            <div class="detail-field-label">Izin Prinsip</div>
+            <div class="detail-field-label">Dokumen Pendukung</div>
             <div class="detail-field-value">
               @if($ticket->izin_prinsip_path)
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-md);">
@@ -158,7 +158,7 @@
                       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                     </div>
                     <div>
-                      <div class="label-md text-ink">Izin Prinsip — Tiket #{{ str_pad($ticket->id, 4, '0', STR_PAD_LEFT) }}</div>
+                      <div class="label-md text-ink">Dokumen Pendukung — Tiket #{{ str_pad($ticket->id, 4, '0', STR_PAD_LEFT) }}</div>
                       <div class="caption text-muted">Klik untuk melihat file (PDF) · Diunggah {{ $ticket->created_at->format('d M Y') }}</div>
                     </div>
                   </a>
