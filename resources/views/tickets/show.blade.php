@@ -151,7 +151,7 @@
           <div class="detail-field">
             <div class="detail-field-label">Dokumen Pendukung</div>
             <div class="detail-field-value">
-              @if($ticket->izin_prinsip_path)
+              @if($ticket->document_path)
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-md);">
                   <a href="{{ Storage::url($ticket->document_path) }}" target="_blank" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-sm) var(--space-md); border:1px solid var(--color-hairline); border-radius:var(--radius-md); transition:background 0.2s;">
                     <div style="width:36px; height:36px; background:var(--color-error-soft); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--color-error);">
@@ -282,9 +282,9 @@
     @if($user->isRequester() && $status === 'revision')
       Dokumen Anda memerlukan revisi. Unggah ulang dokumen untuk melanjutkan proses.
     @elseif($user->isRequester() && $status === 'need_to_validate')
-      Dokumen Izin Prinsip Anda telah diterima oleh PFA. Jalankan Smart Validation untuk mengklasifikasikan anggaran dan mengunci budget.
+      Dokumen Pendukung Anda telah diterima oleh PFA. Jalankan Smart Validation untuk mengklasifikasikan anggaran dan mengunci budget.
     @elseif($user->isPfa() && $status === 'pending_review')
-      Tinjau dokumen Izin Prinsip. Terima jika valid, atau minta revisi.
+      Tinjau Dokumen Pendukung. Terima jika valid, atau minta revisi.
     @elseif($user->isPfa() && $status === 'approved')
       Tiket disetujui oleh Division Head. Generate Purchase Order sekarang.
     @elseif($user->isDepartmentHead() && $status === 'pending_dept_head')
@@ -380,9 +380,9 @@
     <div class="modal-icon success">
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
     </div>
-    <div class="modal-title">Terima Dokumen?</div>
+    <div class="modal-title">Terima Dokumen Pendukung?</div>
     <div class="modal-body">
-      Anda akan menerima dokumen Izin Prinsip tiket ini dan meneruskan ke tahap Smart Validation.
+      Anda akan menerima Dokumen Pendukung tiket ini dan meneruskan ke tahap Smart Validation.
     </div>
     <form method="POST" action="{{ route('tickets.review', $ticket) }}">
       @csrf
