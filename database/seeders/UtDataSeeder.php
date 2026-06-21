@@ -15,20 +15,7 @@ class UtDataSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Reset Data (Truncate/Delete)
-        if (DB::getDriverName() === 'pgsql') {
-            DB::statement('TRUNCATE TABLE approval_logs, tickets, users, hr_employees, budgets RESTART IDENTITY CASCADE;');
-        } else {
-            Schema::disableForeignKeyConstraints();
-            DB::table('approval_logs')->truncate();
-            DB::table('tickets')->truncate();
-            DB::table('users')->truncate();
-            DB::table('hr_employees')->truncate();
-            DB::table('budgets')->truncate();
-            Schema::enableForeignKeyConstraints();
-        }
-
-        // 2. Re-seed Budgets (required for creating tickets in UT)
+        // 1. Seed Budgets if missing (firstOrCreate inside BudgetSeeder)
         $this->call(BudgetSeeder::class);
 
         // 3. Inject Data HR from Google Sheets Live CSV

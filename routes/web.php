@@ -84,14 +84,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/tickets/{ticket}/cancel', [TicketController::class, 'cancel'])->name('tickets.cancel');
     });
 
-    // PO Download — Requester and PFA only
-    Route::middleware('role:requester,pfa')->group(function () {
-        Route::get('/tickets/{ticket}/download-po', [PurchaseOrderController::class, 'download'])->name('tickets.download-po');
-    });
-
-    // Ticket detail — all roles (AFTER /create route)
+    // Ticket detail and documents — all authenticated roles (AFTER /create route)
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
     Route::get('/tickets/{ticket}/document', [TicketController::class, 'streamDocument'])->name('tickets.document');
+    Route::get('/tickets/{ticket}/download-po', [PurchaseOrderController::class, 'download'])->name('tickets.download-po');
 
     // [PFA only] Document review + PO generation
     Route::middleware('role:pfa')->group(function () {

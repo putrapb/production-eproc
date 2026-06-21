@@ -153,7 +153,7 @@
             <div class="detail-field-value">
               @if($ticket->document_path)
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-md);">
-                  <a href="{{ Storage::url($ticket->document_path) }}" target="_blank" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-sm) var(--space-md); border:1px solid var(--color-hairline); border-radius:var(--radius-md); transition:background 0.2s;">
+                  <a href="{{ route('tickets.document', ['ticket' => $ticket->id]) }}" target="_blank" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-sm) var(--space-md); border:1px solid var(--color-hairline); border-radius:var(--radius-md); transition:background 0.2s;">
                     <div style="width:36px; height:36px; background:var(--color-error-soft); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--color-error);">
                       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                     </div>
@@ -180,7 +180,7 @@
             <div class="detail-field-label">Purchase Order</div>
             <div class="detail-field-value">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-md);">
-                  <a href="{{ Storage::url($ticket->document_po_path) }}" target="_blank" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-sm) var(--space-md); border:1px solid var(--color-hairline); border-radius:var(--radius-md); transition:background 0.2s;">
+                  <a href="{{ route('tickets.download-po', ['ticket' => $ticket->id]) }}" target="_blank" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-sm) var(--space-md); border:1px solid var(--color-hairline); border-radius:var(--radius-md); transition:background 0.2s;">
                     <div style="width:36px; height:36px; background:var(--color-success-soft); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--color-success-text);">
                       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 12l2 2 4-4"/></svg>
                     </div>

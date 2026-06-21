@@ -15,7 +15,7 @@
 </div>
 
 <div class="page-content">
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-xl); max-width:900px;">
+  <div class="profile-grid">
 
     {{-- Profile Card --}}
     <div class="card">
@@ -114,4 +114,18 @@
 
   </div>
 </div>
+
+<style>
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+  max-width: 900px;
+}
+@media (max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 @endsection

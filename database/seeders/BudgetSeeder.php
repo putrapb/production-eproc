@@ -83,10 +83,11 @@ class BudgetSeeder extends Seeder
         ];
 
         foreach ($budgets as $budget) {
-            Budget::create([
+            Budget::firstOrCreate([
                 'expenditure_type' => $budget['expenditure_type'],
                 'category'         => $budget['category'],
                 'fiscal_year'      => $fiscalYear,
+            ], [
                 'total_limit'      => $budget['total_limit'], // decimal(15,2)
                 'locked_amount'    => 0.00,
                 'used_amount'      => 0.00,
