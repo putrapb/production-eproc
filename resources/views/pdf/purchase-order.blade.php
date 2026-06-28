@@ -379,8 +379,8 @@
     {{-- ═══ HEADER BAND ═══ --}}
     <div class="header-band">
         <div class="header-left">
-            <div class="org-name">PT BANK NEGARA INDONESIA (Persero) Tbk</div>
-            <div class="org-sub">Divisi IT Infrastructure Management · Kantor Pejompongan, Jakarta</div>
+            <div class="org-name">Internal System</div>
+            <div class="org-sub">Departemen IT Infrastructure Management &middot; Kantor Pejompongan, Jakarta</div>
         </div>
         <div class="header-right">
             <div class="doc-type">Purchase Order</div>
@@ -500,7 +500,7 @@
                 <div class="info-val">{{ $ticket->user->hrEmployee->position }}</div>
             </div>
             <div class="info-row">
-                <div class="info-key">Divisi</div>
+                <div class="info-key">Departemen</div>
                 <div class="info-val">{{ $ticket->user->hrEmployee->division }}</div>
             </div>
             @endif
@@ -593,7 +593,7 @@
                         @if($generated_by->hrEmployee)
                             {{ $generated_by->hrEmployee->position }}
                         @else
-                            Staff Procurement &amp; Fixed Assets
+                            Staff Procurement
                         @endif
                     </div>
                 </div>
@@ -604,7 +604,7 @@
                 $divHeadLog = $ticket->approvalLogs->filter(fn($l) => $l->action === 'approved')->sortByDesc('created_at')->first();
             @endphp
             <div class="signature-cell">
-                <div class="sig-role">Disetujui oleh / Division Head</div>
+                <div class="sig-role">Disetujui oleh / Dept. Head</div>
                 <div class="sig-name-box">
                     <div class="sig-stamp"></div>
                     <div class="sig-approved-text">APPROVED</div>
@@ -623,10 +623,10 @@
     {{-- ═══ FOOTER BAND ═══ --}}
     <div class="footer-band">
         <div class="footer-left">
-            PT Bank Negara Indonesia (Persero) Tbk &nbsp;·&nbsp; Divisi IT Infrastructure Management
+            E-Procurement Pejompongan &nbsp;&middot;&nbsp; Departemen IT Infrastructure Management
         </div>
         <div class="footer-right">
-            Dokumen ini diterbitkan secara elektronik oleh Sistem E-Procurement BNI &nbsp;·&nbsp;
+            Dokumen ini diterbitkan secara elektronik oleh Sistem E-Procurement &nbsp;&middot;&nbsp;
             {{ $generated_at->format('d/m/Y H:i') }} WIB
         </div>
     </div>

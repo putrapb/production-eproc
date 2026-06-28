@@ -27,7 +27,7 @@
     <label class="form-label" for="email">Email Korporat</label>
     <input type="email" id="email" name="email"
       class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
-      value="{{ old('email') }}" placeholder="nama@bni.co.id" required autofocus>
+      value="{{ old('email') }}" placeholder="nama@perusahaan.co.id" required autofocus>
     @error('email') <div class="form-error">{{ $message }}</div> @enderror
   </div>
 

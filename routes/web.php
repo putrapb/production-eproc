@@ -95,18 +95,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/tickets/{ticket}/generate-po', [PurchaseOrderController::class, 'generate'])->name('tickets.generate-po');
     });
 
-    // [Department Head only] Forward ticket
-    Route::middleware('role:department_head')->group(function () {
+    // [Team Leader only] Forward ticket
+    Route::middleware('role:team_leader')->group(function () {
         Route::post('/tickets/{ticket}/forward', [TicketController::class, 'forward'])->name('tickets.forward');
     });
 
-    // [Division Head only] Final decision
-    Route::middleware('role:division_head')->group(function () {
+    // [Department Head only] Final decision
+    Route::middleware('role:department_head')->group(function () {
         Route::post('/tickets/{ticket}/decide', [TicketController::class, 'decide'])->name('tickets.decide');
     });
 
-    // [PFA & Division Head only] Audit Logs
-    Route::middleware('role:pfa,division_head')->group(function () {
+    // [PFA & Department Head only] Audit Logs
+    Route::middleware('role:pfa,department_head')->group(function () {
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     });
 });

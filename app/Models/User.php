@@ -83,12 +83,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isDepartmentHead(): bool
     {
-        return $this->role === 'department_head';
+        return $this->role === 'department_head'; // Decision maker (formerly division_head)
     }
 
-    public function isDivisionHead(): bool
+    public function isTeamLeader(): bool
     {
-        return $this->role === 'division_head';
+        return $this->role === 'team_leader'; // Forwarder/reviewer (formerly department_head)
     }
 
     /**
@@ -99,8 +99,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return match ($this->role) {
             'requester'       => 'IT Infrastructure Project Management',
             'pfa'             => 'Procurement & Fixed Assets',
+            'team_leader'     => 'Team Leader',
             'department_head' => 'Department Head',
-            'division_head'   => 'Division Head',
             default           => $this->role,
         };
     }

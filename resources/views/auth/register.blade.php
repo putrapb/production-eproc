@@ -4,11 +4,13 @@
 
 @section('content')
 <div style="display: flex; justify-content: center; margin-bottom: var(--space-lg);">
-  <img src="{{ asset('images/bni-logo.png') }}" alt="Logo BNI" class="h-10 w-auto" style="height: 40px; width: auto;">
+  <div style="width:44px; height:44px; background: linear-gradient(135deg, var(--color-primary), #6366f1); border-radius: var(--radius-md); display:flex; align-items:center; justify-content:center;">
+    <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+  </div>
 </div>
 
 <div class="auth-form-title">Daftar Akun</div>
-<div class="auth-form-subtitle">Gunakan NIP dan email korporat BNI Anda untuk mendaftar.</div>
+<div class="auth-form-subtitle">Gunakan NIP dan email Anda untuk mendaftar.</div>
 
 @if($errors->any())
 <div class="alert alert-error mb-md">
@@ -33,7 +35,7 @@
       </div>
     @enderror
     <div style="font-size:12px; color:var(--color-muted-soft); margin-top:4px;">
-      NIP harus terdaftar dalam database karyawan Divisi IT Infrastructure.
+      NIP harus terdaftar dalam database karyawan Departemen IT Infrastructure.
     </div>
   </div>
 
@@ -41,7 +43,7 @@
     <label class="form-label" for="email">Email Korporat <span class="required">*</span></label>
     <input type="email" id="email" name="email"
       class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
-      value="{{ old('email') }}" placeholder="nama@bni.co.id"
+      value="{{ old('email') }}" placeholder="nama@perusahaan.co.id"
       required autocomplete="email">
     @error('email') <div class="form-error">{{ $message }}</div> @enderror
   </div>

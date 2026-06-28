@@ -15,14 +15,14 @@ class Ticket extends Model
     // Status Constants
     // ─────────────────────────────────────────────
 
-    const STATUS_PENDING_REVIEW    = 'pending_review';
-    const STATUS_REVISION          = 'revision';
-    const STATUS_NEED_TO_VALIDATE  = 'need_to_validate';
-    const STATUS_PENDING_DEPT_HEAD = 'pending_dept_head';
-    const STATUS_PENDING_DIV_HEAD  = 'pending_div_head';
-    const STATUS_DECLINED          = 'declined';
-    const STATUS_APPROVED          = 'approved';
-    const STATUS_PO_GENERATED      = 'po_generated';
+    const STATUS_PENDING_REVIEW      = 'pending_review';
+    const STATUS_REVISION            = 'revision';
+    const STATUS_NEED_TO_VALIDATE    = 'need_to_validate';
+    const STATUS_PENDING_TEAM_LEADER = 'pending_team_leader'; // Menunggu Team Leader (forwarder)
+    const STATUS_PENDING_DEPT_HEAD   = 'pending_dept_head';   // Menunggu Department Head (decision maker)
+    const STATUS_DECLINED            = 'declined';
+    const STATUS_APPROVED            = 'approved';
+    const STATUS_PO_GENERATED        = 'po_generated';
 
     // ─────────────────────────────────────────────
     // Category Constants
@@ -103,16 +103,16 @@ class Ticket extends Model
         return $query->where('status', self::STATUS_NEED_TO_VALIDATE);
     }
 
-    /** Tiket di antrian Department Head */
+    /** Tiket di antrian Team Leader */
+    public function scopePendingTeamLeader($query)
+    {
+        return $query->where('status', self::STATUS_PENDING_TEAM_LEADER);
+    }
+
+    /** Tiket di antrian Department Head (decision maker) */
     public function scopePendingDeptHead($query)
     {
         return $query->where('status', self::STATUS_PENDING_DEPT_HEAD);
-    }
-
-    /** Tiket di antrian Division Head */
-    public function scopePendingDivHead($query)
-    {
-        return $query->where('status', self::STATUS_PENDING_DIV_HEAD);
     }
 
     /** Tiket yang sudah disetujui (menunggu PO) */
@@ -131,15 +131,15 @@ class Ticket extends Model
                 self::STATUS_APPROVED,
                 self::STATUS_PO_GENERATED,
             ]),
-            'department_head' => $query->whereIn('status', [
+            'team_leader'     => $query->whereIn('status', [
+                self::STATUS_PENDING_TEAM_LEADER,
                 self::STATUS_PENDING_DEPT_HEAD,
-                self::STATUS_PENDING_DIV_HEAD,
                 self::STATUS_APPROVED,
                 self::STATUS_DECLINED,
                 self::STATUS_PO_GENERATED,
             ]),
-            'division_head'   => $query->whereIn('status', [
-                self::STATUS_PENDING_DIV_HEAD,
+            'department_head' => $query->whereIn('status', [
+                self::STATUS_PENDING_DEPT_HEAD,
                 self::STATUS_APPROVED,
                 self::STATUS_DECLINED,
                 self::STATUS_PO_GENERATED,
@@ -167,14 +167,14 @@ class Ticket extends Model
         return $this->status === self::STATUS_NEED_TO_VALIDATE;
     }
 
+    public function isPendingTeamLeader(): bool
+    {
+        return $this->status === self::STATUS_PENDING_TEAM_LEADER;
+    }
+
     public function isPendingDeptHead(): bool
     {
         return $this->status === self::STATUS_PENDING_DEPT_HEAD;
-    }
-
-    public function isPendingDivHead(): bool
-    {
-        return $this->status === self::STATUS_PENDING_DIV_HEAD;
     }
 
     public function isApproved(): bool
@@ -198,15 +198,15 @@ class Ticket extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            self::STATUS_PENDING_REVIEW    => 'Menunggu Review',
-            self::STATUS_REVISION          => 'Revisi',
-            self::STATUS_NEED_TO_VALIDATE  => 'Perlu Validasi',
-            self::STATUS_PENDING_DEPT_HEAD => 'Menunggu Dept Head',
-            self::STATUS_PENDING_DIV_HEAD  => 'Menunggu Div Head',
-            self::STATUS_DECLINED          => 'Ditolak',
-            self::STATUS_APPROVED          => 'Disetujui',
-            self::STATUS_PO_GENERATED      => 'PO Diterbitkan',
-            default                        => $this->status,
+            self::STATUS_PENDING_REVIEW      => 'Menunggu Review',
+            self::STATUS_REVISION            => 'Revisi',
+            self::STATUS_NEED_TO_VALIDATE    => 'Perlu Validasi',
+            self::STATUS_PENDING_TEAM_LEADER => 'Menunggu Team Leader',
+            self::STATUS_PENDING_DEPT_HEAD   => 'Menunggu Dept Head',
+            self::STATUS_DECLINED            => 'Ditolak',
+            self::STATUS_APPROVED            => 'Disetujui',
+            self::STATUS_PO_GENERATED        => 'PO Diterbitkan',
+            default                          => $this->status,
         };
     }
 
@@ -218,13 +218,13 @@ class Ticket extends Model
         return match ($this->status) {
             self::STATUS_PENDING_REVIEW,
             self::STATUS_NEED_TO_VALIDATE,
-            self::STATUS_PENDING_DEPT_HEAD,
-            self::STATUS_PENDING_DIV_HEAD  => 'blue',
-            self::STATUS_REVISION          => 'yellow',
-            self::STATUS_DECLINED          => 'red',
+            self::STATUS_PENDING_TEAM_LEADER,
+            self::STATUS_PENDING_DEPT_HEAD   => 'blue',
+            self::STATUS_REVISION            => 'yellow',
+            self::STATUS_DECLINED            => 'red',
             self::STATUS_APPROVED,
-            self::STATUS_PO_GENERATED      => 'green',
-            default                        => 'gray',
+            self::STATUS_PO_GENERATED        => 'green',
+            default                          => 'gray',
         };
     }
 

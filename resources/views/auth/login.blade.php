@@ -4,11 +4,12 @@
 
 @section('content')
 <div style="display: flex; justify-content: center; margin-bottom: var(--space-lg);">
-  <img src="{{ asset('images/bni-logo.png') }}" alt="Logo BNI" class="h-10 w-auto" style="height: 40px; width: auto;">
+  <div style="width:44px; height:44px; background: linear-gradient(135deg, var(--color-primary), #6366f1); border-radius: var(--radius-md); display:flex; align-items:center; justify-content:center; margin-bottom: var(--space-sm);">
+    <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+  </div>
 </div>
-
-<div class="auth-form-title">Selamat Datang</div>
-<div class="auth-form-subtitle">Masuk dengan akun korporat BNI Anda.</div>
+<div class="auth-form-title">Masuk ke Sistem</div>
+<div class="auth-form-subtitle">Masuk dengan akun Anda untuk melanjutkan.</div>
 
 {{-- Validation Errors --}}
 @if($errors->any())
@@ -29,7 +30,7 @@
       name="email"
       class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
       value="{{ old('email') }}"
-      placeholder="nama@bni.co.id"
+      placeholder="nama@perusahaan.co.id"
       required
       autocomplete="email"
       autofocus

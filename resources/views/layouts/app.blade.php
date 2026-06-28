@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>@yield('title', 'Dashboard') | E-Procurement BNI</title>
-  <meta name="description" content="Sistem E-Procurement IT Infrastructure Management BNI">
+  <title>@yield('title', 'Dashboard') | E-Procurement Pejompongan</title>
+  <meta name="description" content="Sistem E-Procurement IT Infrastructure Management Pejompongan">
   <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=2" type="image/x-icon">
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -21,7 +21,9 @@
 
     <!-- Logo Area -->
     <div class="sidebar-logo" style="display: flex; align-items: center; gap: var(--space-sm); border-bottom: 1px solid var(--color-secondary-active);">
-      <img src="{{ asset('images/bni-logo.png') }}" alt="Logo BNI" class="h-8 w-auto" style="height: 32px; width: auto; background: #fff; border-radius: var(--radius-sm); padding: 4px; flex-shrink: 0;">
+      <div style="width:32px; height:32px; background: linear-gradient(135deg, var(--color-primary), #6366f1); border-radius: var(--radius-sm); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+      </div>
       <div class="sidebar-logo-text">
         E-Procurement
         <span>IT Infrastructure</span>

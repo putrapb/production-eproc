@@ -28,8 +28,9 @@ class HrEmployee extends Model
     /**
      * Derive the system role from the HR position field.
      * Rules:
-     *  - "Division Head" position → division_head
-     *  - "Department Head" position → department_head
+     *  - "Department Head" position → department_head (decision maker)
+     *  - "Team Leader" position     → team_leader (forwarder/reviewer)
+     *  - "Division Head" position   → department_head (legacy mapping, same as dept head)
      *  - Procurement & Fixed Assets team → pfa
      *  - All other IT Infrastructure PM staff → requester
      */
@@ -37,12 +38,19 @@ class HrEmployee extends Model
     {
         $position = strtolower($this->position);
 
-        if (str_contains($position, 'division head')) {
-            return 'division_head';
-        }
-
+        // Department Head = decision maker role (formerly division_head)
         if (str_contains($position, 'department head')) {
             return 'department_head';
+        }
+
+        // Legacy: if spreadsheet still has 'division head', map to department_head too
+        if (str_contains($position, 'division head')) {
+            return 'department_head';
+        }
+
+        // Team Leader = forwarder/reviewer role (formerly department_head)
+        if (str_contains($position, 'team leader')) {
+            return 'team_leader';
         }
 
         if (str_contains($position, 'procurement') || str_contains($position, 'fixed assets')) {

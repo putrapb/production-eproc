@@ -28,14 +28,14 @@
       Semua
     </a>
     @foreach([
-      'pending_review'    => 'Pending Review',
-      'revision'          => 'Revisi',
-      'need_to_validate'  => 'Validasi',
-      'pending_dept_head' => 'Dept Head',
-      'pending_div_head'  => 'Div Head',
-      'approved'          => 'Disetujui',
-      'declined'          => 'Ditolak',
-      'po_generated'      => 'PO Terbit',
+      'pending_review'      => 'Pending Review',
+      'revision'            => 'Revisi',
+      'need_to_validate'    => 'Validasi',
+      'pending_team_leader' => 'Team Leader',
+      'pending_dept_head'   => 'Dept Head',
+      'approved'            => 'Disetujui',
+      'declined'            => 'Ditolak',
+      'po_generated'        => 'PO Terbit',
     ] as $val => $label)
       <a href="{{ route('tickets.index', ['status' => $val]) }}"
          class="filter-tab {{ request('status') === $val ? 'active' : '' }}">

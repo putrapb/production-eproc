@@ -20,9 +20,9 @@ class ApprovalLog extends Model
     const ACTION_REVISED              = 'revised';           // Requester re-upload
     const ACTION_VALIDATED            = 'validated';         // Smart Validation pass
     const ACTION_CROSS_FUND_REQUESTED = 'cross_fund_requested';
-    const ACTION_FORWARDED            = 'forwarded';         // DH → DivHead
-    const ACTION_APPROVED             = 'approved';          // DivHead approve
-    const ACTION_DECLINED             = 'declined';          // DivHead decline
+    const ACTION_FORWARDED            = 'forwarded';         // Team Leader → DeptHead
+    const ACTION_APPROVED             = 'approved';          // DeptHead approve
+    const ACTION_DECLINED             = 'declined';          // DeptHead decline
     const ACTION_PO_ISSUED            = 'po_issued';         // PFA generate PO
 
     protected $fillable = [
@@ -62,7 +62,7 @@ class ApprovalLog extends Model
             self::ACTION_REVISED              => 'Dokumen direvisi oleh Requester',
             self::ACTION_VALIDATED            => 'Smart Validation berhasil',
             self::ACTION_CROSS_FUND_REQUESTED => 'Silang dana diajukan',
-            self::ACTION_FORWARDED            => 'Diteruskan ke Division Head',
+            self::ACTION_FORWARDED            => 'Diteruskan ke Department Head',
             self::ACTION_APPROVED             => 'Pengadaan disetujui',
             self::ACTION_DECLINED             => 'Pengadaan ditolak',
             self::ACTION_PO_ISSUED            => 'Purchase Order diterbitkan',

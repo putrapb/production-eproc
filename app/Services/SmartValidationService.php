@@ -14,10 +14,10 @@ use Illuminate\Support\Facades\DB;
  * Executes the 4-Gate validation engine sequentially.
  * Each gate runs only if the previous gate passed.
  *
- * Gate 1 — Duplicate Check
- * Gate 2 — Nominal Validation
+ * Gate 1 — Duplicate Check       (soft warning: user can override)
+ * Gate 2 — Nominal Validation    (soft warning: user can override if > threshold)
  * Gate 3 — CAPEX/OPEX Auto-Classification
- * Gate 4 — Budget Availability + Temporary Lock
+ * Gate 4 — Budget Availability Check (no lock here — lock happens at cross-fund/decision)
  */
 class SmartValidationService
 {
@@ -28,12 +28,14 @@ class SmartValidationService
      *   success: bool,
      *   gate: int,
      *   message: string,
+     *   needs_duplicate_confirmation: bool,
+     *   needs_nominal_confirmation: bool,
      *   over_budget: bool,
      *   classified_type: string|null,
      *   available_balance: float|null,
      * }
      */
-    public function run(Ticket $ticket, User $requester): array
+    public function run(Ticket $ticket, User $requester, bool $duplicateConfirmed = false, bool $nominalConfirmed = false): array
     {
         // Guard: ticket must be in 'need_to_validate' status
         if (! $ticket->isNeedToValidate()) {
@@ -41,15 +43,43 @@ class SmartValidationService
         }
 
         // ─────────────── GATE 1: Duplicate Check ───────────────
-        $gate1 = $this->gate1DuplicateCheck($ticket, $requester);
-        if (! $gate1['passed']) {
-            return $this->fail(1, $gate1['message']);
+        // Soft warning — user can override by confirming
+        if (! $duplicateConfirmed) {
+            $gate1 = $this->gate1DuplicateCheck($ticket, $requester);
+            if ($gate1['has_duplicate']) {
+                return [
+                    'success'                      => false,
+                    'gate'                         => 1,
+                    'message'                      => $gate1['message'],
+                    'needs_duplicate_confirmation' => true,
+                    'needs_nominal_confirmation'   => false,
+                    'over_budget'                  => false,
+                    'classified_type'              => null,
+                    'available_balance'            => null,
+                ];
+            }
         }
 
         // ─────────────── GATE 2: Nominal Validation ───────────────
-        $gate2 = $this->gate2NominalValidation($ticket);
-        if (! $gate2['passed']) {
-            return $this->fail(2, $gate2['message']);
+        // Hard fail: amount <= 0
+        // Soft warning: amount > max_reasonable (user can confirm to proceed)
+        if (! $nominalConfirmed) {
+            $gate2 = $this->gate2NominalValidation($ticket);
+            if ($gate2['hard_fail']) {
+                return $this->fail(2, $gate2['message']);
+            }
+            if ($gate2['needs_confirmation']) {
+                return [
+                    'success'                      => false,
+                    'gate'                         => 2,
+                    'message'                      => $gate2['message'],
+                    'needs_duplicate_confirmation' => false,
+                    'needs_nominal_confirmation'   => true,
+                    'over_budget'                  => false,
+                    'classified_type'              => null,
+                    'available_balance'            => null,
+                ];
+            }
         }
 
         // ─────────────── GATE 3: CAPEX/OPEX Classification ───────────────
@@ -58,15 +88,16 @@ class SmartValidationService
             $ticket->update(['expenditure_type' => $classifiedType]);
         });
 
-        // ─────────────── GATE 4: Monthly Budget Limit + Atomic Lock ───────────────
+        // ─────────────── GATE 4: Budget Availability Check (READ-ONLY) ───────────────
+        //
+        // NOTE: Budget is NO LONGER locked here. Locking happens only after:
+        //  - Cross-fund confirmation (applyCrossFund)
+        // This allows users to see the budget situation before committing.
         //
         // Budget check uses a 3-tier monthly rule:
         //  - Tier 1: amount <= monthly_limit (annual/12) → pass normally
         //  - Tier 2: monthly_limit < amount <= monthly_limit * 1.30 → pass with tolerance (10–30% over)
         //  - Tier 3: amount > monthly_limit * 1.30 → mandatory cross-fund (> 30% over monthly limit)
-        //
-        // NOTE: CAPEX/OPEX classification (Gate 3, threshold Rp 200 juta) is SEPARATE
-        // from this cross-fund monthly logic. Gate 3 only classifies; Gate 4 checks budget.
         $gate4Result = DB::transaction(function () use ($ticket, $classifiedType, $requester) {
             $budget = Budget::findForTicket(
                 $classifiedType,
@@ -75,7 +106,7 @@ class SmartValidationService
             );
 
             if (! $budget) {
-                return ['status' => 'over_budget', 'available_balance' => 0.0, 'committed' => false];
+                return ['status' => 'over_budget', 'available_balance' => 0.0];
             }
 
             $available    = $budget->available_balance;
@@ -91,25 +122,20 @@ class SmartValidationService
                     'status'           => 'over_budget',
                     'available_balance' => $available,
                     'monthly_limit'    => $monthlyLimit,
-                    'committed'        => false,
                 ];
             }
 
             // Tier 1 & 2: amount within monthly_limit or within 10–30% tolerance
-            // Still check annual available balance to prevent overspending the yearly budget
             if ($amount > $available) {
                 return [
                     'status'           => 'over_budget',
                     'available_balance' => $available,
                     'monthly_limit'    => $monthlyLimit,
-                    'committed'        => false,
                 ];
             }
 
-            // Saldo mencukupi dan dalam batas bulanan (atau toleransi 10–30%) — kunci saldo
-            $budget->lock($amount);
-
-            $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
+            // Budget tersedia — advance tiket ke Team Leader (NO BUDGET LOCK HERE)
+            $ticket->update(['status' => Ticket::STATUS_PENDING_TEAM_LEADER]);
 
             $toleranceNote = ($monthlyLimit > 0 && $amount > $monthlyLimit)
                 ? ' (Kelebihan pagu bulanan dalam batas toleransi 10–30%.)'
@@ -119,39 +145,43 @@ class SmartValidationService
                 'ticket_id' => $ticket->id,
                 'user_id'   => $requester->id,
                 'action'    => ApprovalLog::ACTION_VALIDATED,
-                'notes'     => "Klasifikasi: {$classifiedType}. Saldo dikunci sementara.{$toleranceNote}",
+                'notes'     => "Klasifikasi: {$classifiedType}. Validasi lolos.{$toleranceNote}",
             ]);
 
-            return ['status' => 'ok', 'available_balance' => $available, 'committed' => true];
+            return ['status' => 'ok', 'available_balance' => $available];
         });
 
         if ($gate4Result['status'] === 'over_budget') {
             // Return over-budget info — caller will display cross-fund popup
             return [
-                'success'           => false,
-                'gate'              => 4,
-                'message'           => 'Pengajuan melebihi batas anggaran bulanan (> 30% dari pagu bulan ini). Silang dana diperlukan.',
-                'over_budget'       => true,
-                'classified_type'   => $classifiedType,
-                'available_balance' => $gate4Result['available_balance'],
+                'success'                      => false,
+                'gate'                         => 4,
+                'message'                      => 'Pengajuan melebihi batas anggaran bulanan (> 30% dari pagu bulan ini). Silang dana diperlukan.',
+                'needs_duplicate_confirmation' => false,
+                'needs_nominal_confirmation'   => false,
+                'over_budget'                  => true,
+                'classified_type'              => $classifiedType,
+                'available_balance'            => $gate4Result['available_balance'],
             ];
         }
 
         return [
-            'success'           => true,
-            'gate'              => 4,
-            'message'           => 'Validasi berhasil. Tiket diteruskan ke Department Head.',
-            'over_budget'       => false,
-            'classified_type'   => $classifiedType,
-            'available_balance' => null,
+            'success'                      => true,
+            'gate'                         => 4,
+            'message'                      => 'Validasi berhasil. Tiket diteruskan ke Team Leader.',
+            'needs_duplicate_confirmation' => false,
+            'needs_nominal_confirmation'   => false,
+            'over_budget'                  => false,
+            'classified_type'              => $classifiedType,
+            'available_balance'            => null,
         ];
-
     }
 
     /**
-     * Apply cross-fund: flag ticket, lock alternate budget, advance to pending_dept_head.
+     * Apply cross-fund: flag ticket, lock alternate budget, advance to pending_team_leader.
      *
      * When OPEX is over-budget → try CAPEX of same category, and vice versa.
+     * Budget lock happens HERE (not in Gate 4) per Revisi 3.
      *
      * @return array{success: bool, message: string}
      */
@@ -174,9 +204,10 @@ class SmartValidationService
             $ticket->update([
                 'expenditure_type' => $alternativeType,
                 'is_cross_fund'    => true,
-                'status'           => Ticket::STATUS_PENDING_DEPT_HEAD,
+                'status'           => Ticket::STATUS_PENDING_TEAM_LEADER,
             ]);
 
+            // Budget lock happens here — after cross-fund decision confirmed
             $budget->lock($ticket->total_amount);
 
             ApprovalLog::create([
@@ -198,7 +229,7 @@ class SmartValidationService
 
         return [
             'success' => true,
-            'message' => 'Silang dana berhasil diajukan. Tiket diteruskan ke Department Head.',
+            'message' => 'Silang dana berhasil diajukan. Tiket diteruskan ke Team Leader.',
         ];
     }
 
@@ -207,10 +238,11 @@ class SmartValidationService
     // ──────────────────────────────────────────────────────────
 
     /**
-     * Gate 1 — Duplicate Check
+     * Gate 1 — Duplicate Check (SOFT WARNING — user can override)
      *
      * Checks if an identical active ticket (same item_name + same user) exists.
      * Tickets with status 'declined' are excluded from the check.
+     * Returns has_duplicate: true if found — caller shows warning popup.
      */
     private function gate1DuplicateCheck(Ticket $ticket, User $requester): array
     {
@@ -218,44 +250,48 @@ class SmartValidationService
             ->where('item_name', $ticket->item_name)
             ->where('id', '!=', $ticket->id)
             ->whereNotIn('status', [Ticket::STATUS_DECLINED])
-            ->exists();
+            ->first();
 
         if ($duplicate) {
             return [
-                'passed'  => false,
-                'message' => 'Pengajuan serupa sudah tersedia dalam sistem.',
+                'has_duplicate' => true,
+                'message'       => "Terdapat pengajuan serupa yang sudah aktif di sistem (Tiket #{$duplicate->id}: \"{$duplicate->title}\"). Apakah Anda yakin ingin melanjutkan pengajuan ini?",
             ];
         }
 
-        return ['passed' => true, 'message' => ''];
+        return ['has_duplicate' => false, 'message' => ''];
     }
 
     /**
-     * Gate 2 — Nominal Validation
+     * Gate 2 — Nominal Validation (SOFT WARNING for unreasonable amount)
      *
-     * Validates the submitted amount for anomalies.
+     * Hard fail: amount <= 0
+     * Soft warning: amount > max_reasonable (user can confirm to proceed)
      */
     private function gate2NominalValidation(Ticket $ticket): array
     {
         $amount = $ticket->total_amount;
 
+        // Hard fail: amount is zero or negative — cannot proceed
         if ($amount <= 0) {
             return [
-                'passed'  => false,
-                'message' => 'Nominal harga tidak wajar atau tidak valid. Nilai harus lebih dari 0.',
+                'hard_fail'           => true,
+                'needs_confirmation'  => false,
+                'message'             => 'Nominal harga tidak wajar atau tidak valid. Nilai harus lebih dari 0.',
             ];
         }
 
-        // Reasonableness upper bound: 99 billion (configurable via config if needed)
+        // Soft warning: amount exceeds reasonableness threshold (99 billion)
         $maxReasonable = 99_000_000_000;
         if ($amount > $maxReasonable) {
             return [
-                'passed'  => false,
-                'message' => 'Nominal harga tidak wajar atau tidak valid. Nilai terlalu besar.',
+                'hard_fail'           => false,
+                'needs_confirmation'  => true,
+                'message'             => 'Nominal pengadaan tergolong sangat besar (> Rp 99 Miliar). Apakah nominal ini sudah benar dan Anda yakin ingin melanjutkan?',
             ];
         }
 
-        return ['passed' => true, 'message' => ''];
+        return ['hard_fail' => false, 'needs_confirmation' => false, 'message' => ''];
     }
 
     /**
@@ -276,12 +312,11 @@ class SmartValidationService
         $category  = $ticket->category;
 
         // CAPEX-eligible asset classes:
-        //   infrastruktur_utama  (formerly hardware)  → CAPEX if >= threshold
-        //   lisensi_sistem       (formerly software)   → CAPEX if >= threshold
+        //   infrastruktur_utama  → CAPEX if >= threshold
+        //   lisensi_sistem       → CAPEX if >= threshold
         //
         // Always OPEX:
-        //   layanan_pemeliharaan     (formerly services)
-        //   perlengkapan_operasional (formerly office_supplies)
+        //   layanan_pemeliharaan, perlengkapan_operasional
         $capexEligibleCategories = [
             Ticket::CATEGORY_INFRASTRUKTUR_UTAMA,
             Ticket::CATEGORY_LISENSI_SISTEM,
@@ -294,43 +329,6 @@ class SmartValidationService
         return Ticket::TYPE_OPEX;
     }
 
-    /**
-     * Gate 4 — Budget Availability Check (read-only, used only for over-budget response preview)
-     *
-     * NOTE: This method is NO LONGER called in the main run() flow.
-     * The atomic check+lock is handled directly in the DB::transaction block above.
-     * Kept here for potential standalone use in cross-fund pre-check scenarios.
-     */
-    private function gate4BudgetCheck(Ticket $ticket, string $expenditureType): array
-    {
-        $budget = Budget::where('expenditure_type', $expenditureType)
-            ->where('category', $ticket->category)
-            ->where('fiscal_year', now()->year)
-            ->first(); // Read-only preview — no lockForUpdate needed here
-
-        if (! $budget) {
-            return [
-                'over_budget'       => true,
-                'available_balance' => 0.0,
-            ];
-        }
-
-        $available = $budget->available_balance;
-        $amount    = $ticket->total_amount;
-
-        if ($amount > $available) {
-            return [
-                'over_budget'       => true,
-                'available_balance' => $available,
-            ];
-        }
-
-        return [
-            'over_budget'       => false,
-            'available_balance' => $available,
-        ];
-    }
-
     // ──────────────────────────────────────────────────────────
     // Internal Helpers
     // ──────────────────────────────────────────────────────────
@@ -338,12 +336,14 @@ class SmartValidationService
     private function fail(int $gate, string $message): array
     {
         return [
-            'success'           => false,
-            'gate'              => $gate,
-            'message'           => $message,
-            'over_budget'       => false,
-            'classified_type'   => null,
-            'available_balance' => null,
+            'success'                      => false,
+            'gate'                         => $gate,
+            'message'                      => $message,
+            'needs_duplicate_confirmation' => false,
+            'needs_nominal_confirmation'   => false,
+            'over_budget'                  => false,
+            'classified_type'              => null,
+            'available_balance'            => null,
         ];
     }
 }

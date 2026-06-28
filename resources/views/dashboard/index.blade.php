@@ -91,31 +91,31 @@
         <div class="stat-card-sub">Membutuhkan perhatian</div>
       </div>
 
-    @elseif(auth()->user()->isDepartmentHead())
+    @elseif(auth()->user()->isTeamLeader())
       <div class="stat-card">
         <div class="stat-card-icon" style="background:var(--color-info-soft);">
           <svg width="22" height="22" fill="none" stroke="var(--color-info)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
         </div>
-        <div class="stat-card-label">Menunggu Persetujuan Saya</div>
-        <div class="stat-card-value">{{ $ticketSummary['pending_dept_head'] ?? 0 }}</div>
+        <div class="stat-card-label">Menunggu Review Saya</div>
+        <div class="stat-card-value">{{ $ticketSummary['pending_team_leader'] ?? 0 }}</div>
         <div class="stat-card-sub">Perlu diteruskan</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-icon" style="background:var(--color-warning-soft);">
           <svg width="22" height="22" fill="none" stroke="var(--color-warning-text)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v4M12 16h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
         </div>
-        <div class="stat-card-label">Di Division Head</div>
-        <div class="stat-card-value">{{ $ticketSummary['pending_div_head'] ?? 0 }}</div>
+        <div class="stat-card-label">Di Department Head</div>
+        <div class="stat-card-value">{{ $ticketSummary['pending_dept_head'] ?? 0 }}</div>
         <div class="stat-card-sub">Menunggu keputusan final</div>
       </div>
 
-    @elseif(auth()->user()->isDivisionHead())
+    @elseif(auth()->user()->isDepartmentHead())
       <div class="stat-card">
         <div class="stat-card-icon" style="background:var(--color-info-soft);">
           <svg width="22" height="22" fill="none" stroke="var(--color-info)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
         </div>
         <div class="stat-card-label">Menunggu Keputusan Saya</div>
-        <div class="stat-card-value">{{ $ticketSummary['pending_div_head'] ?? 0 }}</div>
+        <div class="stat-card-value">{{ $ticketSummary['pending_dept_head'] ?? 0 }}</div>
         <div class="stat-card-sub">Perlu keputusan segera</div>
       </div>
       <div class="stat-card">

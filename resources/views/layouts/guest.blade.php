@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>@yield('title', 'Masuk') | E-Procurement BNI</title>
-  <meta name="description" content="Login Sistem E-Procurement IT Infrastructure Management BNI">
+  <title>@yield('title', 'Masuk') | E-Procurement Pejompongan</title>
+  <meta name="description" content="Login Sistem E-Procurement IT Infrastructure Management Pejompongan">
   <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=2" type="image/x-icon">
   <link rel="stylesheet" href="{{ asset('css/app.css') }}">
   @stack('styles')
@@ -14,7 +14,9 @@
 <div class="auth-shell">
   <!-- ─── LEFT BRAND PANEL ─────────────────────── -->
   <div class="auth-brand-panel" style="background: linear-gradient(rgba(0, 104, 133, 0.6), rgba(0, 104, 133, 0.6)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop') center/cover no-repeat; background-blend-mode: multiply; background-color: #006885;">
-    <img src="{{ asset('images/bni-logo.png') }}" alt="Logo BNI" class="h-12 w-auto" style="height: 48px; width: auto; background: #fff; padding: 6px; border-radius: var(--radius-md); box-shadow: var(--shadow-md); margin-bottom: var(--space-xl); flex-shrink: 0;">
+    <div style="width:56px; height:56px; background: rgba(255,255,255,0.15); border-radius: var(--radius-md); display:flex; align-items:center; justify-content:center; margin-bottom: var(--space-xl); flex-shrink:0;">
+      <svg width="30" height="30" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+    </div>
 
     <div>
       <div class="auth-brand-title">E-Procurement</div>
@@ -22,7 +24,7 @@
     </div>
 
     <div class="auth-brand-subtitle">
-      Sistem pengadaan digital untuk Divisi IT Infrastructure BNI Pejompongan. Cepat, terstruktur, dan dapat diaudit.
+      Sistem pengadaan digital untuk Departemen IT Infrastructure Pejompongan. Cepat, terstruktur, dan dapat diaudit.
     </div>
 
     <div style="display:flex; flex-direction:column; gap:12px; width:100%; max-width:280px;">
@@ -61,7 +63,7 @@
     </div>
 
     <div style="font-size:12px; color:rgba(255,255,255,0.35); margin-top:auto;">
-      © {{ date('Y') }} PT Bank Negara Indonesia (Persero) Tbk
+      © {{ date('Y') }} E-Procurement Pejompongan
     </div>
   </div>
 

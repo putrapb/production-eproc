@@ -274,22 +274,22 @@
 @if(
   ($user->isRequester() && in_array($status, ['need_to_validate', 'revision', 'po_generated'])) ||
   ($user->isPfa() && in_array($status, ['pending_review', 'approved', 'po_generated'])) ||
-  ($user->isDepartmentHead() && $status === 'pending_dept_head') ||
-  ($user->isDivisionHead() && $status === 'pending_div_head')
+  ($user->isTeamLeader() && $status === 'pending_team_leader') ||
+  ($user->isDepartmentHead() && $status === 'pending_dept_head')
 )
 <div class="action-panel">
   <div class="action-panel-info">
     @if($user->isRequester() && $status === 'revision')
       Dokumen Anda memerlukan revisi. Unggah ulang dokumen untuk melanjutkan proses.
     @elseif($user->isRequester() && $status === 'need_to_validate')
-      Dokumen Pendukung Anda telah diterima oleh PFA. Jalankan Smart Validation untuk mengklasifikasikan anggaran dan mengunci budget.
+      Dokumen Pendukung Anda telah diterima oleh PFA. Jalankan Smart Validation untuk mengklasifikasikan anggaran.
     @elseif($user->isPfa() && $status === 'pending_review')
       Tinjau Dokumen Pendukung. Terima jika valid, atau minta revisi.
     @elseif($user->isPfa() && $status === 'approved')
-      Tiket disetujui oleh Division Head. Generate Purchase Order sekarang.
+      Tiket disetujui oleh Department Head. Generate Purchase Order sekarang.
+    @elseif($user->isTeamLeader() && $status === 'pending_team_leader')
+      Tinjau dan teruskan ke Department Head jika pengajuan valid.
     @elseif($user->isDepartmentHead() && $status === 'pending_dept_head')
-      Tinjau dan teruskan ke Division Head jika pengajuan valid.
-    @elseif($user->isDivisionHead() && $status === 'pending_div_head')
       Berikan keputusan final: setujui atau tolak pengajuan pengadaan ini.
     @elseif($status === 'po_generated' && $user->isRequester())
       Purchase Order telah diterbitkan oleh PFA. Anda dapat mengunduh dokumen PO.
@@ -348,16 +348,16 @@
       </a>
     @endif
 
-    {{-- DEPT HEAD: Forward --}}
-    @if($user->isDepartmentHead() && $status === 'pending_dept_head')
+    {{-- TEAM LEADER: Forward --}}
+    @if($user->isTeamLeader() && $status === 'pending_team_leader')
       <button onclick="openModal('modal-forward')" class="btn btn-orient">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-        Teruskan ke Division Head
+        Teruskan ke Department Head
       </button>
     @endif
 
-    {{-- DIV HEAD: Decline / Approve --}}
-    @if($user->isDivisionHead() && $status === 'pending_div_head')
+    {{-- DEPT HEAD: Decline / Approve --}}
+    @if($user->isDepartmentHead() && $status === 'pending_dept_head')
       <button onclick="openModal('modal-decline')" class="btn btn-danger">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
         Tolak Pengajuan
@@ -502,22 +502,22 @@
 </div>
 @endif
 
-{{-- Modal: Forward (Dept Head) --}}
-@if($user->isDepartmentHead() && $status === 'pending_dept_head')
+{{-- Modal: Forward (Team Leader) --}}
+@if($user->isTeamLeader() && $status === 'pending_team_leader')
 <div class="modal-overlay" id="modal-forward">
   <div class="modal-card">
     <div class="modal-icon" style="background:var(--color-secondary-soft);">
       <svg width="24" height="24" fill="none" stroke="var(--color-secondary)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
     </div>
-    <div class="modal-title">Teruskan ke Division Head?</div>
+    <div class="modal-title">Teruskan ke Department Head?</div>
     <div class="modal-body">
-      Pengajuan akan dikirimkan ke Division Head untuk keputusan final. Pastikan Anda telah memeriksa semua detail pengadaan.
+      Pengajuan akan dikirimkan ke Department Head untuk keputusan final. Pastikan Anda telah memeriksa semua detail pengadaan.
     </div>
     <form method="POST" action="{{ route('tickets.forward', $ticket) }}">
       @csrf
       <div class="form-group">
         <label class="form-label">Catatan (opsional)</label>
-        <textarea name="notes" class="form-control" rows="2" placeholder="Tambahkan catatan untuk Division Head..."></textarea>
+        <textarea name="notes" class="form-control" rows="2" placeholder="Tambahkan catatan untuk Department Head..."></textarea>
       </div>
       <div class="modal-footer">
         <button type="button" onclick="closeModal('modal-forward')" class="btn btn-secondary">Batal</button>
@@ -528,8 +528,8 @@
 </div>
 @endif
 
-{{-- Modal: Approve (Div Head) --}}
-@if($user->isDivisionHead() && $status === 'pending_div_head')
+{{-- Modal: Approve (Dept Head) --}}
+@if($user->isDepartmentHead() && $status === 'pending_dept_head')
 <div class="modal-overlay" id="modal-approve">
   <div class="modal-card">
     <div class="modal-icon success">
@@ -576,6 +576,54 @@
         <button type="submit" class="btn btn-danger">Tolak Pengajuan</button>
       </div>
     </form>
+  </div>
+</div>
+@endif
+
+{{-- Modal: Gate 1 Duplicate Warning (Requester) --}}
+@if(session('needs_duplicate_confirmation') && $user->isRequester() && $status === 'need_to_validate')
+<div class="modal-overlay open" id="modal-duplicate-warning">
+  <div class="modal-card">
+    <div class="modal-icon warning">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v4M12 16h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+    </div>
+    <div class="modal-title">Tiket Serupa Terdeteksi</div>
+    <div class="modal-body">
+      {{ session('duplicate_warning') }}
+      <p style="margin-top:12px;color:var(--color-muted);font-size:13px;">Anda dapat membatalkan atau melanjutkan dengan memberikan justifikasi.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" onclick="closeModal('modal-duplicate-warning')" class="btn btn-secondary">Batalkan</button>
+      <form method="POST" action="{{ route('tickets.validate', $ticket) }}" style="display:inline;margin:0;">
+        @csrf
+        <input type="hidden" name="duplicate_confirmed" value="1">
+        <button type="submit" class="btn btn-primary">Tetap Lanjutkan</button>
+      </form>
+    </div>
+  </div>
+</div>
+@endif
+
+{{-- Modal: Gate 2 Nominal Warning (Requester) --}}
+@if(session('needs_nominal_confirmation') && $user->isRequester() && $status === 'need_to_validate')
+<div class="modal-overlay open" id="modal-nominal-warning">
+  <div class="modal-card">
+    <div class="modal-icon warning">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v4M12 16h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+    </div>
+    <div class="modal-title">Nominal Tidak Wajar</div>
+    <div class="modal-body">
+      {{ session('nominal_warning') }}
+      <p style="margin-top:12px;color:var(--color-muted);font-size:13px;">Jika nominal sudah benar, klik &quot;Tetap Lanjutkan&quot; untuk melanjutkan validasi.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" onclick="closeModal('modal-nominal-warning')" class="btn btn-secondary">Batalkan</button>
+      <form method="POST" action="{{ route('tickets.validate', $ticket) }}" style="display:inline;margin:0;">
+        @csrf
+        <input type="hidden" name="nominal_confirmed" value="1">
+        <button type="submit" class="btn btn-primary">Tetap Lanjutkan</button>
+      </form>
+    </div>
   </div>
 </div>
 @endif

@@ -182,6 +182,7 @@ class TicketController extends Controller
 
     /**
      * Requester: Run Smart Validation (4-Gate Engine) after PFA accepts the document.
+     * Supports soft-warning confirmations for Gate 1 (duplicate) and Gate 2 (nominal).
      */
     public function runSmartValidation(Request $request, Ticket $ticket): RedirectResponse
     {
@@ -192,11 +193,30 @@ class TicketController extends Controller
         $this->ensureStatus($ticket, Ticket::STATUS_NEED_TO_VALIDATE);
 
         $user   = $request->user();
-        $result = $this->smartValidation->run($ticket, $user);
+        $result = $this->smartValidation->run(
+            $ticket,
+            $user,
+            duplicateConfirmed: (bool) $request->boolean('duplicate_confirmed'),
+            nominalConfirmed: (bool) $request->boolean('nominal_confirmed'),
+        );
 
         if ($result['success']) {
             return redirect()->route('tickets.show', $ticket)
                 ->with('success', $result['message']);
+        }
+
+        // Gate 1: Duplicate soft warning — show confirmation popup
+        if ($result['needs_duplicate_confirmation'] ?? false) {
+            return redirect()->route('tickets.show', $ticket)
+                ->with('needs_duplicate_confirmation', true)
+                ->with('duplicate_warning', $result['message']);
+        }
+
+        // Gate 2: Nominal soft warning — show confirmation popup
+        if ($result['needs_nominal_confirmation'] ?? false) {
+            return redirect()->route('tickets.show', $ticket)
+                ->with('needs_nominal_confirmation', true)
+                ->with('nominal_warning', $result['message']);
         }
 
         if ($result['over_budget']) {
@@ -260,7 +280,7 @@ class TicketController extends Controller
     }
 
     /**
-     * Department Head: Forward ticket to Division Head.
+     * Team Leader: Forward ticket to Department Head (decision maker).
      */
     public function forward(Request $request, Ticket $ticket): RedirectResponse
     {
@@ -268,9 +288,9 @@ class TicketController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $this->ensureStatus($ticket, Ticket::STATUS_PENDING_DEPT_HEAD);
+        $this->ensureStatus($ticket, Ticket::STATUS_PENDING_TEAM_LEADER);
 
-        $ticket->update(['status' => Ticket::STATUS_PENDING_DIV_HEAD]);
+        $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
 
         ApprovalLog::create([
             'ticket_id' => $ticket->id,
@@ -280,11 +300,12 @@ class TicketController extends Controller
         ]);
 
         return redirect()->route('tickets.show', $ticket)
-            ->with('success', 'Tiket berhasil diteruskan ke Division Head.');
+            ->with('success', 'Tiket berhasil diteruskan ke Department Head.');
     }
 
     /**
-     * Division Head: Final approve or decline decision.
+     * Department Head: Final approve or decline decision.
+     * Budget lock (if normal flow, no cross-fund) also happens HERE.
      */
     public function decide(Request $request, Ticket $ticket): RedirectResponse
     {
@@ -293,13 +314,15 @@ class TicketController extends Controller
             'notes'  => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $this->ensureStatus($ticket, Ticket::STATUS_PENDING_DIV_HEAD);
+        $this->ensureStatus($ticket, Ticket::STATUS_PENDING_DEPT_HEAD);
 
         $user = $request->user();
 
         $message = DB::transaction(function () use ($request, $ticket, $user) {
             if ($request->action === 'approve') {
-                // Release temporary lock, apply permanent deduction
+                // Permanently deduct budget on approval
+                // For cross-fund: budget was locked in applyCrossFund → permanentDeduct converts lock to permanent
+                // For normal flow: budget was NOT locked (Revisi 3), so permanentDeduct without prior lock
                 $budget = Budget::findForTicket(
                     $ticket->expenditure_type,
                     $ticket->category,
@@ -321,15 +344,17 @@ class TicketController extends Controller
 
                 return 'Pengadaan disetujui. PFA dapat menerbitkan Purchase Order.';
             } else {
-                // Release temporary lock — no permanent deduction
-                $budget = Budget::findForTicket(
-                    $ticket->expenditure_type,
-                    $ticket->category,
-                    now()->year
-                );
-
-                if ($budget) {
-                    $budget->unlock($ticket->total_amount);
+                // Decline: only release lock if this was a cross-fund ticket
+                // Normal flow tickets have no lock to release (lock removed at Gate 4 per Revisi 3)
+                if ($ticket->is_cross_fund) {
+                    $budget = Budget::findForTicket(
+                        $ticket->expenditure_type,
+                        $ticket->category,
+                        now()->year
+                    );
+                    if ($budget) {
+                        $budget->unlock($ticket->total_amount);
+                    }
                 }
 
                 $ticket->update(['status' => Ticket::STATUS_DECLINED]);
@@ -341,7 +366,7 @@ class TicketController extends Controller
                     'notes'     => $request->notes,
                 ]);
 
-                return 'Pengadaan ditolak. Saldo anggaran dilepas.';
+                return 'Pengadaan ditolak. Tiket tidak dapat dilanjutkan.';
             }
         });
 
@@ -382,14 +407,14 @@ class TicketController extends Controller
     {
         if ($ticket->status !== $expectedStatus) {
             $statusLabels = [
-                'pending_review'   => 'Menunggu Tinjauan PFA',
-                'need_to_validate' => 'Menunggu Smart Validation',
-                'pending_dept_head'=> 'Menunggu Department Head',
-                'pending_div_head' => 'Menunggu Division Head',
-                'approved'         => 'Disetujui',
-                'declined'         => 'Ditolak',
-                'revision'         => 'Perlu Revisi',
-                'po_generated'     => 'PO Diterbitkan',
+                'pending_review'      => 'Menunggu Tinjauan PFA',
+                'need_to_validate'    => 'Menunggu Smart Validation',
+                'pending_team_leader' => 'Menunggu Team Leader',
+                'pending_dept_head'   => 'Menunggu Department Head',
+                'approved'            => 'Disetujui',
+                'declined'            => 'Ditolak',
+                'revision'            => 'Perlu Revisi',
+                'po_generated'        => 'PO Diterbitkan',
             ];
             $label = $statusLabels[$ticket->status] ?? $ticket->status;
 

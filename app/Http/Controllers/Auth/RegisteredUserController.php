@@ -37,10 +37,8 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'nip'      => ['required', 'string', 'max:20'],
-            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email', 'ends_with:@bni.co.id'],
+            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ], [
-            'email.ends_with' => 'Email harus menggunakan domain korporat BNI (@bni.co.id).',
         ]);
 
         // Step 1: Validate NIP against HR database
@@ -48,7 +46,7 @@ class RegisteredUserController extends Controller
 
         if (! $hrEmployee) {
             return back()->withErrors([
-                'nip' => 'NIP tidak ditemukan dalam database karyawan BNI.',
+                'nip' => 'NIP tidak ditemukan dalam database karyawan.',
             ])->withInput();
         }
 
@@ -56,7 +54,7 @@ class RegisteredUserController extends Controller
         $allowedDivision = config('eprocurement.allowed_division_keyword', 'IT Infrastructure');
         if (! str_contains($hrEmployee->division, $allowedDivision)) {
             return back()->withErrors([
-                'nip' => 'NIP Anda tidak termasuk dalam Divisi IT Infrastructure Management.',
+                'nip' => 'NIP Anda tidak termasuk dalam Departemen IT Infrastructure Management.',
             ])->withInput();
         }
 
