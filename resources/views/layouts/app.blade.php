@@ -122,11 +122,11 @@
       <div class="topbar-actions">
         {{-- Notification Bell --}}
         <div class="notif-bell" id="notif-bell" onclick="toggleNotifDropdown()" title="Notifikasi">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 01-3.46 0"/>
           </svg>
-          <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
+          <span class="notif-badge" id="notif-badge" style="display:none;"></span>
 
           {{-- Notification Dropdown --}}
           <div class="notif-dropdown" id="notif-dropdown" onclick="event.stopPropagation()">
@@ -290,11 +290,10 @@ document.addEventListener('click', (e) => {
 });
 
 function renderNotifications(data) {
-  // Update badge
+  // Update badge dot
   if (notifBadge) {
     if (data.unread_count > 0) {
-      notifBadge.style.display = 'flex';
-      notifBadge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+      notifBadge.style.display = 'block';
     } else {
       notifBadge.style.display = 'none';
     }
@@ -323,23 +322,16 @@ function renderNotifications(data) {
   `).join('');
 }
 
-// Badge-only fetch (background polling) — hanya update angka, tidak buka dropdown
+// Badge-only fetch (background polling) — hanya update dot, tidak buka dropdown
 function fetchBadge() {
   fetch('/notifications', {
     headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
   })
   .then(r => r.json())
   .then(data => {
-    // Only update badge, not the list content (unless dropdown is open)
     if (notifBadge) {
-      if (data.unread_count > 0) {
-        notifBadge.style.display = 'flex';
-        notifBadge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
-      } else {
-        notifBadge.style.display = 'none';
-      }
+      notifBadge.style.display = data.unread_count > 0 ? 'block' : 'none';
     }
-    // If dropdown is open, also update content
     if (notifOpen) renderNotifications(data);
   })
   .catch(() => {});
