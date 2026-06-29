@@ -135,10 +135,10 @@
               <button id="mark-all-btn" onclick="markAllRead()" style="font-size:12px; color:var(--color-primary); background:none; border:none; cursor:pointer; font-weight:500;">Tandai semua dibaca</button>
             </div>
             <div id="notif-list" style="max-height:340px; overflow-y:auto;">
-              <div style="padding:24px 16px; text-align:center; color:var(--color-muted); font-size:13px;">Memuat notifikasi...</div>
-            </div>
-            <div style="padding:10px 16px; border-top:1px solid var(--color-border); text-align:center;">
-              <a href="{{ route('tickets.index') }}" style="font-size:12px; color:var(--color-primary); text-decoration:none; font-weight:500;">Lihat semua tiket →</a>
+              <div style="padding:32px 16px; text-align:center; color:var(--color-muted); font-size:13px;">
+                <div style="font-size:28px; margin-bottom:8px;">🔔</div>
+                Belum ada notifikasi di sini.
+              </div>
             </div>
           </div>
         </div>
@@ -303,7 +303,7 @@ function renderNotifications(data) {
   if (!notifList) return;
 
   if (!data.notifications || data.notifications.length === 0) {
-    notifList.innerHTML = '<div style="padding:24px 16px; text-align:center; color:var(--color-muted); font-size:13px;">Belum ada notifikasi.</div>';
+    notifList.innerHTML = '<div style="padding:32px 16px; text-align:center; color:var(--color-muted); font-size:13px;"><div style="font-size:28px; margin-bottom:8px;">🔔</div>Belum ada notifikasi di sini.</div>';
     return;
   }
 
@@ -321,6 +321,28 @@ function renderNotifications(data) {
       </div>
     </a>
   `).join('');
+}
+
+// Badge-only fetch (background polling) — hanya update angka, tidak buka dropdown
+function fetchBadge() {
+  fetch('/notifications', {
+    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+  })
+  .then(r => r.json())
+  .then(data => {
+    // Only update badge, not the list content (unless dropdown is open)
+    if (notifBadge) {
+      if (data.unread_count > 0) {
+        notifBadge.style.display = 'flex';
+        notifBadge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+      } else {
+        notifBadge.style.display = 'none';
+      }
+    }
+    // If dropdown is open, also update content
+    if (notifOpen) renderNotifications(data);
+  })
+  .catch(() => {});
 }
 
 function fetchNotifications() {
@@ -349,9 +371,8 @@ function markAllRead() {
   .then(() => fetchNotifications());
 }
 
-// Initial fetch + polling every 5 seconds
-fetchNotifications();
-setInterval(fetchNotifications, 5000);
+// Polling badge setiap 5 detik (background, tidak ganggu dropdown)
+setInterval(fetchBadge, 5000);
 </script>
 
 @stack('scripts')
