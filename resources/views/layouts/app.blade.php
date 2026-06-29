@@ -121,24 +121,27 @@
 
       <div class="topbar-actions">
         {{-- Notification Bell --}}
-        <div class="notif-bell" id="notif-bell" onclick="toggleNotifDropdown()" title="Notifikasi">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 01-3.46 0"/>
-          </svg>
-          <span class="notif-badge" id="notif-badge" style="display:none;"></span>
+        <div style="position:relative; display:flex; align-items:center;">
+          <button id="notif-bell" onclick="toggleNotifDropdown()" title="Notifikasi"
+            style="position:relative; background:none; border:none; cursor:pointer; padding:4px; color:#9ca3af; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:color 0.15s;"
+            onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9ca3af'">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+            {{-- Bintik merah --}}
+            <span id="notif-badge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; background:#ef4444; border-radius:50%; border:2px solid #fff; z-index:1;"></span>
+          </button>
 
-          {{-- Notification Dropdown --}}
-          <div class="notif-dropdown" id="notif-dropdown" onclick="event.stopPropagation()">
-            <div class="notif-header">
-              <span style="font-weight:600; font-size:14px;">Notifikasi</span>
-              <button id="mark-all-btn" onclick="markAllRead()" style="font-size:12px; color:var(--color-primary); background:none; border:none; cursor:pointer; font-weight:500;">Tandai semua dibaca</button>
+          {{-- Notification Dropdown — hidden by default --}}
+          <div id="notif-dropdown" onclick="event.stopPropagation()"
+            style="display:none; position:absolute; top:calc(100% + 8px); right:0; width:320px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.12); z-index:9999; flex-direction:column; overflow:hidden;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid #f3f4f6;">
+              <span style="font-weight:600; font-size:14px; color:#111827;">Notifikasi</span>
+              <button onclick="markAllRead()" style="font-size:12px; color:var(--color-primary); background:none; border:none; cursor:pointer; font-weight:500;">Tandai semua dibaca</button>
             </div>
             <div id="notif-list" style="max-height:340px; overflow-y:auto;">
-              <div style="padding:32px 16px; text-align:center; color:var(--color-muted); font-size:13px;">
-                <div style="font-size:28px; margin-bottom:8px;">🔔</div>
-                Belum ada notifikasi di sini.
-              </div>
+              {{-- Diisi JS saat diklik --}}
             </div>
           </div>
         </div>
@@ -275,18 +278,22 @@ const typeIcon = {
 
 function toggleNotifDropdown() {
   notifOpen = !notifOpen;
-  if (notifDropdown) notifDropdown.classList.toggle('open', notifOpen);
+  if (notifDropdown) {
+    notifDropdown.style.display = notifOpen ? 'flex' : 'none';
+    notifDropdown.style.flexDirection = 'column';
+  }
   if (notifOpen) fetchNotifications();
 }
 
 function closeNotifDropdown() {
   notifOpen = false;
-  if (notifDropdown) notifDropdown.classList.remove('open');
+  if (notifDropdown) notifDropdown.style.display = 'none';
 }
 
 // Close dropdown when clicking outside
 document.addEventListener('click', (e) => {
-  if (notifBell && !notifBell.contains(e.target)) closeNotifDropdown();
+  const wrapper = notifBell ? notifBell.closest('div') : null;
+  if (wrapper && !wrapper.contains(e.target)) closeNotifDropdown();
 });
 
 function renderNotifications(data) {
