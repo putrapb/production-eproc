@@ -6,6 +6,7 @@ use App\Http\Requests\StoreTicketRequest;
 use App\Http\Requests\UpdateTicketDocumentRequest;
 use App\Models\ApprovalLog;
 use App\Models\Budget;
+use App\Models\Notification;
 use App\Models\Ticket;
 use App\Services\SmartValidationService;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +24,10 @@ class TicketController extends Controller
      */
     public function index(Request $request): View
     {
-        $user = $request->user();
+        $user    = $request->user();
+        $perPage = in_array((int) $request->per_page, [10, 25, 50, 100])
+            ? (int) $request->per_page
+            : 15;
 
         $tickets = Ticket::with(['user', 'approvalLogs.user'])
             ->forRole($user)
@@ -34,10 +38,10 @@ class TicketController extends Controller
                   ->orWhere('vendor_name', 'like', "%{$s}%");
             }))
             ->latest()
-            ->paginate(15)
+            ->paginate($perPage)
             ->withQueryString();
 
-        return view('tickets.index', compact('tickets', 'user'));
+        return view('tickets.index', compact('tickets', 'user', 'perPage'));
     }
 
     /**
@@ -94,6 +98,15 @@ class TicketController extends Controller
             'user_id'   => $user->id,
             'action'    => ApprovalLog::ACTION_SUBMITTED,
         ]);
+
+        // Notify all PFAs about new submission
+        Notification::notifyRole(
+            'pfa',
+            'ticket_submitted',
+            'Pengajuan Baru Masuk',
+            "{$user->name} mengajukan tiket: {$ticket->title}",
+            $ticket->id
+        );
 
         return redirect()->route('tickets.index')
             ->with('success', 'Tiket pengadaan berhasil diajukan.');
@@ -176,6 +189,25 @@ class TicketController extends Controller
             'notes'     => $request->notes,
         ]);
 
+        // Notify the ticket owner
+        if ($request->action === 'accept') {
+            Notification::notify(
+                $ticket->user_id,
+                'ticket_reviewed',
+                'Dokumen Diterima',
+                "Dokumen tiket \"{$ticket->title}\" diterima oleh PFA. Silakan jalankan Smart Validation.",
+                $ticket->id
+            );
+        } else {
+            Notification::notify(
+                $ticket->user_id,
+                'ticket_revised',
+                'Dokumen Perlu Revisi',
+                "Dokumen tiket \"{$ticket->title}\" diminta revisi oleh PFA.",
+                $ticket->id
+            );
+        }
+
         return redirect()->route('tickets.show', $ticket)
             ->with('success', $message);
     }
@@ -201,6 +233,14 @@ class TicketController extends Controller
         );
 
         if ($result['success']) {
+            // Notify all Team Leaders that a ticket is ready for review
+            Notification::notifyRole(
+                'team_leader',
+                'ticket_validated',
+                'Tiket Siap Ditinjau',
+                "Tiket \"{$ticket->title}\" telah tervalidasi dan menunggu tinjauan Team Leader.",
+                $ticket->id
+            );
             return redirect()->route('tickets.show', $ticket)
                 ->with('success', $result['message']);
         }
@@ -299,8 +339,54 @@ class TicketController extends Controller
             'notes'     => $request->notes,
         ]);
 
+        // Notify all Department Heads
+        Notification::notifyRole(
+            'department_head',
+            'ticket_forwarded',
+            'Tiket Diteruskan',
+            "Tiket \"{$ticket->title}\" diteruskan oleh Team Leader untuk keputusan Anda.",
+            $ticket->id
+        );
+
         return redirect()->route('tickets.show', $ticket)
             ->with('success', 'Tiket berhasil diteruskan ke Department Head.');
+    }
+
+    /**
+     * Team Leader: Bulk forward multiple tickets to Department Head.
+     */
+    public function bulkForward(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'ticket_ids'   => ['required', 'array', 'min:1'],
+            'ticket_ids.*' => ['integer', 'exists:tickets,id'],
+            'notes'        => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $user    = $request->user();
+        $ids     = $request->ticket_ids;
+        $tickets = Ticket::whereIn('id', $ids)
+            ->where('status', Ticket::STATUS_PENDING_TEAM_LEADER)
+            ->get();
+
+        if ($tickets->isEmpty()) {
+            return back()->with('error', 'Tidak ada tiket valid untuk diteruskan.');
+        }
+
+        DB::transaction(function () use ($tickets, $user, $request) {
+            foreach ($tickets as $ticket) {
+                $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
+                ApprovalLog::create([
+                    'ticket_id' => $ticket->id,
+                    'user_id'   => $user->id,
+                    'action'    => ApprovalLog::ACTION_FORWARDED,
+                    'notes'     => $request->notes,
+                ]);
+            }
+        });
+
+        return redirect()->route('tickets.index', ['status' => 'pending_dept_head'])
+            ->with('success', "{$tickets->count()} tiket berhasil diteruskan ke Department Head.");
     }
 
     /**
@@ -342,6 +428,22 @@ class TicketController extends Controller
                     'notes'     => $request->notes,
                 ]);
 
+                // Notify Requester and PFAs
+                Notification::notify(
+                    $ticket->user_id,
+                    'ticket_approved',
+                    'Pengajuan Disetujui!',
+                    "Tiket \"{$ticket->title}\" telah disetujui oleh Department Head.",
+                    $ticket->id
+                );
+                Notification::notifyRole(
+                    'pfa',
+                    'ticket_approved',
+                    'Siap Generate PO',
+                    "Tiket \"{$ticket->title}\" disetujui. Silakan terbitkan Purchase Order.",
+                    $ticket->id
+                );
+
                 return 'Pengadaan disetujui. PFA dapat menerbitkan Purchase Order.';
             } else {
                 // Decline: only release lock if this was a cross-fund ticket
@@ -366,12 +468,89 @@ class TicketController extends Controller
                     'notes'     => $request->notes,
                 ]);
 
+                // Notify Requester
+                Notification::notify(
+                    $ticket->user_id,
+                    'ticket_declined',
+                    'Pengajuan Ditolak',
+                    "Tiket \"{$ticket->title}\" ditolak oleh Department Head.",
+                    $ticket->id
+                );
+
                 return 'Pengadaan ditolak. Tiket tidak dapat dilanjutkan.';
             }
         });
 
         return redirect()->route('tickets.show', $ticket)
             ->with('success', $message);
+    }
+
+    /**
+     * Department Head: Bulk approve or decline multiple tickets.
+     */
+    public function bulkDecide(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'action'       => ['required', 'in:approve,decline'],
+            'ticket_ids'   => ['required', 'array', 'min:1'],
+            'ticket_ids.*' => ['integer', 'exists:tickets,id'],
+            'notes'        => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $user    = $request->user();
+        $tickets = Ticket::whereIn('id', $request->ticket_ids)
+            ->where('status', Ticket::STATUS_PENDING_DEPT_HEAD)
+            ->get();
+
+        if ($tickets->isEmpty()) {
+            return back()->with('error', 'Tidak ada tiket valid untuk diproses.');
+        }
+
+        $count = $tickets->count();
+
+        DB::transaction(function () use ($tickets, $user, $request) {
+            foreach ($tickets as $ticket) {
+                if ($request->action === 'approve') {
+                    $budget = Budget::findForTicket(
+                        $ticket->expenditure_type,
+                        $ticket->category,
+                        now()->year
+                    );
+                    if ($budget) {
+                        $budget->permanentDeduct($ticket->total_amount);
+                    }
+                    $ticket->update(['status' => Ticket::STATUS_APPROVED]);
+                    ApprovalLog::create([
+                        'ticket_id' => $ticket->id,
+                        'user_id'   => $user->id,
+                        'action'    => ApprovalLog::ACTION_APPROVED,
+                        'notes'     => $request->notes,
+                    ]);
+                } else {
+                    if ($ticket->is_cross_fund) {
+                        $budget = Budget::findForTicket(
+                            $ticket->expenditure_type,
+                            $ticket->category,
+                            now()->year
+                        );
+                        if ($budget) {
+                            $budget->unlock($ticket->total_amount);
+                        }
+                    }
+                    $ticket->update(['status' => Ticket::STATUS_DECLINED]);
+                    ApprovalLog::create([
+                        'ticket_id' => $ticket->id,
+                        'user_id'   => $user->id,
+                        'action'    => ApprovalLog::ACTION_DECLINED,
+                        'notes'     => $request->notes,
+                    ]);
+                }
+            }
+        });
+
+        $verb = $request->action === 'approve' ? 'disetujui' : 'ditolak';
+        return redirect()->route('tickets.index', ['status' => $request->action === 'approve' ? 'approved' : 'declined'])
+            ->with('success', "{$count} tiket berhasil {$verb}.");
     }
 
     /**

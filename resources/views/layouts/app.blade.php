@@ -120,6 +120,29 @@
       </div>
 
       <div class="topbar-actions">
+        {{-- Notification Bell --}}
+        <div class="notif-bell" id="notif-bell" onclick="toggleNotifDropdown()" title="Notifikasi">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+          <span class="notif-badge" id="notif-badge" style="display:none;">0</span>
+
+          {{-- Notification Dropdown --}}
+          <div class="notif-dropdown" id="notif-dropdown" onclick="event.stopPropagation()">
+            <div class="notif-header">
+              <span style="font-weight:600; font-size:14px;">Notifikasi</span>
+              <button id="mark-all-btn" onclick="markAllRead()" style="font-size:12px; color:var(--color-primary); background:none; border:none; cursor:pointer; font-weight:500;">Tandai semua dibaca</button>
+            </div>
+            <div id="notif-list" style="max-height:340px; overflow-y:auto;">
+              <div style="padding:24px 16px; text-align:center; color:var(--color-muted); font-size:13px;">Memuat notifikasi...</div>
+            </div>
+            <div style="padding:10px 16px; border-top:1px solid var(--color-border); text-align:center;">
+              <a href="{{ route('tickets.index') }}" style="font-size:12px; color:var(--color-primary); text-decoration:none; font-weight:500;">Lihat semua tiket →</a>
+            </div>
+          </div>
+        </div>
+
         <!-- Avatar + Dropdown -->
         <div class="topbar-avatar" id="avatar-btn" onclick="toggleAvatarMenu()">
           {{ auth()->user()->initials }}
@@ -231,6 +254,104 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     if (e.target === this) closeModal(this.id);
   });
 });
+
+// ── Notification Bell (Polling every 5s) ─────────
+const notifBell      = document.getElementById('notif-bell');
+const notifDropdown  = document.getElementById('notif-dropdown');
+const notifBadge     = document.getElementById('notif-badge');
+const notifList      = document.getElementById('notif-list');
+let notifOpen = false;
+
+const typeIcon = {
+  ticket_submitted: '📋',
+  ticket_reviewed:  '✅',
+  ticket_revised:   '📝',
+  ticket_validated: '🔍',
+  ticket_forwarded: '➡️',
+  ticket_approved:  '🎉',
+  ticket_declined:  '❌',
+  po_generated:     '📄',
+};
+
+function toggleNotifDropdown() {
+  notifOpen = !notifOpen;
+  if (notifDropdown) notifDropdown.classList.toggle('open', notifOpen);
+  if (notifOpen) fetchNotifications();
+}
+
+function closeNotifDropdown() {
+  notifOpen = false;
+  if (notifDropdown) notifDropdown.classList.remove('open');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  if (notifBell && !notifBell.contains(e.target)) closeNotifDropdown();
+});
+
+function renderNotifications(data) {
+  // Update badge
+  if (notifBadge) {
+    if (data.unread_count > 0) {
+      notifBadge.style.display = 'flex';
+      notifBadge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+    } else {
+      notifBadge.style.display = 'none';
+    }
+  }
+
+  if (!notifList) return;
+
+  if (!data.notifications || data.notifications.length === 0) {
+    notifList.innerHTML = '<div style="padding:24px 16px; text-align:center; color:var(--color-muted); font-size:13px;">Belum ada notifikasi.</div>';
+    return;
+  }
+
+  notifList.innerHTML = data.notifications.map(n => `
+    <a href="${n.ticket_url || '#'}" class="notif-item ${n.read ? '' : 'unread'}"
+       onclick="markRead(${n.id}, this)" style="text-decoration:none; display:block;">
+      <div style="display:flex; gap:10px; align-items:flex-start;">
+        <span style="font-size:18px; flex-shrink:0;">${typeIcon[n.type] || '🔔'}</span>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:600; font-size:13px; color:var(--color-text);">${n.title}</div>
+          <div style="font-size:12px; color:var(--color-muted); margin-top:2px; line-height:1.4; word-break:break-word;">${n.message}</div>
+          <div style="font-size:11px; color:var(--color-muted); margin-top:4px;">${n.time}</div>
+        </div>
+        ${!n.read ? '<span style="width:8px; height:8px; background:var(--color-primary); border-radius:50%; flex-shrink:0; margin-top:4px;"></span>' : ''}
+      </div>
+    </a>
+  `).join('');
+}
+
+function fetchNotifications() {
+  fetch('/notifications', {
+    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+  })
+  .then(r => r.json())
+  .then(data => renderNotifications(data))
+  .catch(() => {});
+}
+
+function markRead(id, el) {
+  fetch(`/notifications/${id}/read`, {
+    method: 'POST',
+    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+  });
+  if (el) el.classList.remove('unread');
+  el.querySelector('span[style*="border-radius:50%"]')?.remove();
+}
+
+function markAllRead() {
+  fetch('/notifications/read-all', {
+    method: 'POST',
+    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+  })
+  .then(() => fetchNotifications());
+}
+
+// Initial fetch + polling every 5 seconds
+fetchNotifications();
+setInterval(fetchNotifications, 5000);
 </script>
 
 @stack('scripts')

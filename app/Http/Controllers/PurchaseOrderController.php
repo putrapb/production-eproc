@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ApprovalLog;
+use App\Models\Notification;
 use App\Models\Ticket;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -56,6 +57,15 @@ class PurchaseOrderController extends Controller
             'action'    => ApprovalLog::ACTION_PO_ISSUED,
             'notes'     => "Purchase Order diterbitkan: {$filename}",
         ]);
+
+        // Notify Requester that PO is ready
+        Notification::notify(
+            $ticket->user_id,
+            'po_generated',
+            'Purchase Order Siap Diunduh',
+            "Purchase Order untuk tiket \"{$ticket->title}\" telah diterbitkan oleh PFA.",
+            $ticket->id
+        );
 
         return redirect()->route('tickets.show', $ticket)
             ->with('success', 'Purchase Order berhasil diterbitkan. Klik "Unduh PO" untuk mengunduh dokumen.');

@@ -12,6 +12,12 @@
     <h1>Dashboard</h1>
     <p>Selamat datang, {{ auth()->user()->name }} — {{ auth()->user()->role_label }}</p>
   </div>
+  @if(auth()->user()->isRequester())
+    <a href="{{ route('tickets.create') }}" class="btn btn-primary">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+      Pengajuan Baru
+    </a>
+  @endif
 </div>
 
 <div class="page-content">

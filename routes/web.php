@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\TicketController;
@@ -95,18 +96,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/tickets/{ticket}/generate-po', [PurchaseOrderController::class, 'generate'])->name('tickets.generate-po');
     });
 
-    // [Team Leader only] Forward ticket
+    // [Team Leader only] Forward ticket + Bulk Forward
     Route::middleware('role:team_leader')->group(function () {
         Route::post('/tickets/{ticket}/forward', [TicketController::class, 'forward'])->name('tickets.forward');
+        Route::post('/tickets/bulk-forward', [TicketController::class, 'bulkForward'])->name('tickets.bulk-forward');
     });
 
-    // [Department Head only] Final decision
+    // [Department Head only] Final decision + Bulk Decide
     Route::middleware('role:department_head')->group(function () {
         Route::post('/tickets/{ticket}/decide', [TicketController::class, 'decide'])->name('tickets.decide');
+        Route::post('/tickets/bulk-decide', [TicketController::class, 'bulkDecide'])->name('tickets.bulk-decide');
     });
 
     // [PFA & Department Head only] Audit Logs
     Route::middleware('role:pfa,department_head')->group(function () {
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     });
+
+    // ─── Notification Routes ─────────────────────────────────
+    // All authenticated roles can receive and read notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
 });
