@@ -68,7 +68,7 @@
               @if($doc->isRejected() || $doc->isPending())
                 <div style="margin-top: var(--space-sm);">
                   <label class="form-label" style="font-size: 12px; margin-bottom: 4px; color: var(--color-muted);">Unggah File Baru untuk Mengganti (PDF, Maks. 10MB) <span class="required">*</span></label>
-                  <input type="file" name="document_files[{{ $doc->id }}]" accept=".pdf" class="form-control" style="padding: 6px 12px;" required>
+                  <input type="file" name="document_files[{{ $doc->id }}]" accept=".pdf" class="form-control" style="padding: 6px 12px;" required onchange="validatePdfFile(this)">
                 </div>
               @else
                 <div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
@@ -122,7 +122,7 @@ function addNewDocumentRow() {
     </div>
     <div style="flex: 1;">
       <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">File PDF <span class="required">*</span></label>
-      <input type="file" name="new_document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;">
+      <input type="file" name="new_document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;" onchange="validatePdfFile(this)">
     </div>
     <div style="align-self: flex-end; padding-bottom: 2px;">
       <button type="button" onclick="removeNewDocumentRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus Dokumen">
@@ -136,7 +136,18 @@ function addNewDocumentRow() {
 function removeNewDocumentRow(button) {
   button.closest('.new-document-row').remove();
 }
+
+// Client-side PDF Validator
+function validatePdfFile(input) {
+  const file = input.files[0];
+  if (file) {
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      showToast('error', 'Format Tidak Valid', 'Hanya file PDF yang diperbolehkan.');
+      input.value = ''; // Reset input
+    }
+  }
+}
 </script>
 @endpush
 @endsection
-

@@ -142,7 +142,7 @@
               </div>
               <div style="flex: 1;">
                 <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">File PDF <span class="required">*</span></label>
-                <input type="file" name="document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;">
+                <input type="file" name="document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;" onchange="validatePdfFile(this)">
               </div>
               <div style="align-self: flex-end; padding-bottom: 2px;">
                 <button type="button" onclick="removeDocumentRow(this)" class="btn btn-danger btn-icon btn-sm" style="display: none;" title="Hapus Dokumen">
@@ -202,7 +202,7 @@ function addDocumentRow() {
     </div>
     <div style="flex: 1;">
       <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">File PDF <span class="required">*</span></label>
-      <input type="file" name="document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;">
+      <input type="file" name="document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;" onchange="validatePdfFile(this)">
     </div>
     <div style="align-self: flex-end; padding-bottom: 2px;">
       <button type="button" onclick="removeDocumentRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus Dokumen">
@@ -228,6 +228,18 @@ function updateDeleteButtons() {
       delBtn.style.display = rows.length > 1 ? 'inline-flex' : 'none';
     }
   });
+}
+
+// Client-side PDF Validator
+function validatePdfFile(input) {
+  const file = input.files[0];
+  if (file) {
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      showToast('error', 'Format Tidak Valid', 'Hanya file PDF yang diperbolehkan.');
+      input.value = ''; // Reset input
+    }
+  }
 }
 </script>
 @endpush
