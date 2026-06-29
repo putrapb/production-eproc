@@ -87,7 +87,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Ticket detail and documents — all authenticated roles (AFTER /create route)
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
-    Route::get('/tickets/{ticket}/document', [TicketController::class, 'streamDocument'])->name('tickets.document');
+    Route::get('/tickets/document/{ticketDocument}', [TicketController::class, 'streamDocument'])->name('tickets.document');
     Route::get('/tickets/{ticket}/download-po', [PurchaseOrderController::class, 'download'])->name('tickets.download-po');
 
     // [PFA only] Document review + PO generation

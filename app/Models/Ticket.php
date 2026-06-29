@@ -81,6 +81,11 @@ class Ticket extends Model
         return $this->hasMany(ApprovalLog::class, 'ticket_id')->latest();
     }
 
+    public function documents(): HasMany
+    {
+        return $this->hasMany(TicketDocument::class, 'ticket_id');
+    }
+
     // ─────────────────────────────────────────────
     // Query Scopes
     // ─────────────────────────────────────────────

@@ -145,33 +145,48 @@
       {{-- Dokumen --}}
       <div class="card mb-lg">
         <div class="card-header">
-          <div class="heading-sm">Dokumen</div>
+          <div class="heading-sm">Dokumen Pendukung</div>
         </div>
         <div class="card-body">
-          <div class="detail-field">
-            <div class="detail-field-label">Dokumen Pendukung</div>
-            <div class="detail-field-value">
-              @if($ticket->document_path)
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-md);">
-                  <a href="{{ route('tickets.document', ['ticket' => $ticket->id]) }}" target="_blank" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-sm) var(--space-md); border:1px solid var(--color-hairline); border-radius:var(--radius-md); transition:background 0.2s;">
-                    <div style="width:36px; height:36px; background:var(--color-error-soft); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--color-error);">
-                      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+            @forelse($ticket->documents as $doc)
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:var(--space-sm) var(--space-md); border:1px solid var(--color-hairline); border-radius:var(--radius-md); background:var(--color-surface-card);">
+                <div style="display:flex; align-items:center; gap:var(--space-sm);">
+                  <div style="width:36px; height:36px; background:var(--color-error-soft); border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; color:var(--color-error); flex-shrink:0;">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  </div>
+                  <div>
+                    <div class="label-md text-ink">{{ $doc->description }}</div>
+                    <div class="caption text-muted" style="margin-top: 2px;">
+                      Status: 
+                      @if($doc->isAccepted())
+                        <span style="color:var(--color-success); font-weight:600;">{{ $doc->status_label }}</span>
+                      @elseif($doc->isRejected())
+                        <span style="color:var(--color-error); font-weight:600;">{{ $doc->status_label }}</span>
+                        @if($doc->feedback)
+                          <br><span style="font-style: italic;">Catatan revisi: "{{ $doc->feedback }}"</span>
+                        @endif
+                      @else
+                        <span style="color:var(--color-info); font-weight:600;">{{ $doc->status_label }}</span>
+                      @endif
                     </div>
-                    <div>
-                      <div class="label-md text-ink">Dokumen Pendukung — Tiket #{{ str_pad($ticket->id, 4, '0', STR_PAD_LEFT) }}</div>
-                      <div class="caption text-muted">Klik untuk melihat file (PDF) · Diunggah {{ $ticket->created_at->format('d M Y') }}</div>
-                    </div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:var(--space-xs);">
+                  <a href="{{ route('tickets.document', ['ticketDocument' => $doc->id]) }}" target="_blank" class="btn btn-ghost btn-sm">
+                    Lihat PDF
                   </a>
-                  <a href="{{ route('tickets.document', ['ticket' => $ticket->id, 'download' => 1]) }}" class="btn btn-ghost btn-sm">
+                  <a href="{{ route('tickets.document', ['ticketDocument' => $doc->id, 'download' => 1]) }}" class="btn btn-ghost btn-sm" title="Download">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-                    Download
                   </a>
                 </div>
-              @else
-                <span class="text-muted">Belum ada dokumen</span>
-              @endif
-            </div>
+              </div>
+            @empty
+              <span class="text-muted">Belum ada dokumen</span>
+            @endforelse
           </div>
+        </div>
+      </div>
 
           {{-- PO Document --}}
           @if($ticket->po_path)
@@ -309,13 +324,9 @@
 
     {{-- PFA: Document review --}}
     @if($user->isPfa() && $status === 'pending_review')
-      <button onclick="openModal('modal-reject')" class="btn btn-danger">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
-        Minta Revisi
-      </button>
-      <button onclick="openModal('modal-accept')" class="btn btn-orient">
+      <button onclick="openModal('modal-review-documents')" class="btn btn-primary">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
-        Terima Dokumen
+        Tinjau Dokumen Pendukung
       </button>
     @endif
 
@@ -373,57 +384,74 @@
 
 {{-- ═══════════════════ MODALS ═══════════════════ --}}
 
-{{-- Modal: Accept Document (PFA) --}}
+{{-- Modal: Review Documents (PFA) --}}
 @if($user->isPfa() && $status === 'pending_review')
-<div class="modal-overlay" id="modal-accept">
-  <div class="modal-card">
-    <div class="modal-icon success">
-      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+<div class="modal-overlay" id="modal-review-documents">
+  <div class="modal-card" style="max-width: 650px;">
+    <div class="modal-icon" style="background: var(--color-primary-soft);">
+      <svg width="24" height="24" fill="none" stroke="var(--color-primary)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
     </div>
-    <div class="modal-title">Terima Dokumen Pendukung?</div>
-    <div class="modal-body">
-      Anda akan menerima Dokumen Pendukung tiket ini dan meneruskan ke tahap Smart Validation.
+    <div class="modal-title">Tinjau Dokumen Pendukung</div>
+    <div class="modal-body" style="text-align: left; margin-bottom: var(--space-sm);">
+      Evaluasi setiap dokumen pendukung di bawah ini. Jika ada satu atau lebih dokumen yang ditolak, tiket akan dikembalikan ke Requester untuk revisi.
     </div>
     <form method="POST" action="{{ route('tickets.review', $ticket) }}">
       @csrf
-      <input type="hidden" name="action" value="accept">
-      <div class="form-group">
-        <label class="form-label">Catatan (opsional)</label>
-        <textarea name="notes" class="form-control" rows="2" placeholder="Tambahkan catatan..."></textarea>
+      <div style="display: flex; flex-direction: column; gap: var(--space-md); margin: var(--space-md) 0; text-align: left;">
+        @foreach($ticket->documents as $doc)
+          <div style="background: var(--color-surface-soft); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
+              <span style="font-weight: 600; font-size: 14px; color: var(--color-text);">{{ $doc->description }}</span>
+              <a href="{{ route('tickets.document', ['ticketDocument' => $doc->id]) }}" target="_blank" class="btn btn-ghost btn-sm" style="padding: 4px 8px; font-size: 11px;">Lihat PDF</a>
+            </div>
+            
+            <div style="display: flex; gap: var(--space-md); margin-bottom: var(--space-sm);">
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                <input type="radio" name="document_status[{{ $doc->id }}]" value="accepted" checked onchange="toggleDocFeedback({{ $doc->id }}, false)">
+                <span style="color: var(--color-success); font-weight: 600;">Setuju</span>
+              </label>
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                <input type="radio" name="document_status[{{ $doc->id }}]" value="rejected" onchange="toggleDocFeedback({{ $doc->id }}, true)">
+                <span style="color: var(--color-error); font-weight: 600;">Perlu Revisi</span>
+              </label>
+            </div>
+
+            <div id="feedback-container-{{ $doc->id }}" style="display: none;">
+              <input type="text" name="document_feedback[{{ $doc->id }}]" class="form-control" placeholder="Masukkan alasan penolakan/revisi..." style="font-size: 12px; padding: 6px 12px;">
+            </div>
+          </div>
+        @endforeach
       </div>
+
+      <div class="form-group" style="text-align: left; margin-top: var(--space-md);">
+        <label class="form-label">Catatan Tinjauan Global (opsional)</label>
+        <textarea name="notes" class="form-control" rows="2" placeholder="Tambahkan catatan untuk seluruh proses pemeriksaan ini..."></textarea>
+      </div>
+
       <div class="modal-footer">
-        <button type="button" onclick="closeModal('modal-accept')" class="btn btn-secondary">Batal</button>
-        <button type="submit" class="btn btn-orient">Terima Dokumen</button>
+        <button type="button" onclick="closeModal('modal-review-documents')" class="btn btn-secondary">Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan Tinjauan</button>
       </div>
     </form>
   </div>
 </div>
 
-{{-- Modal: Reject Document (PFA) --}}
-<div class="modal-overlay" id="modal-reject">
-  <div class="modal-card">
-    <div class="modal-icon danger">
-      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
-    </div>
-    <div class="modal-title">Minta Revisi?</div>
-    <div class="modal-body">
-      Tiket akan dikembalikan ke requester untuk perbaikan dokumen. Berikan alasan yang jelas.
-    </div>
-    <form method="POST" action="{{ route('tickets.review', $ticket) }}">
-      @csrf
-      <input type="hidden" name="action" value="reject">
-      <div class="form-group">
-        <label class="form-label">Alasan Revisi <span class="required">*</span></label>
-        <textarea name="notes" class="form-control" rows="3" placeholder="Jelaskan dokumen yang perlu diperbaiki..." required></textarea>
-      </div>
-      <div class="modal-footer">
-        <button type="button" onclick="closeModal('modal-reject')" class="btn btn-secondary">Batal</button>
-        <button type="submit" class="btn btn-danger">Minta Revisi</button>
-      </div>
-    </form>
-  </div>
-</div>
+@push('scripts')
+<script>
+function toggleDocFeedback(docId, show) {
+  const container = document.getElementById('feedback-container-' + docId);
+  if (container) {
+    container.style.display = show ? 'block' : 'none';
+    const input = container.querySelector('input');
+    if (input) {
+      input.required = show;
+    }
+  }
+}
+</script>
+@endpush
 @endif
+
 
 {{-- Modal: Smart Validation (Requester) --}}
 @if($user->isRequester() && $status === 'need_to_validate')

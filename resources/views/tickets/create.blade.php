@@ -131,38 +131,37 @@
         <div class="detail-section-title">Dokumen Pendukung</div>
 
         <div class="form-group">
-          <label class="form-label">Unggah Dokumen PDF <span class="required">*</span></label>
+          <label class="form-label" style="margin-bottom: var(--space-sm); display: block;">Unggah Dokumen Pendukung (Maks. 10 MB per file, Format: PDF) <span class="required">*</span></label>
 
-          <div class="file-upload-zone" id="upload-zone" onclick="document.getElementById('izin_prinsip').click()"
-               ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-            <input type="file" id="izin_prinsip" name="izin_prinsip" accept=".pdf" onchange="handleFileSelect(event)">
-
-            <div id="upload-prompt">
-              <div class="file-upload-icon">
-                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
+          <div id="documents-container" style="display: flex; flex-direction: column; gap: var(--space-md);">
+            {{-- Initial row --}}
+            <div class="document-row" style="display: flex; gap: var(--space-md); align-items: flex-start; background: var(--color-surface-soft); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+              <div style="flex: 1;">
+                <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Nama / Deskripsi Dokumen <span class="required">*</span></label>
+                <input type="text" name="document_descriptions[]" class="form-control" placeholder="Contoh: Izin Prinsip / RKS / HPS" required>
               </div>
-              <div class="label-md" style="margin-top:var(--space-sm);">Drag & drop file PDF di sini</div>
-              <div class="body-sm text-muted" style="margin-top:4px;">atau klik untuk memilih file</div>
-              <div class="caption text-muted" style="margin-top:var(--space-xs);">Maks. 10 MB · Format: PDF</div>
-            </div>
-
-            <div id="file-selected" style="display:none;">
-              <div class="file-upload-icon" style="color:var(--color-error);">
-                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-                </svg>
+              <div style="flex: 1;">
+                <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">File PDF <span class="required">*</span></label>
+                <input type="file" name="document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;">
               </div>
-              <div id="file-name" class="label-md" style="margin-top:var(--space-sm);"></div>
-              <div id="file-size" class="caption text-muted" style="margin-top:4px;"></div>
-              <button type="button" onclick="clearFile(event)" class="btn btn-ghost btn-sm" style="margin-top:var(--space-sm);">
-                Ganti File
-              </button>
+              <div style="align-self: flex-end; padding-bottom: 2px;">
+                <button type="button" onclick="removeDocumentRow(this)" class="btn btn-danger btn-icon btn-sm" style="display: none;" title="Hapus Dokumen">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
             </div>
           </div>
 
-          @error('izin_prinsip') <div class="form-error" style="margin-top:6px;">{{ $message }}</div> @enderror
+          <button type="button" onclick="addDocumentRow()" class="btn btn-secondary btn-sm" style="margin-top: var(--space-md); display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+            Tambah Dokumen Lainnya
+          </button>
+
+          @if ($errors->has('document_files') || $errors->has('document_files.*') || $errors->has('document_descriptions') || $errors->has('document_descriptions.*'))
+            <div class="form-error" style="margin-top:12px; display: block;">
+              Harap periksa kembali dokumen yang diunggah. Semua deskripsi dan file harus diisi dan berformat PDF.
+            </div>
+          @endif
         </div>
 
         <hr class="divider">
@@ -190,45 +189,45 @@ function formatAmount(input) {
   document.getElementById('amount').value = raw;
 }
 
-// File upload UX
-function handleFileSelect(e) {
-  const file = e.target.files[0];
-  if (file) showFile(file);
+// Dynamic Document Rows
+function addDocumentRow() {
+  const container = document.getElementById('documents-container');
+  const newRow = document.createElement('div');
+  newRow.className = 'document-row';
+  newRow.style = 'display: flex; gap: var(--space-md); align-items: flex-start; background: var(--color-surface-soft); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border); margin-top: var(--space-sm);';
+  newRow.innerHTML = `
+    <div style="flex: 1;">
+      <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Nama / Deskripsi Dokumen <span class="required">*</span></label>
+      <input type="text" name="document_descriptions[]" class="form-control" placeholder="Contoh: Izin Prinsip / RKS / HPS" required>
+    </div>
+    <div style="flex: 1;">
+      <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">File PDF <span class="required">*</span></label>
+      <input type="file" name="document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;">
+    </div>
+    <div style="align-self: flex-end; padding-bottom: 2px;">
+      <button type="button" onclick="removeDocumentRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus Dokumen">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>
+  `;
+  container.appendChild(newRow);
+  updateDeleteButtons();
 }
 
-function showFile(file) {
-  document.getElementById('upload-prompt').style.display = 'none';
-  document.getElementById('file-selected').style.display = 'block';
-  document.getElementById('file-name').textContent = file.name;
-  document.getElementById('file-size').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+function removeDocumentRow(button) {
+  const row = button.closest('.document-row');
+  row.remove();
+  updateDeleteButtons();
 }
 
-function clearFile(e) {
-  e.stopPropagation();
-  document.getElementById('izin_prinsip').value = '';
-  document.getElementById('upload-prompt').style.display = 'block';
-  document.getElementById('file-selected').style.display = 'none';
-}
-
-function handleDragOver(e) {
-  e.preventDefault();
-  document.getElementById('upload-zone').classList.add('dragover');
-}
-function handleDragLeave(e) {
-  document.getElementById('upload-zone').classList.remove('dragover');
-}
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('upload-zone').classList.remove('dragover');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type === 'application/pdf') {
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    document.getElementById('izin_prinsip').files = dt.files;
-    showFile(file);
-  } else {
-    showToast('error', 'Format Tidak Valid', 'Hanya file PDF yang diterima.');
-  }
+function updateDeleteButtons() {
+  const rows = document.querySelectorAll('.document-row');
+  rows.forEach(row => {
+    const delBtn = row.querySelector('button[onclick="removeDocumentRow(this)"]');
+    if (delBtn) {
+      delBtn.style.display = rows.length > 1 ? 'inline-flex' : 'none';
+    }
+  });
 }
 </script>
 @endpush

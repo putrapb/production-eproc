@@ -19,17 +19,25 @@ class UpdateTicketDocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'izin_prinsip' => ['required', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'], // 10 MB, double-validated MIME
+            'document_files'               => ['nullable', 'array'],
+            'document_files.*'             => ['file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'],
+            'new_document_files'           => ['nullable', 'array'],
+            'new_document_files.*'         => ['file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'],
+            'new_document_descriptions'     => ['nullable', 'array'],
+            'new_document_descriptions.*'   => ['required_with:new_document_files.*', 'string', 'max:255'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'izin_prinsip.required' => 'Dokumen izin prinsip wajib diunggah.',
-            'izin_prinsip.mimes'    => 'Dokumen harus dalam format PDF.',
-            'izin_prinsip.mimetypes' => 'Tipe file tidak valid. Hanya file PDF asli yang diperbolehkan.',
-            'izin_prinsip.max'      => 'Ukuran dokumen maksimal 10 MB.',
+            'document_files.*.mimes'       => 'Semua dokumen harus dalam format PDF.',
+            'document_files.*.mimetypes'   => 'Tipe file tidak valid. Hanya file PDF yang diperbolehkan.',
+            'document_files.*.max'         => 'Ukuran dokumen maksimal 10 MB.',
+            'new_document_files.*.mimes'   => 'Semua dokumen baru harus dalam format PDF.',
+            'new_document_files.*.mimetypes' => 'Tipe file tidak valid. Hanya file PDF yang diperbolehkan.',
+            'new_document_files.*.max'     => 'Ukuran dokumen baru maksimal 10 MB.',
+            'new_document_descriptions.*.required_with' => 'Nama/Deskripsi untuk dokumen baru wajib diisi.',
         ];
     }
 }

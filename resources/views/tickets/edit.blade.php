@@ -43,42 +43,55 @@
         @csrf
         @method('PUT')
 
-        <div class="detail-section-title">Unggah Ulang Dokumen Izin Prinsip</div>
+        <div class="detail-section-title">Dokumen Pendukung Saat Ini</div>
 
-        @if($ticket->izin_prinsip_path)
-        <div style="background:var(--color-surface-soft); border-radius:var(--radius-md); padding:var(--space-md); margin-bottom:var(--space-lg); display:flex; align-items:center; gap:var(--space-sm);">
-          <div style="color:var(--color-error);">
-            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          </div>
-          <div class="label-md">Dokumen saat ini tersimpan di sistem.</div>
-          <a href="{{ Storage::url($ticket->izin_prinsip_path) }}" target="_blank" class="btn btn-ghost btn-sm" style="margin-left:auto;">Lihat Dokumen Lama</a>
+        <div style="display: flex; flex-direction: column; gap: var(--space-md); margin-bottom: var(--space-xl);">
+          @foreach($ticket->documents as $doc)
+            <div style="background: var(--color-surface-soft); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
+                <span style="font-weight: 600; font-size: 14px; color: var(--color-text);">{{ $doc->description }}</span>
+                @if($doc->isAccepted())
+                  <span class="badge badge-success" style="background: var(--color-success-soft); color: var(--color-success); font-weight: 600;">Disetujui</span>
+                @elseif($doc->isRejected())
+                  <span class="badge badge-danger" style="background: var(--color-error-soft); color: var(--color-error); font-weight: 600;">Perlu Revisi</span>
+                @else
+                  <span class="badge badge-info" style="background: var(--color-info-soft); color: var(--color-info); font-weight: 600;">Pending</span>
+                @endif
+              </div>
+
+              @if($doc->isRejected() && $doc->feedback)
+                <div style="font-size: 13px; color: var(--color-error); margin: 6px 0; font-style: italic; background: rgba(239,68,68,0.05); padding: 8px 12px; border-radius: 4px; border-left: 3px solid var(--color-error);">
+                  <strong>Catatan PFA:</strong> "{{ $doc->feedback }}"
+                </div>
+              @endif
+
+              @if($doc->isRejected() || $doc->isPending())
+                <div style="margin-top: var(--space-sm);">
+                  <label class="form-label" style="font-size: 12px; margin-bottom: 4px; color: var(--color-muted);">Unggah File Baru untuk Mengganti (PDF, Maks. 10MB) <span class="required">*</span></label>
+                  <input type="file" name="document_files[{{ $doc->id }}]" accept=".pdf" class="form-control" style="padding: 6px 12px;" required>
+                </div>
+              @else
+                <div style="margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
+                  <span class="caption text-muted">Tidak memerlukan revisi.</span>
+                  <a href="{{ route('tickets.document', ['ticketDocument' => $doc->id]) }}" target="_blank" class="btn btn-ghost btn-sm" style="padding: 4px 8px; font-size: 11px;">Lihat Dokumen</a>
+                </div>
+              @endif
+            </div>
+          @endforeach
         </div>
-        @endif
 
+        <hr class="divider">
+
+        <div class="detail-section-title">Tambah Dokumen Baru (Opsional)</div>
         <div class="form-group">
-          <label class="form-label">Dokumen Baru <span class="required">*</span></label>
-          <div class="file-upload-zone" id="upload-zone" onclick="document.getElementById('izin_prinsip').click()"
-               ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-            <input type="file" id="izin_prinsip" name="izin_prinsip" accept=".pdf" onchange="handleFileSelect(event)" required>
-            <div id="upload-prompt">
-              <div class="file-upload-icon">
-                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-              </div>
-              <div class="label-md" style="margin-top:var(--space-sm);">Drag & drop file PDF di sini</div>
-              <div class="body-sm text-muted" style="margin-top:4px;">atau klik untuk memilih file — Maks. 10 MB</div>
-            </div>
-            <div id="file-selected" style="display:none;">
-              <div style="color:var(--color-error);">
-                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              </div>
-              <div id="file-name" class="label-md" style="margin-top:var(--space-sm);"></div>
-              <div id="file-size" class="caption text-muted"></div>
-              <button type="button" onclick="clearFile(event)" class="btn btn-ghost btn-sm" style="margin-top:var(--space-sm);">Ganti File</button>
-            </div>
+          <div id="new-documents-container" style="display: flex; flex-direction: column; gap: var(--space-md);">
+            {{-- Dynamic rows will go here --}}
           </div>
-          @error('izin_prinsip') <div class="form-error" style="margin-top:6px;">{{ $message }}</div> @enderror
+
+          <button type="button" onclick="addNewDocumentRow()" class="btn btn-secondary btn-sm" style="margin-top: var(--space-md); display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+            Tambah Dokumen Lainnya
+          </button>
         </div>
 
         <hr class="divider">
@@ -97,37 +110,33 @@
 
 @push('scripts')
 <script>
-function handleFileSelect(e) {
-  const file = e.target.files[0];
-  if (file) showFile(file);
+function addNewDocumentRow() {
+  const container = document.getElementById('new-documents-container');
+  const newRow = document.createElement('div');
+  newRow.className = 'new-document-row';
+  newRow.style = 'display: flex; gap: var(--space-md); align-items: flex-start; background: var(--color-surface-soft); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);';
+  newRow.innerHTML = `
+    <div style="flex: 1;">
+      <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Nama / Deskripsi Dokumen <span class="required">*</span></label>
+      <input type="text" name="new_document_descriptions[]" class="form-control" placeholder="Contoh: RKS / HPS" required>
+    </div>
+    <div style="flex: 1;">
+      <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">File PDF <span class="required">*</span></label>
+      <input type="file" name="new_document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;">
+    </div>
+    <div style="align-self: flex-end; padding-bottom: 2px;">
+      <button type="button" onclick="removeNewDocumentRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus Dokumen">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div>
+  `;
+  container.appendChild(newRow);
 }
-function showFile(file) {
-  document.getElementById('upload-prompt').style.display = 'none';
-  document.getElementById('file-selected').style.display = 'block';
-  document.getElementById('file-name').textContent = file.name;
-  document.getElementById('file-size').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-}
-function clearFile(e) {
-  e.stopPropagation();
-  document.getElementById('izin_prinsip').value = '';
-  document.getElementById('upload-prompt').style.display = 'block';
-  document.getElementById('file-selected').style.display = 'none';
-}
-function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('dragover'); }
-function handleDragLeave(e) { document.getElementById('upload-zone').classList.remove('dragover'); }
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('upload-zone').classList.remove('dragover');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type === 'application/pdf') {
-    const dt = new DataTransfer();
-    dt.items.add(file);
-    document.getElementById('izin_prinsip').files = dt.files;
-    showFile(file);
-  } else {
-    showToast('error', 'Format Tidak Valid', 'Hanya file PDF yang diterima.');
-  }
+
+function removeNewDocumentRow(button) {
+  button.closest('.new-document-row').remove();
 }
 </script>
 @endpush
 @endsection
+

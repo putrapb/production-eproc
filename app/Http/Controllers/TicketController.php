@@ -8,6 +8,7 @@ use App\Models\ApprovalLog;
 use App\Models\Budget;
 use App\Models\Notification;
 use App\Models\Ticket;
+use App\Models\TicketDocument;
 use App\Services\SmartValidationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -74,10 +75,7 @@ class TicketController extends Controller
     {
         $user = $request->user();
 
-        // Upload izin prinsip PDF to local public storage
-        $folder  = config('eprocurement.storage.izin_prinsip_folder', 'izin_prinsip');
-        $path    = $request->file('izin_prinsip')->store($folder, 'public');
-
+        // 1. Create the ticket first
         $ticket = Ticket::create([
             'user_id'     => $user->id,
             'title'       => $request->title,
@@ -88,9 +86,35 @@ class TicketController extends Controller
             'quantity'    => $request->quantity,
             'vendor_name' => $request->vendor_name,
             'amount'      => $request->amount,
-            'document_path' => $path,
             'status'      => Ticket::STATUS_PENDING_REVIEW,
         ]);
+
+        // 2. Upload and save each document
+        $folder = config('eprocurement.storage.izin_prinsip_folder', 'izin_prinsip');
+        $firstPath = null;
+
+        if ($request->hasFile('document_files')) {
+            foreach ($request->file('document_files') as $index => $file) {
+                $description = $request->document_descriptions[$index] ?? 'Dokumen Pendukung';
+                $path = $file->store($folder, 'public');
+
+                if ($index === 0) {
+                    $firstPath = $path;
+                }
+
+                TicketDocument::create([
+                    'ticket_id'   => $ticket->id,
+                    'file_path'   => $path,
+                    'description' => $description,
+                    'status'      => 'pending',
+                ]);
+            }
+        }
+
+        // Save the first path to the legacy column as a fallback
+        if ($firstPath) {
+            $ticket->update(['document_path' => $firstPath]);
+        }
 
         // Log the submission
         ApprovalLog::create([
@@ -137,27 +161,62 @@ class TicketController extends Controller
 
         $folder = config('eprocurement.storage.izin_prinsip_folder', 'izin_prinsip');
 
-        // Delete old document from storage if exists
-        if ($ticket->document_path) {
-            Storage::disk('public')->delete($ticket->document_path);
+        // 1. Process replacements for existing rejected documents
+        if ($request->hasFile('document_files')) {
+            foreach ($request->file('document_files') as $docId => $file) {
+                $doc = TicketDocument::where('ticket_id', $ticket->id)->find($docId);
+                if ($doc && ($doc->isRejected() || $doc->isPending())) {
+                    // Delete old file
+                    Storage::disk('public')->delete($doc->file_path);
+
+                    // Store new file
+                    $path = $file->store($folder, 'public');
+
+                    // Update document
+                    $doc->update([
+                        'file_path' => $path,
+                        'status'    => 'pending',
+                        'feedback'  => null,
+                    ]);
+                }
+            }
         }
 
-        $path = $request->file('izin_prinsip')->store($folder, 'public');
+        // 2. Process any brand new documents added during revision
+        if ($request->hasFile('new_document_files')) {
+            foreach ($request->file('new_document_files') as $index => $file) {
+                $description = $request->new_document_descriptions[$index] ?? 'Dokumen Pendukung Baru';
+                $path = $file->store($folder, 'public');
 
+                TicketDocument::create([
+                    'ticket_id'   => $ticket->id,
+                    'file_path'   => $path,
+                    'description' => $description,
+                    'status'      => 'pending',
+                ]);
+            }
+        }
+
+        // Update legacy fallback column if needed
+        $firstDoc = $ticket->documents()->first();
+        if ($firstDoc) {
+            $ticket->update(['document_path' => $firstDoc->file_path]);
+        }
+
+        // Reset ticket status to pending_review
         $ticket->update([
-            'document_path' => $path,
-            'status'        => Ticket::STATUS_PENDING_REVIEW,
+            'status' => Ticket::STATUS_PENDING_REVIEW,
         ]);
 
         ApprovalLog::create([
             'ticket_id' => $ticket->id,
             'user_id'   => $request->user()->id,
             'action'    => ApprovalLog::ACTION_REVISED,
-            'notes'     => 'Dokumen izin prinsip diunggah ulang oleh Requester.',
+            'notes'     => 'Dokumen pendukung diunggah ulang/ditambahkan oleh Requester.',
         ]);
 
         return redirect()->route('tickets.show', $ticket)
-            ->with('success', 'Dokumen berhasil diunggah ulang. Tiket kembali ke status Pending Review.');
+            ->with('success', 'Dokumen berhasil diperbarui. Tiket kembali ke status Pending Review.');
     }
 
     /**
@@ -166,31 +225,56 @@ class TicketController extends Controller
     public function review(Request $request, Ticket $ticket): RedirectResponse
     {
         $request->validate([
-            'action' => ['required', 'in:accept,reject'],
-            'notes'  => ['nullable', 'string', 'max:1000'],
+            'document_status'     => ['required', 'array'],
+            'document_status.*'   => ['required', 'in:accepted,rejected'],
+            'document_feedback'   => ['nullable', 'array'],
+            'document_feedback.*' => ['nullable', 'string', 'max:1000'],
+            'notes'               => ['nullable', 'string', 'max:1000'],
         ]);
 
         $this->ensureStatus($ticket, Ticket::STATUS_PENDING_REVIEW);
 
-        if ($request->action === 'accept') {
-            $ticket->update(['status' => Ticket::STATUS_NEED_TO_VALIDATE]);
-            $action  = ApprovalLog::ACTION_FOLLOWED_UP;
-            $message = 'Dokumen diterima. Silakan jalankan Smart Validation untuk mengklasifikasikan anggaran.';
-        } else {
-            $ticket->update(['status' => Ticket::STATUS_REVISION]);
+        $hasRejected = false;
+        $rejectedNames = [];
+
+        DB::transaction(function () use ($request, $ticket, &$hasRejected, &$rejectedNames) {
+            foreach ($ticket->documents as $doc) {
+                $status = $request->document_status[$doc->id] ?? 'accepted';
+                $feedback = $request->document_feedback[$doc->id] ?? null;
+
+                if ($status === 'rejected') {
+                    $hasRejected = true;
+                    $rejectedNames[] = $doc->description;
+                }
+
+                $doc->update([
+                    'status'   => $status,
+                    'feedback' => $status === 'rejected' ? $feedback : null,
+                ]);
+            }
+
+            if ($hasRejected) {
+                $ticket->update(['status' => Ticket::STATUS_REVISION]);
+            } else {
+                $ticket->update(['status' => Ticket::STATUS_NEED_TO_VALIDATE]);
+            }
+        });
+
+        if ($hasRejected) {
             $action  = ApprovalLog::ACTION_REJECTED_DOCUMENT;
-            $message = 'Dokumen ditolak. Tiket dikembalikan ke Requester untuk revisi.';
-        }
+            $message = 'Beberapa dokumen memerlukan revisi. Tiket dikembalikan ke Requester.';
 
-        ApprovalLog::create([
-            'ticket_id' => $ticket->id,
-            'user_id'   => $request->user()->id,
-            'action'    => $action,
-            'notes'     => $request->notes,
-        ]);
+            Notification::notify(
+                $ticket->user_id,
+                'ticket_revised',
+                'Dokumen Perlu Revisi',
+                "Dokumen berikut perlu direvisi: " . implode(', ', $rejectedNames) . ". Catatan: " . ($request->notes ?? 'Silakan periksa detail tiket.'),
+                $ticket->id
+            );
+        } else {
+            $action  = ApprovalLog::ACTION_FOLLOWED_UP;
+            $message = 'Semua dokumen diterima. Silakan jalankan Smart Validation untuk mengklasifikasikan anggaran.';
 
-        // Notify the ticket owner
-        if ($request->action === 'accept') {
             Notification::notify(
                 $ticket->user_id,
                 'ticket_reviewed',
@@ -198,15 +282,14 @@ class TicketController extends Controller
                 "Dokumen tiket \"{$ticket->title}\" diterima oleh PFA. Silakan jalankan Smart Validation.",
                 $ticket->id
             );
-        } else {
-            Notification::notify(
-                $ticket->user_id,
-                'ticket_revised',
-                'Dokumen Perlu Revisi',
-                "Dokumen tiket \"{$ticket->title}\" diminta revisi oleh PFA.",
-                $ticket->id
-            );
         }
+
+        ApprovalLog::create([
+            'ticket_id' => $ticket->id,
+            'user_id'   => $request->user()->id,
+            'action'    => $action,
+            'notes'     => $request->notes ?? ($hasRejected ? 'Beberapa dokumen ditolak.' : 'Semua dokumen disetujui.'),
+        ]);
 
         return redirect()->route('tickets.show', $ticket)
             ->with('success', $message);
@@ -553,26 +636,23 @@ class TicketController extends Controller
             ->with('success', "{$count} tiket berhasil {$verb}.");
     }
 
-    /**
-     * Stream the Izin Prinsip document inline (for PDF preview).
-     */
-    public function streamDocument(Ticket $ticket, Request $request)
+    public function streamDocument(TicketDocument $ticketDocument, Request $request)
     {
-        $this->authorizeView($ticket, $request->user());
+        $this->authorizeView($ticketDocument->ticket, $request->user());
 
-        if (!$ticket->document_path || !Storage::disk('public')->exists($ticket->document_path)) {
+        if (!$ticketDocument->file_path || !Storage::disk('public')->exists($ticketDocument->file_path)) {
             abort(404, 'Dokumen tidak ditemukan.');
         }
 
-        $path = Storage::disk('public')->path($ticket->document_path);
+        $path = Storage::disk('public')->path($ticketDocument->file_path);
 
         if ($request->query('download')) {
-            return response()->download($path, 'Izin_Prinsip_' . $ticket->id . '.pdf');
+            return response()->download($path, str_replace(' ', '_', $ticketDocument->description) . '.pdf');
         }
 
         $headers = [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="izin-prinsip.pdf"'
+            'Content-Disposition' => 'inline; filename="' . basename($ticketDocument->file_path) . '"'
         ];
 
         return response()->file($path, $headers);
