@@ -85,23 +85,16 @@ class DashboardController extends Controller
                 'total'             => (clone $base)->count(),
                 'pending_review'    => (clone $base)->where('status', Ticket::STATUS_PENDING_REVIEW)->count(),
                 'need_to_validate'  => (clone $base)->where('status', Ticket::STATUS_NEED_TO_VALIDATE)->count(),
-                'in_approval'       => (clone $base)->whereIn('status', [
-                    Ticket::STATUS_PENDING_TEAM_LEADER,
-                    Ticket::STATUS_PENDING_DEPT_HEAD,
-                ])->count(),
+                'in_approval'       => (clone $base)->where('status', Ticket::STATUS_PENDING_DEPT_HEAD)->count(),
                 'approved'          => (clone $base)->where('status', Ticket::STATUS_APPROVED)->count(),
-                'po_generated'      => (clone $base)->where('status', Ticket::STATUS_PO_GENERATED)->count(),
+                'form_generated'    => (clone $base)->where('status', Ticket::STATUS_FORM_GENERATED)->count(),
                 'declined'          => (clone $base)->where('status', Ticket::STATUS_DECLINED)->count(),
                 'revision'          => (clone $base)->where('status', Ticket::STATUS_REVISION)->count(),
             ],
-            'pfa' => [
+            'team_leader' => [
                 'pending_review'    => (clone $base)->where('status', Ticket::STATUS_PENDING_REVIEW)->count(),
                 'approved'          => (clone $base)->where('status', Ticket::STATUS_APPROVED)->count(),
-                'po_generated'      => (clone $base)->where('status', Ticket::STATUS_PO_GENERATED)->count(),
-            ],
-            'team_leader' => [
-                'pending_team_leader' => (clone $base)->where('status', Ticket::STATUS_PENDING_TEAM_LEADER)->count(),
-                'pending_dept_head'   => (clone $base)->where('status', Ticket::STATUS_PENDING_DEPT_HEAD)->count(),
+                'form_generated'    => (clone $base)->where('status', Ticket::STATUS_FORM_GENERATED)->count(),
             ],
             'department_head' => [
                 'pending_dept_head'   => (clone $base)->where('status', Ticket::STATUS_PENDING_DEPT_HEAD)->count(),

@@ -50,8 +50,8 @@
           <svg width="22" height="22" fill="none" stroke="var(--color-success)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
         </div>
         <div class="stat-card-label">Disetujui</div>
-        <div class="stat-card-value">{{ ($s['approved'] ?? 0) + ($s['po_generated'] ?? 0) }}</div>
-        <div class="stat-card-sub">Termasuk PO terbit</div>
+        <div class="stat-card-value">{{ ($s['approved'] ?? 0) + ($s['form_generated'] ?? 0) }}</div>
+        <div class="stat-card-sub">Termasuk form terbit</div>
       </div>
 
       <div class="stat-card">
@@ -63,56 +63,31 @@
         <div class="stat-card-sub">Butuh tindak lanjut</div>
       </div>
 
-    @elseif(auth()->user()->isPfa())
-      <div class="stat-card">
-        <div class="stat-card-icon" style="background:var(--color-info-soft);">
-          <svg width="22" height="22" fill="none" stroke="var(--color-info)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
-        </div>
-        <div class="stat-card-label">Menunggu Review</div>
-        <div class="stat-card-value">{{ $ticketSummary['pending_review'] ?? 0 }}</div>
-        <div class="stat-card-sub">Perlu ditinjau dokumen</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-icon" style="background:var(--color-success-soft);">
-          <svg width="22" height="22" fill="none" stroke="var(--color-success)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
-        </div>
-        <div class="stat-card-label">Siap Generate PO</div>
-        <div class="stat-card-value">{{ $ticketSummary['approved'] ?? 0 }}</div>
-        <div class="stat-card-sub">Disetujui Div Head</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-icon" style="background:var(--color-secondary-soft);">
-          <svg width="22" height="22" fill="none" stroke="var(--color-secondary)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-        </div>
-        <div class="stat-card-label">PO Diterbitkan</div>
-        <div class="stat-card-value">{{ $ticketSummary['po_generated'] ?? 0 }}</div>
-        <div class="stat-card-sub">Bulan ini</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-card-icon" style="background:var(--color-primary-soft);">
-          <svg width="22" height="22" fill="none" stroke="var(--color-primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        </div>
-        <div class="stat-card-label">Total Tiket Aktif</div>
-        <div class="stat-card-value">{{ ($ticketSummary['pending_review'] ?? 0) + ($ticketSummary['approved'] ?? 0) }}</div>
-        <div class="stat-card-sub">Membutuhkan perhatian</div>
-      </div>
-
     @elseif(auth()->user()->isTeamLeader())
+      @php $s = $ticketSummary; @endphp
       <div class="stat-card">
         <div class="stat-card-icon" style="background:var(--color-info-soft);">
           <svg width="22" height="22" fill="none" stroke="var(--color-info)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
         </div>
-        <div class="stat-card-label">Menunggu Review Saya</div>
-        <div class="stat-card-value">{{ $ticketSummary['pending_team_leader'] ?? 0 }}</div>
-        <div class="stat-card-sub">Perlu diteruskan</div>
+        <div class="stat-card-label">Cek Dokumen</div>
+        <div class="stat-card-value">{{ $s['pending_review'] ?? 0 }}</div>
+        <div class="stat-card-sub">Perlu pemeriksaan dokumen</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-icon" style="background:var(--color-warning-soft);">
-          <svg width="22" height="22" fill="none" stroke="var(--color-warning-text)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v4M12 16h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          <svg width="22" height="22" fill="none" stroke="var(--color-warning-text)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
         </div>
-        <div class="stat-card-label">Di Department Head</div>
-        <div class="stat-card-value">{{ $ticketSummary['pending_dept_head'] ?? 0 }}</div>
-        <div class="stat-card-sub">Menunggu keputusan final</div>
+        <div class="stat-card-label">Siap Terbit Form</div>
+        <div class="stat-card-value">{{ $s['approved'] ?? 0 }}</div>
+        <div class="stat-card-sub">Disetujui Dept Head</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon" style="background:var(--color-success-soft);">
+          <svg width="22" height="22" fill="none" stroke="var(--color-success)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+        <div class="stat-card-label">Form Diterbitkan</div>
+        <div class="stat-card-value">{{ $s['form_generated'] ?? 0 }}</div>
+        <div class="stat-card-sub">Total selesai</div>
       </div>
 
     @elseif(auth()->user()->isDepartmentHead())
