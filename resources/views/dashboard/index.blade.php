@@ -233,9 +233,11 @@
       <div style="overflow:hidden; border-radius:0 0 var(--radius-lg) var(--radius-lg);">
         @forelse($recentTickets as $ticket)
           <a href="{{ route('tickets.show', $ticket) }}" class="topbar-menu-item" style="padding:var(--space-md) var(--space-lg); text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); border-bottom:1px solid var(--color-hairline-soft);">
-            <span class="badge badge-{{ str_replace('_','-',$ticket->status) }}" style="flex-shrink:0; font-size:11px; padding:3px 8px;">
-              {{ $ticket->status_label }}
-            </span>
+            <div style="flex-shrink:0; width:150px; display:flex;">
+              <span class="badge badge-{{ str_replace('_','-',$ticket->status) }}" style="font-size:11px; padding:3px 8px; width:100%; justify-content:center; text-align:center;">
+                {{ $ticket->status_label }}
+              </span>
+            </div>
             <div style="flex:1; min-width:0;">
               <div class="label-md text-ink truncate">{{ $ticket->title }}</div>
               <div class="caption text-muted">{{ $ticket->formatted_total_amount }} · {{ $ticket->updated_at->diffForHumans() }}</div>
