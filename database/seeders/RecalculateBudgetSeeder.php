@@ -20,6 +20,11 @@ class RecalculateBudgetSeeder extends Seeder
 {
     public function run(): void
     {
+        // 0. Delete the "Pengadaan Penambahan Kapasitas Storage BNI" ticket so it is cleared completely
+        Ticket::where('id', 5)
+            ->orWhere('title', 'Pengadaan Penambahan Kapasitas Storage BNI')
+            ->delete();
+
         // 1. Reset all used and locked amounts to 0
         foreach (Budget::all() as $budget) {
             $budget->update([

@@ -9,7 +9,15 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
   <!-- Design System -->
-  <link rel="stylesheet" href="{{ asset('css/app.css') }}?v=1.0.1">
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}?v=1.0.5">
+
+  <style>
+    /* Bulletproof fix for badge-form-generated styling to bypass any server-side static file cache */
+    .badge-form-generated {
+      background: #E8F9ED !important;
+      color: #1A7A36 !important;
+    }
+  </style>
 
   @stack('styles')
 </head>
