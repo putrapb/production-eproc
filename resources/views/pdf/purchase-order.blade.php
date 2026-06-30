@@ -280,7 +280,7 @@
             font-size: 10px;
             font-weight: bold;
             color: #1a1a2e;
-            margin-top: 44px;
+            margin-top: 65px;
         }
         .sig-title {
             font-size: 9px;
@@ -570,7 +570,7 @@
                 <div class="sig-role">Dibuat oleh / Requester</div>
                 <div class="sig-name-box">
                     @php $qrUrl = \Illuminate\Support\Facades\URL::signedRoute('tickets.verify', ['ticket' => $ticket->id]); @endphp
-                    <div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; text-align: center;">
+                    <div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; text-align: center;">
                         <img src="data:image/png;base64,{{ \Milon\Barcode\Facades\DNS2DFacade::getBarcodePNG($qrUrl, 'QRCODE', 1.8, 1.8) }}" alt="QR Code" />
                     </div>
                     <div class="sig-name">{{ $ticket->user->name }}</div>
@@ -588,7 +588,7 @@
             <div class="signature-cell">
                 <div class="sig-role">Diterbitkan oleh / Team Leader</div>
                 <div class="sig-name-box">
-                    <div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; text-align: center;">
+                    <div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; text-align: center;">
                         <img src="data:image/png;base64,{{ \Milon\Barcode\Facades\DNS2DFacade::getBarcodePNG($qrUrl, 'QRCODE', 1.8, 1.8) }}" alt="QR Code" />
                     </div>
                     <div class="sig-name">{{ $generated_by->name }}</div>
@@ -610,7 +610,7 @@
                 <div class="sig-role">Disetujui oleh / Dept. Head</div>
                 <div class="sig-name-box">
                     @if($divHeadLog)
-                        <div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; text-align: center;">
+                        <div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; text-align: center;">
                             <img src="data:image/png;base64,{{ \Milon\Barcode\Facades\DNS2DFacade::getBarcodePNG($qrUrl, 'QRCODE', 1.8, 1.8) }}" alt="QR Code" />
                         </div>
                         <div class="sig-name">{{ $divHeadLog->user->name }}</div>
