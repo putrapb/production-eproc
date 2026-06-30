@@ -31,7 +31,7 @@ class HrEmployee extends Model
      *  - "Department Head" position → department_head (decision maker)
      *  - "Team Leader" position     → team_leader (forwarder/reviewer)
      *  - "Division Head" position   → department_head (legacy mapping, same as dept head)
-     *  - Procurement & Fixed Assets team → pfa
+     *  - Procurement & Fixed Assets team → team_leader (replaces legacy pfa role)
      *  - All other IT Infrastructure PM staff → requester
      */
     public function deriveRole(): string
@@ -54,7 +54,7 @@ class HrEmployee extends Model
         }
 
         if (str_contains($position, 'procurement') || str_contains($position, 'fixed assets')) {
-            return 'pfa';
+            return 'team_leader';
         }
 
         return 'requester';
