@@ -359,7 +359,7 @@
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
         Tolak Pengajuan
       </button>
-      <button onclick="openModal('modal-approve')" class="btn btn-primary">
+      <button onclick="openModal('modal-approve')" class="btn btn-success">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
         Setujui Pengajuan
       </button>
@@ -536,7 +536,7 @@ function toggleDocFeedback(docId, show) {
       </div>
       <div class="modal-footer">
         <button type="button" onclick="closeModal('modal-approve')" class="btn btn-secondary">Batal</button>
-        <button type="submit" class="btn btn-primary">Setujui</button>
+        <button type="submit" class="btn btn-success">Setujui</button>
       </div>
     </form>
   </div>
