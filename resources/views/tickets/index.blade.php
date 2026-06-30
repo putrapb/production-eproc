@@ -130,7 +130,7 @@
 </div>
 
 {{-- Modal Custom untuk Bulk Reject Notes --}}
-<div class="modal-overlay" id="modal-bulk-reject-notes" style="display:none; z-index:10000;">
+<div class="modal-overlay" id="modal-bulk-reject-notes" style="z-index:10000;">
   <div class="modal-card">
     <div class="modal-icon danger">
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
@@ -151,7 +151,7 @@
 </div>
 
 {{-- Modal Custom untuk Bulk Accept (Team Leader) --}}
-<div class="modal-overlay" id="modal-bulk-accept-confirm" style="display:none; z-index:10000;">
+<div class="modal-overlay" id="modal-bulk-accept-confirm" style="z-index:10000;">
   <div class="modal-card">
     <div class="modal-icon success" style="background: var(--color-success-soft); color: var(--color-success-text);">
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
@@ -168,7 +168,7 @@
 </div>
 
 {{-- Modal Custom untuk Bulk Approve (Dept Head) --}}
-<div class="modal-overlay" id="modal-bulk-approve-confirm" style="display:none; z-index:10000;">
+<div class="modal-overlay" id="modal-bulk-approve-confirm" style="z-index:10000;">
   <div class="modal-card">
     <div class="modal-icon success" style="background: var(--color-success-soft); color: var(--color-success-text);">
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
@@ -406,7 +406,7 @@ function openBulkRejectModal(type) {
   
   // Show modal
   const modal = document.getElementById('modal-bulk-reject-notes');
-  if (modal) modal.style.display = 'flex';
+  if (modal) modal.classList.add('open');
   
   // Set up click handler for the submit button inside modal
   const submitBtn = document.getElementById('btn-submit-bulk-reject');
@@ -484,12 +484,12 @@ function openBulkAcceptModal() {
   if (checked.length === 0) return;
   document.getElementById('bulk-accept-count').textContent = checked.length;
   const modal = document.getElementById('modal-bulk-accept-confirm');
-  if (modal) modal.style.display = 'flex';
+  if (modal) modal.classList.add('open');
 }
 
 function closeBulkAcceptModal() {
   const modal = document.getElementById('modal-bulk-accept-confirm');
-  if (modal) modal.style.display = 'none';
+  if (modal) modal.classList.remove('open');
 }
 
 function executeBulkAccept() {
@@ -522,12 +522,12 @@ function openBulkApproveModal() {
   if (checked.length === 0) return;
   document.getElementById('bulk-approve-count').textContent = checked.length;
   const modal = document.getElementById('modal-bulk-approve-confirm');
-  if (modal) modal.style.display = 'flex';
+  if (modal) modal.classList.add('open');
 }
 
 function closeBulkApproveModal() {
   const modal = document.getElementById('modal-bulk-approve-confirm');
-  if (modal) modal.style.display = 'none';
+  if (modal) modal.classList.remove('open');
 }
 
 function executeBulkApprove() {
