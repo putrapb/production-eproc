@@ -65,7 +65,7 @@
           <div class="form-group">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
               <label class="form-label" style="margin-bottom: 0;">PIC (Person In Charge)</label>
-              <button type="button" onclick="addPicRow()" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11px;">
+              <button type="button" id="btn-add-pic" onclick="addPicRow()" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11px; {{ count(old('pic_name', [''])) >= 2 ? 'display: none;' : '' }}">
                 + Tambah PIC
               </button>
             </div>
@@ -251,6 +251,8 @@ function updateDeleteButtons() {
 // Dynamic PIC Rows
 function addPicRow() {
   const container = document.getElementById('pic-container');
+  if (container.children.length >= 2) return;
+  
   const newRow = document.createElement('div');
   newRow.className = 'pic-row';
   newRow.style = 'display: flex; gap: var(--space-sm); align-items: center; margin-top: var(--space-xs);';
@@ -280,6 +282,11 @@ function updatePicDeleteButtons() {
       delBtn.style.display = rows.length > 1 ? 'inline-flex' : 'none';
     }
   });
+  
+  const addBtn = document.getElementById('btn-add-pic');
+  if (addBtn) {
+    addBtn.style.display = rows.length >= 2 ? 'none' : 'inline-flex';
+  }
 }
 
 // Client-side PDF Validator
