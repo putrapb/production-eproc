@@ -17,6 +17,23 @@
       background: #E8F9ED !important;
       color: #1A7A36 !important;
     }
+    /* Bulletproof fix for buttons to bypass any CSS caching */
+    .btn-success {
+      background: #34C759 !important;
+      color: #fff !important;
+    }
+    .btn-success:hover {
+      background: #1A7A36 !important;
+      color: #fff !important;
+    }
+    .btn-danger {
+      background: #E53E3E !important;
+      color: #fff !important;
+    }
+    .btn-danger:hover {
+      background: #C53030 !important;
+      color: #fff !important;
+    }
   </style>
 
   @stack('styles')
