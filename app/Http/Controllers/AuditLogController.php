@@ -43,15 +43,16 @@ class AuditLogController extends Controller
         // Get actions from ApprovalLog constants to populate dropdown
         $actionOptions = [
             ApprovalLog::ACTION_SUBMITTED            => 'Tiket diajukan',
-            ApprovalLog::ACTION_FOLLOWED_UP          => 'Dokumen diterima oleh PFA',
-            ApprovalLog::ACTION_REJECTED_DOCUMENT    => 'Dokumen ditolak oleh PFA',
+            ApprovalLog::ACTION_FOLLOWED_UP          => 'Dokumen diterima oleh Team Leader',
+            ApprovalLog::ACTION_REJECTED_DOCUMENT    => 'Dokumen ditolak oleh Team Leader',
             ApprovalLog::ACTION_REVISED              => 'Dokumen direvisi oleh Requester',
             ApprovalLog::ACTION_VALIDATED            => 'Smart Validation berhasil',
             ApprovalLog::ACTION_CROSS_FUND_REQUESTED => 'Silang dana diajukan',
-            ApprovalLog::ACTION_FORWARDED            => 'Diteruskan ke Division Head',
+            ApprovalLog::ACTION_FORWARDED            => 'Diteruskan ke Department Head',
             ApprovalLog::ACTION_APPROVED             => 'Pengadaan disetujui',
             ApprovalLog::ACTION_DECLINED             => 'Pengadaan ditolak',
             ApprovalLog::ACTION_PO_ISSUED            => 'Purchase Order diterbitkan',
+            ApprovalLog::ACTION_FORM_ISSUED          => 'Form Pengadaan diterbitkan',
         ];
 
         return view('audit-logs.index', compact('logs', 'search', 'action', 'actionOptions'));

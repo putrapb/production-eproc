@@ -23,7 +23,8 @@ class ApprovalLog extends Model
     const ACTION_FORWARDED            = 'forwarded';         // Team Leader → DeptHead
     const ACTION_APPROVED             = 'approved';          // DeptHead approve
     const ACTION_DECLINED             = 'declined';          // DeptHead decline
-    const ACTION_PO_ISSUED            = 'po_issued';         // PFA generate PO
+    const ACTION_PO_ISSUED            = 'po_issued';         // Legacy PFA generate PO
+    const ACTION_FORM_ISSUED          = 'form_issued';       // Team Leader generate Form
 
     protected $fillable = [
         'ticket_id',
@@ -57,8 +58,8 @@ class ApprovalLog extends Model
     {
         return match ($this->action) {
             self::ACTION_SUBMITTED            => 'Tiket diajukan',
-            self::ACTION_FOLLOWED_UP          => 'Dokumen diterima oleh PFA',
-            self::ACTION_REJECTED_DOCUMENT    => 'Dokumen ditolak oleh PFA',
+            self::ACTION_FOLLOWED_UP          => 'Dokumen diterima oleh Team Leader',
+            self::ACTION_REJECTED_DOCUMENT    => 'Dokumen ditolak oleh Team Leader',
             self::ACTION_REVISED              => 'Dokumen direvisi oleh Requester',
             self::ACTION_VALIDATED            => 'Smart Validation berhasil',
             self::ACTION_CROSS_FUND_REQUESTED => 'Silang dana diajukan',
@@ -66,6 +67,7 @@ class ApprovalLog extends Model
             self::ACTION_APPROVED             => 'Pengadaan disetujui',
             self::ACTION_DECLINED             => 'Pengadaan ditolak',
             self::ACTION_PO_ISSUED            => 'Purchase Order diterbitkan',
+            self::ACTION_FORM_ISSUED          => 'Form Pengadaan diterbitkan',
             default                           => $this->action,
         };
     }
