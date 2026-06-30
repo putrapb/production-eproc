@@ -99,7 +99,7 @@
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
           Tolak Dokumen
         </button>
-        <button type="button" onclick="confirmBulkReview('accept')" class="btn btn-success" style="font-size:13px; font-weight:600;">
+        <button type="button" onclick="openBulkAcceptModal()" class="btn btn-success" style="font-size:13px; font-weight:600;">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
           Terima Dokumen
         </button>
@@ -116,7 +116,7 @@
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
           Tolak
         </button>
-        <button type="button" onclick="confirmBulkAction('approve')" class="btn btn-success" style="font-size:13px; font-weight:600;">
+        <button type="button" onclick="openBulkApproveModal()" class="btn btn-success" style="font-size:13px; font-weight:600;">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
           Setujui
         </button>
@@ -146,6 +146,40 @@
     <div class="modal-footer">
       <button type="button" onclick="closeBulkRejectModal()" class="btn btn-secondary">Kembali</button>
       <button type="button" id="btn-submit-bulk-reject" class="btn btn-danger">Tolak Tiket</button>
+    </div>
+  </div>
+</div>
+
+{{-- Modal Custom untuk Bulk Accept (Team Leader) --}}
+<div class="modal-overlay" id="modal-bulk-accept-confirm" style="display:none; z-index:10000;">
+  <div class="modal-card">
+    <div class="modal-icon success" style="background: var(--color-success-soft); color: var(--color-success-text);">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+    </div>
+    <div class="modal-title">Terima Dokumen Pendukung?</div>
+    <div class="modal-body">
+      Anda yakin ingin menyetujui (terima dokumen) untuk <strong id="bulk-accept-count">0</strong> tiket ini? Tiket akan dilanjutkan ke tahap berikutnya.
+    </div>
+    <div class="modal-footer">
+      <button type="button" onclick="closeBulkAcceptModal()" class="btn btn-secondary">Batal</button>
+      <button type="button" onclick="executeBulkAccept()" class="btn btn-success">Terima Dokumen</button>
+    </div>
+  </div>
+</div>
+
+{{-- Modal Custom untuk Bulk Approve (Dept Head) --}}
+<div class="modal-overlay" id="modal-bulk-approve-confirm" style="display:none; z-index:10000;">
+  <div class="modal-card">
+    <div class="modal-icon success" style="background: var(--color-success-soft); color: var(--color-success-text);">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+    </div>
+    <div class="modal-title">Setujui Pengadaan?</div>
+    <div class="modal-body">
+      Anda yakin ingin menyetujui <strong id="bulk-approve-count">0</strong> pengajuan pengadaan yang dipilih secara massal?
+    </div>
+    <div class="modal-footer">
+      <button type="button" onclick="closeBulkApproveModal()" class="btn btn-secondary">Batal</button>
+      <button type="button" onclick="executeBulkApprove()" class="btn btn-success">Setujui Pengadaan</button>
     </div>
   </div>
 </div>
@@ -445,58 +479,78 @@ function executeBulkDecideDecline(notes) {
 }
 
 // ── Bulk Review - Accept (Team Leader) ─────────────────────────
-function confirmBulkReview(action) {
+function openBulkAcceptModal() {
   const checked = getCheckedBoxes();
   if (checked.length === 0) return;
-  
-  if (action === 'accept') {
-    if (!confirm(`Anda yakin ingin menyetujui (terima dokumen) untuk ${checked.length} tiket ini?`)) return;
+  document.getElementById('bulk-accept-count').textContent = checked.length;
+  const modal = document.getElementById('modal-bulk-accept-confirm');
+  if (modal) modal.style.display = 'flex';
+}
 
-    const form      = document.getElementById('bulk-review-form');
-    const container = document.getElementById('bulk-review-inputs');
-    
-    document.getElementById('bulk-review-action').value = 'accept';
-    document.getElementById('bulk-review-notes').value  = 'Semua dokumen diterima.';
-    
-    container.innerHTML = '';
-    checked.forEach(cb => {
-      const inp = document.createElement('input');
-      inp.type  = 'hidden';
-      inp.name  = 'ticket_ids[]';
-      inp.value = cb.value;
-      container.appendChild(inp);
-    });
-    
-    localStorage.removeItem(LS_KEY);
-    form.submit();
-  }
+function closeBulkAcceptModal() {
+  const modal = document.getElementById('modal-bulk-accept-confirm');
+  if (modal) modal.style.display = 'none';
+}
+
+function executeBulkAccept() {
+  const checked = getCheckedBoxes();
+  if (checked.length === 0) return;
+
+  const form      = document.getElementById('bulk-review-form');
+  const container = document.getElementById('bulk-review-inputs');
+  
+  document.getElementById('bulk-review-action').value = 'accept';
+  document.getElementById('bulk-review-notes').value  = 'Semua dokumen diterima.';
+  
+  container.innerHTML = '';
+  checked.forEach(cb => {
+    const inp = document.createElement('input');
+    inp.type  = 'hidden';
+    inp.name  = 'ticket_ids[]';
+    inp.value = cb.value;
+    container.appendChild(inp);
+  });
+  
+  localStorage.removeItem(LS_KEY);
+  closeBulkAcceptModal();
+  form.submit();
 }
 
 // ── Bulk Decide - Approve (Dept Head) ──────────────────────────
-function confirmBulkAction(action) {
+function openBulkApproveModal() {
   const checked = getCheckedBoxes();
   if (checked.length === 0) return;
-  
-  if (action === 'approve') {
-    if (!confirm(`Anda yakin ingin menyetujui ${checked.length} pengadaan ini?`)) return;
+  document.getElementById('bulk-approve-count').textContent = checked.length;
+  const modal = document.getElementById('modal-bulk-approve-confirm');
+  if (modal) modal.style.display = 'flex';
+}
 
-    const form      = document.getElementById('bulk-decide-form');
-    const container = document.getElementById('bulk-decide-inputs');
-    
-    document.getElementById('bulk-action-input').value = 'approve';
-    
-    container.innerHTML = '';
-    checked.forEach(cb => {
-      const inp = document.createElement('input');
-      inp.type  = 'hidden';
-      inp.name  = 'ticket_ids[]';
-      inp.value = cb.value;
-      container.appendChild(inp);
-    });
-    
-    localStorage.removeItem(LS_KEY);
-    form.submit();
-  }
+function closeBulkApproveModal() {
+  const modal = document.getElementById('modal-bulk-approve-confirm');
+  if (modal) modal.style.display = 'none';
+}
+
+function executeBulkApprove() {
+  const checked = getCheckedBoxes();
+  if (checked.length === 0) return;
+
+  const form      = document.getElementById('bulk-decide-form');
+  const container = document.getElementById('bulk-decide-inputs');
+  
+  document.getElementById('bulk-action-input').value = 'approve';
+  
+  container.innerHTML = '';
+  checked.forEach(cb => {
+    const inp = document.createElement('input');
+    inp.type  = 'hidden';
+    inp.name  = 'ticket_ids[]';
+    inp.value = cb.value;
+    container.appendChild(inp);
+  });
+  
+  localStorage.removeItem(LS_KEY);
+  closeBulkApproveModal();
+  form.submit();
 }
 
 // Restore selection state when page loads
