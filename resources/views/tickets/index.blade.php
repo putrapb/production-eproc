@@ -84,9 +84,9 @@
 @endphp
 
 @if($isBulkRole && $hasBulkTickets)
-<div id="bulk-action-bar" style="display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:9999; background:#1A1C23; color:#fff; padding:14px 24px; border-radius:var(--radius-lg); align-items:center; gap:var(--space-md); justify-content:space-between; box-shadow:0 8px 30px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); width:calc(100% - 48px); max-width:800px;">
-  <span id="bulk-count-label" style="font-weight:600; font-size:14px; color:rgba(255,255,255,0.9);">0 tiket dipilih</span>
-  <div style="display:flex; gap:var(--space-sm); align-items:center;">
+<div id="bulk-action-bar" class="action-panel" style="display:none;">
+  <span id="bulk-count-label" style="font-weight:600; font-size:14px; color:var(--color-trout);">0 tiket dipilih</span>
+  <div class="action-panel-buttons">
 
     @if(auth()->user()->isTeamLeader())
       {{-- Bulk Review Form: Accept or Reject --}}
@@ -123,7 +123,7 @@
       </form>
     @endif
 
-    <button onclick="clearSelection()" style="background:rgba(255,255,255,0.1); border:none; color:rgba(255,255,255,0.6); border-radius:var(--radius-sm); padding:6px 12px; cursor:pointer; font-size:12px; font-weight:600; transition:color 0.15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
+    <button type="button" onclick="clearSelection()" class="btn btn-secondary" style="font-size:13px;">
       Batal
     </button>
   </div>
