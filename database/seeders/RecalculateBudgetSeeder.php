@@ -20,11 +20,10 @@ class RecalculateBudgetSeeder extends Seeder
 {
     public function run(): void
     {
-        // 0. Delete the specific 8 legacy tickets so they are cleared completely from database
-        Ticket::whereIn('id', [1, 2, 3, 4, 5, 6, 7, 8])->delete();
-        Ticket::where('title', 'Pengadaan Penambahan Kapasitas Storage BNI')->delete();
+        // 0. Delete ALL tickets in the database to completely reset the system
+        Ticket::query()->delete();
 
-        // 1. Reset all used and locked amounts to 0
+        // 1. Reset all used and locked amounts to 0 for all budgets
         foreach (Budget::all() as $budget) {
             $budget->update([
                 'used_amount'   => 0,
@@ -32,31 +31,6 @@ class RecalculateBudgetSeeder extends Seeder
             ]);
         }
 
-        // 2. Fetch all tickets except ID 5 ("Pengadaan Penambahan Kapasitas Storage BNI")
-        // and also exclude any ticket with that specific title to be robust.
-        $tickets = Ticket::where('id', '!=', 5)
-            ->where('title', '!=', 'Pengadaan Penambahan Kapasitas Storage BNI')
-            ->get();
-
-        $count = 0;
-        foreach ($tickets as $ticket) {
-            $year = $ticket->created_at ? $ticket->created_at->year : now()->year;
-
-            if ($ticket->isApproved() || $ticket->isFormGenerated()) {
-                $budget = Budget::findForTicket($ticket->expenditure_type, $ticket->category, $year);
-                if ($budget) {
-                    $budget->increment('used_amount', $ticket->total_amount);
-                    $count++;
-                }
-            } elseif ($ticket->status === 'pending_dept_head' && $ticket->is_cross_fund) {
-                $budget = Budget::findForTicket($ticket->expenditure_type, $ticket->category, $year);
-                if ($budget) {
-                    $budget->increment('locked_amount', $ticket->total_amount);
-                    $count++;
-                }
-            }
-        }
-
-        $this->command->info("Recalculation complete. Processed {$count} tickets and updated budgets.");
+        $this->command->info("Database reset complete. All tickets deleted and budgets reset to 0.");
     }
 }
