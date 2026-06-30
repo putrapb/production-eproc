@@ -20,8 +20,8 @@ class RecalculateBudgetSeeder extends Seeder
 {
     public function run(): void
     {
-        // 0. Delete the specific 7 legacy tickets so they are cleared completely from database
-        Ticket::whereIn('id', [1, 2, 3, 4, 5, 6, 7])->delete();
+        // 0. Delete the specific 8 legacy tickets so they are cleared completely from database
+        Ticket::whereIn('id', [1, 2, 3, 4, 5, 6, 7, 8])->delete();
         Ticket::where('title', 'Pengadaan Penambahan Kapasitas Storage BNI')->delete();
 
         // 1. Reset all used and locked amounts to 0
