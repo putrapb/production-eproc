@@ -34,6 +34,30 @@
       background: #C53030 !important;
       color: #fff !important;
     }
+    /* Fixed bottom action panel layout to respect sidebar width on desktop */
+    .action-panel {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 240px !important;
+      right: 0 !important;
+      z-index: 95 !important;
+      background: var(--color-canvas) !important;
+      border-top: 1px solid var(--color-hairline) !important;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.08) !important;
+      padding: var(--space-md) var(--space-xl) !important;
+      border-radius: 0 !important;
+      max-width: none !important;
+      width: auto !important;
+      transform: none !important;
+    }
+    .page-content {
+      padding-bottom: 100px !important;
+    }
+    @media (max-width: 1024px) {
+      .action-panel {
+        left: 0 !important;
+      }
+    }
   </style>
 
   @stack('styles')

@@ -215,8 +215,6 @@
             </div>
           </div>
           @endif
-        </div>
-      </div>
 
       {{-- Metadata --}}
       <div class="card">
