@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Purchase Order | PO-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</title>
+    <title>Form Pengadaan | FORM-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</title>
     <style>
         /* ─── Reset & Base ─────────────────────────────── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -383,8 +383,8 @@
             <div class="org-sub">Departemen IT Infrastructure Management &middot; Kantor Pejompongan, Jakarta</div>
         </div>
         <div class="header-right">
-            <div class="doc-type">Purchase Order</div>
-            <div class="po-number">PO-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</div>
+            <div class="doc-type">Form Pengadaan</div>
+            <div class="po-number">FORM-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</div>
         </div>
     </div>
 
@@ -544,7 +544,7 @@
 
         {{-- ─── Informasi Penerbitan ─── --}}
         <div class="section-header" style="margin-top:16px;">
-            <div class="section-title">D. Informasi Penerbitan PO</div>
+            <div class="section-title">D. Informasi Penerbitan Form</div>
         </div>
         <div class="info-grid">
             <div class="info-row">
@@ -557,7 +557,7 @@
             </div>
             <div class="info-row">
                 <div class="info-key">Nomor Referensi Sistem</div>
-                <div class="info-val" style="font-family:monospace; color:#006885;">EPR-{{ date('Y') }}-TKT{{ str_pad($ticket->id, 4, '0', STR_PAD_LEFT) }}-PO{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</div>
+                <div class="info-val" style="font-family:monospace; color:#006885;">EPR-{{ date('Y') }}-TKT{{ str_pad($ticket->id, 4, '0', STR_PAD_LEFT) }}-FORM{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</div>
             </div>
         </div>
 
@@ -582,9 +582,9 @@
                 </div>
             </div>
 
-            {{-- PFA --}}
+            {{-- Team Leader --}}
             <div class="signature-cell">
-                <div class="sig-role">Diterbitkan oleh / PFA</div>
+                <div class="sig-role">Diterbitkan oleh / Team Leader</div>
                 <div class="sig-name-box">
                     <div class="sig-stamp"></div>
                     <div class="sig-approved-text">APPROVED</div>

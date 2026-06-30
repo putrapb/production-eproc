@@ -192,7 +192,7 @@
           @if($ticket->po_path)
           <hr class="divider" style="margin:var(--space-md) 0;">
           <div class="detail-field">
-            <div class="detail-field-label">Purchase Order</div>
+            <div class="detail-field-label">Form Pengadaan</div>
             <div class="detail-field-value">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-md);">
                   <a href="{{ route('tickets.download-po', ['ticket' => $ticket->id]) }}" target="_blank" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-sm); padding:var(--space-sm) var(--space-md); border:1px solid var(--color-hairline); border-radius:var(--radius-md); transition:background 0.2s;">
@@ -200,7 +200,7 @@
                       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 12l2 2 4-4"/></svg>
                     </div>
                     <div>
-                      <div class="label-md text-ink">Purchase Order — PO-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</div>
+                      <div class="label-md text-ink">Form Pengadaan — FORM-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</div>
                       <div class="caption text-muted">Klik untuk melihat file (PDF) · Diterbitkan {{ $ticket->po_generated_at?->format('d M Y') }}</div>
                     </div>
                   </a>
@@ -525,7 +525,7 @@ function toggleDocFeedback(docId, show) {
     </div>
     <div class="modal-title">Setujui Pengajuan?</div>
     <div class="modal-body">
-      Anda akan menyetujui pengajuan pengadaan senilai <strong>{{ $ticket->formatted_amount }}</strong>. PFA akan diberitahu untuk menerbitkan Purchase Order.
+      Anda akan menyetujui pengajuan pengadaan senilai <strong>{{ $ticket->formatted_total_amount }}</strong>. Team Leader akan diberitahu untuk menerbitkan Form Pengadaan.
     </div>
     <form method="POST" action="{{ route('tickets.decide', $ticket) }}">
       @csrf
