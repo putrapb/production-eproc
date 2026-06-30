@@ -224,7 +224,7 @@
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-sm);">
             <div class="detail-field">
               <div class="detail-field-label">Dibuat Oleh</div>
-              <div class="detail-field-value">{{ $ticket->user->name }}</div>
+              <div class="detail-field-value">{{ $ticket->user?->name ?? 'Karyawan Terhapus/Tidak Ditemukan' }}</div>
             </div>
             <div class="detail-field">
               <div class="detail-field-label">Tanggal Pengajuan</div>
@@ -258,8 +258,8 @@
                   </div>
                   <div class="approval-content">
                     <div class="approval-actor">
-                      {{ $log->user->name }}
-                      <span class="approval-role-tag">({{ $log->user->role_label }})</span>
+                      {{ $log->user?->name ?? 'Sistem / Karyawan Terhapus' }}
+                      <span class="approval-role-tag">({{ $log->user?->role_label ?? 'N/A' }})</span>
                     </div>
                     <div class="approval-action">{{ $log->action_label }}</div>
                     @if($log->notes)
