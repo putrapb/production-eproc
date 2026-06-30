@@ -63,7 +63,7 @@
           </div>
 
           <div class="form-group">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; height: 20px;">
               <label class="form-label" style="margin-bottom: 0;">PIC (Person In Charge) <span class="required">*</span></label>
               <button type="button" id="btn-add-pic" onclick="addPicRow()" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11px; {{ count(old('pic_name', [''])) >= 2 ? 'display: none;' : '' }}">
                 + Tambah PIC
