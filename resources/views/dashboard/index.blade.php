@@ -238,7 +238,7 @@
             </span>
             <div style="flex:1; min-width:0;">
               <div class="label-md text-ink truncate">{{ $ticket->title }}</div>
-              <div class="caption text-muted">{{ $ticket->formatted_amount }} · {{ $ticket->updated_at->diffForHumans() }}</div>
+              <div class="caption text-muted">{{ $ticket->formatted_total_amount }} · {{ $ticket->updated_at->diffForHumans() }}</div>
             </div>
             <svg width="14" height="14" fill="none" stroke="var(--color-muted-soft)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
           </a>
