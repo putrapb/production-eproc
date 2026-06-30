@@ -542,17 +542,14 @@ class TicketController extends Controller
 
                 return 'Pengadaan disetujui. Team Leader dapat menerbitkan Form Pengadaan.';
             } else {
-                // Decline: only release lock if this was a cross-fund ticket
-                // Normal flow tickets have no lock to release (lock removed at Gate 4 per Revisi 3)
-                if ($ticket->is_cross_fund) {
-                    $budget = Budget::findForTicket(
-                        $ticket->expenditure_type,
-                        $ticket->category,
-                        now()->year
-                    );
-                    if ($budget) {
-                        $budget->unlock($ticket->total_amount);
-                    }
+                // Decline: release locked budget
+                $budget = Budget::findForTicket(
+                    $ticket->expenditure_type,
+                    $ticket->category,
+                    now()->year
+                );
+                if ($budget) {
+                    $budget->unlock($ticket->total_amount);
                 }
 
                 $ticket->update(['status' => Ticket::STATUS_DECLINED]);

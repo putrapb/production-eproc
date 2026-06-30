@@ -9,23 +9,23 @@ uses(RefreshDatabase::class);
 // ─── Requester-only routes ───
 
 test('non-requester cannot access create ticket route', function () {
-    foreach (['pfa', 'departmentHead', 'divisionHead'] as $role) {
+    foreach (['teamLeader', 'departmentHead'] as $role) {
         $user = User::factory()->$role()->create();
         $this->actingAs($user)->get('/tickets/create')->assertForbidden();
     }
 });
 
 test('non-requester cannot post to tickets store route', function () {
-    foreach (['pfa', 'departmentHead', 'divisionHead'] as $role) {
+    foreach (['teamLeader', 'departmentHead'] as $role) {
         $user = User::factory()->$role()->create();
         $this->actingAs($user)->post('/tickets', [])->assertForbidden();
     }
 });
 
-// ─── PFA-only routes ───
+// ─── Team Leader-only routes ───
 
-test('non-PFA cannot review a ticket document', function () {
-    foreach (['requester', 'departmentHead', 'divisionHead'] as $role) {
+test('non-team-leader cannot review a ticket document', function () {
+    foreach (['requester', 'departmentHead'] as $role) {
         $ticket = Ticket::factory()->pendingReview()->create();
         $user   = User::factory()->$role()->create();
 
@@ -35,35 +35,22 @@ test('non-PFA cannot review a ticket document', function () {
     }
 });
 
-test('non-PFA cannot generate PO', function () {
-    foreach (['requester', 'departmentHead', 'divisionHead'] as $role) {
+test('non-team-leader cannot generate form', function () {
+    foreach (['requester', 'departmentHead'] as $role) {
         $ticket = Ticket::factory()->approved()->create();
         $user   = User::factory()->$role()->create();
 
         $this->actingAs($user)
-            ->post("/tickets/{$ticket->id}/generate-po")
+            ->post("/tickets/{$ticket->id}/generate-form")
             ->assertForbidden();
     }
 });
 
 // ─── Department Head-only routes ───
 
-test('non-department-head cannot forward a ticket', function () {
-    foreach (['requester', 'pfa', 'divisionHead'] as $role) {
+test('non-department-head cannot decide on a ticket', function () {
+    foreach (['requester', 'teamLeader'] as $role) {
         $ticket = Ticket::factory()->pendingDeptHead()->create();
-        $user   = User::factory()->$role()->create();
-
-        $this->actingAs($user)
-            ->post("/tickets/{$ticket->id}/forward")
-            ->assertForbidden();
-    }
-});
-
-// ─── Division Head-only routes ───
-
-test('non-division-head cannot decide on a ticket', function () {
-    foreach (['requester', 'pfa', 'departmentHead'] as $role) {
-        $ticket = Ticket::factory()->pendingDivHead()->create();
         $user   = User::factory()->$role()->create();
 
         $this->actingAs($user)

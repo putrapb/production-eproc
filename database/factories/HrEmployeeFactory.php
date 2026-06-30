@@ -32,12 +32,17 @@ class HrEmployeeFactory extends Factory
         ]);
     }
 
-    public function pfa(): self
+    public function teamLeader(): self
     {
         return $this->state([
-            'position' => 'Staff Procurement & Fixed Assets',
+            'position' => 'Team Leader IT Infrastructure',
             'division' => 'IT Infrastructure Management',
         ]);
+    }
+
+    public function pfa(): self
+    {
+        return $this->teamLeader();
     }
 
     public function departmentHead(): self
@@ -50,10 +55,7 @@ class HrEmployeeFactory extends Factory
 
     public function divisionHead(): self
     {
-        return $this->state([
-            'position' => 'Division Head IT Infrastructure Management',
-            'division' => 'IT Infrastructure Management',
-        ]);
+        return $this->departmentHead();
     }
 
     public function outsideDivision(): self

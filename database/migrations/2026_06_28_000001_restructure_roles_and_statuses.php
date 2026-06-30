@@ -23,9 +23,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $isPgsql = DB::getDriverName() === 'pgsql';
+
         // ── Users: Role Restructuring ──────────────────────────────────
         // Step 1: Remove existing role check constraint (if any) then re-add
-        DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+        if ($isPgsql) {
+            DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+        }
 
         // Step 2: Use intermediate temp value to safely swap roles without collision
         // department_head → team_leader (old dept head becomes forwarder)
@@ -36,14 +40,18 @@ return new class extends Migration
         DB::statement("UPDATE users SET role = 'team_leader' WHERE role = '_temp_team_leader'");
 
         // Step 3: Re-add constraint with new valid role values
-        DB::statement("
-            ALTER TABLE users ADD CONSTRAINT users_role_check
-            CHECK (role IN ('requester', 'pfa', 'team_leader', 'department_head'))
-        ");
+        if ($isPgsql) {
+            DB::statement("
+                ALTER TABLE users ADD CONSTRAINT users_role_check
+                CHECK (role IN ('requester', 'pfa', 'team_leader', 'department_head'))
+            ");
+        }
 
         // ── Tickets: Status Restructuring ─────────────────────────────────
         // Step 1: Remove existing status check constraint (if any)
-        DB::statement("ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_status_check");
+        if ($isPgsql) {
+            DB::statement("ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_status_check");
+        }
 
         // Step 2: Swap statuses using temp intermediate to avoid collisions
         DB::statement("UPDATE tickets SET status = '_temp_pending_team_leader' WHERE status = 'pending_dept_head'");
@@ -51,40 +59,52 @@ return new class extends Migration
         DB::statement("UPDATE tickets SET status = 'pending_team_leader' WHERE status = '_temp_pending_team_leader'");
 
         // Step 3: Re-add constraint with new valid status values
-        DB::statement("
-            ALTER TABLE tickets ADD CONSTRAINT tickets_status_check
-            CHECK (status IN (
-                'pending_review', 'revision', 'need_to_validate',
-                'pending_team_leader', 'pending_dept_head',
-                'approved', 'declined', 'po_generated'
-            ))
-        ");
+        if ($isPgsql) {
+            DB::statement("
+                ALTER TABLE tickets ADD CONSTRAINT tickets_status_check
+                CHECK (status IN (
+                    'pending_review', 'revision', 'need_to_validate',
+                    'pending_team_leader', 'pending_dept_head',
+                    'approved', 'declined', 'po_generated'
+                ))
+            ");
+        }
     }
 
     public function down(): void
     {
+        $isPgsql = DB::getDriverName() === 'pgsql';
+
         // Reverse roles: team_leader → department_head, department_head → division_head
-        DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+        if ($isPgsql) {
+            DB::statement("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check");
+        }
         DB::statement("UPDATE users SET role = '_temp_dept_head' WHERE role = 'team_leader'");
         DB::statement("UPDATE users SET role = 'division_head' WHERE role = 'department_head'");
         DB::statement("UPDATE users SET role = 'department_head' WHERE role = '_temp_dept_head'");
-        DB::statement("
-            ALTER TABLE users ADD CONSTRAINT users_role_check
-            CHECK (role IN ('requester', 'pfa', 'department_head', 'division_head'))
-        ");
+        if ($isPgsql) {
+            DB::statement("
+                ALTER TABLE users ADD CONSTRAINT users_role_check
+                CHECK (role IN ('requester', 'pfa', 'department_head', 'division_head'))
+            ");
+        }
 
         // Reverse statuses
-        DB::statement("ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_status_check");
+        if ($isPgsql) {
+            DB::statement("ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_status_check");
+        }
         DB::statement("UPDATE tickets SET status = '_temp_pending_dept_head' WHERE status = 'pending_team_leader'");
         DB::statement("UPDATE tickets SET status = 'pending_div_head' WHERE status = 'pending_dept_head'");
         DB::statement("UPDATE tickets SET status = 'pending_dept_head' WHERE status = '_temp_pending_dept_head'");
-        DB::statement("
-            ALTER TABLE tickets ADD CONSTRAINT tickets_status_check
-            CHECK (status IN (
-                'pending_review', 'revision', 'need_to_validate',
-                'pending_dept_head', 'pending_div_head',
-                'approved', 'declined', 'po_generated'
-            ))
-        ");
+        if ($isPgsql) {
+            DB::statement("
+                ALTER TABLE tickets ADD CONSTRAINT tickets_status_check
+                CHECK (status IN (
+                    'pending_review', 'revision', 'need_to_validate',
+                    'pending_dept_head', 'pending_div_head',
+                    'approved', 'declined', 'po_generated'
+                ))
+            ");
+        }
     }
 };

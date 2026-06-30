@@ -64,14 +64,6 @@ class TicketFactory extends Factory
         ]);
     }
 
-    public function pendingDivHead(): self
-    {
-        return $this->state([
-            'status'           => Ticket::STATUS_PENDING_DIV_HEAD,
-            'expenditure_type' => 'OPEX',
-        ]);
-    }
-
     public function approved(): self
     {
         return $this->state([
@@ -88,12 +80,12 @@ class TicketFactory extends Factory
         ]);
     }
 
-    public function poGenerated(): self
+    public function formGenerated(): self
     {
         return $this->state([
-            'status'           => Ticket::STATUS_PO_GENERATED,
+            'status'           => Ticket::STATUS_FORM_GENERATED,
             'expenditure_type' => 'OPEX',
-            'document_po_path' => 'purchase_orders/PO-test.pdf',
+            'po_path'          => 'purchase_orders/PO-test.pdf',
         ]);
     }
 

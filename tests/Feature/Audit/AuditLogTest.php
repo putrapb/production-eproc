@@ -21,24 +21,16 @@ test('requester role is denied access to audit logs page', function () {
     $response->assertStatus(403);
 });
 
-test('department head role is denied access to audit logs page', function () {
-    $user = User::factory()->create(['role' => 'department_head']);
-
-    $response = $this->actingAs($user)->get('/audit-logs');
-
-    $response->assertStatus(403);
-});
-
-test('pfa role can access audit logs page', function () {
-    $user = User::factory()->create(['role' => 'pfa']);
+test('team leader role can access audit logs page', function () {
+    $user = User::factory()->create(['role' => 'team_leader']);
 
     $response = $this->actingAs($user)->get('/audit-logs');
 
     $response->assertStatus(200);
 });
 
-test('division head role can access audit logs page', function () {
-    $user = User::factory()->create(['role' => 'division_head']);
+test('department head role can access audit logs page', function () {
+    $user = User::factory()->create(['role' => 'department_head']);
 
     $response = $this->actingAs($user)->get('/audit-logs');
 
@@ -46,7 +38,7 @@ test('division head role can access audit logs page', function () {
 });
 
 test('audit logs list is searchable and filterable', function () {
-    $pfa = User::factory()->create(['role' => 'pfa']);
+    $tl = User::factory()->create(['role' => 'team_leader']);
     
     // Create tickets
     $ticketA = Ticket::factory()->create(['title' => 'Server Procurement A']);
@@ -55,32 +47,32 @@ test('audit logs list is searchable and filterable', function () {
     // Create logs
     ApprovalLog::create([
         'ticket_id' => $ticketA->id,
-        'user_id' => $pfa->id,
+        'user_id' => $tl->id,
         'action' => ApprovalLog::ACTION_SUBMITTED,
         'notes' => 'Submission notes',
     ]);
 
     ApprovalLog::create([
         'ticket_id' => $ticketB->id,
-        'user_id' => $pfa->id,
+        'user_id' => $tl->id,
         'action' => ApprovalLog::ACTION_APPROVED,
         'notes' => 'Approval notes',
     ]);
 
     // Test Search by title
-    $response = $this->actingAs($pfa)->get('/audit-logs?search=Server');
+    $response = $this->actingAs($tl)->get('/audit-logs?search=Server');
     $response->assertStatus(200);
     $response->assertSee('Server Procurement A');
     $response->assertDontSee('Software License B');
 
     // Test Search by code (padded ID)
-    $response = $this->actingAs($pfa)->get('/audit-logs?search=' . str_pad($ticketB->id, 4, '0', STR_PAD_LEFT));
+    $response = $this->actingAs($tl)->get('/audit-logs?search=' . str_pad($ticketB->id, 4, '0', STR_PAD_LEFT));
     $response->assertStatus(200);
     $response->assertSee('Software License B');
     $response->assertDontSee('Server Procurement A');
 
     // Test Filter by Action
-    $response = $this->actingAs($pfa)->get('/audit-logs?action=' . ApprovalLog::ACTION_APPROVED);
+    $response = $this->actingAs($tl)->get('/audit-logs?action=' . ApprovalLog::ACTION_APPROVED);
     $response->assertStatus(200);
     $response->assertSee('Software License B');
     $response->assertDontSee('Server Procurement A');

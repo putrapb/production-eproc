@@ -24,16 +24,7 @@ return new class extends Migration
             $table->enum('expenditure_type', ['CAPEX', 'OPEX'])->nullable();
             $table->string('document_path')->nullable();
             $table->string('document_po_path')->nullable();
-            $table->enum('status', [
-                'pending_review',
-                'revision',
-                'need_to_validate',
-                'pending_dept_head',
-                'pending_div_head',
-                'declined',
-                'approved',
-                'po_generated',
-            ])->default('pending_review');
+            $table->string('status')->default('pending_review');
             $table->boolean('is_cross_fund')->default(false);
             $table->timestamps();
         });

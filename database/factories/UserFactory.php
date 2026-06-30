@@ -50,17 +50,22 @@ class UserFactory extends Factory
         });
     }
 
-    public function pfa(): self
+    public function teamLeader(): self
     {
         return $this->state(function () {
-            $hr = HrEmployee::factory()->pfa()->create();
+            $hr = HrEmployee::factory()->teamLeader()->create();
 
             return [
                 'hr_employee_id' => $hr->id,
                 'name'           => $hr->name,
-                'role'           => 'pfa',
+                'role'           => 'team_leader',
             ];
         });
+    }
+
+    public function pfa(): self
+    {
+        return $this->teamLeader();
     }
 
     public function departmentHead(): self
@@ -78,14 +83,6 @@ class UserFactory extends Factory
 
     public function divisionHead(): self
     {
-        return $this->state(function () {
-            $hr = HrEmployee::factory()->divisionHead()->create();
-
-            return [
-                'hr_employee_id' => $hr->id,
-                'name'           => $hr->name,
-                'role'           => 'division_head',
-            ];
-        });
+        return $this->departmentHead();
     }
 }

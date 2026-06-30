@@ -134,8 +134,9 @@ class SmartValidationService
                 ];
             }
 
-            // Budget tersedia — advance tiket langsung ke Department Head
+            // Budget tersedia — lock budget dan advance tiket langsung ke Department Head
             // (Team Leader tidak lagi meneruskan; TL hanya cek dokumen)
+            $budget->lock($amount);
             $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
 
             $toleranceNote = ($monthlyLimit > 0 && $amount > $monthlyLimit)
