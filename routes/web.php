@@ -23,6 +23,9 @@ Route::get('/', fn () => redirect()->route('login'));
 // Post-deployment webhook (called by GitHub Actions CI/CD)
 Route::get('/api/deploy/post-update', [DeployController::class, 'postUpdate'])->name('deploy.post-update');
 
+// Public verification for digital signature via barcode
+Route::get('/verify/{ticket}', [TicketController::class, 'verifyPublic'])->name('tickets.verify')->middleware('signed');
+
 // Authentication
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');

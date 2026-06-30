@@ -41,7 +41,7 @@ test('non-team-leader cannot generate form', function () {
         $user   = User::factory()->$role()->create();
 
         $this->actingAs($user)
-            ->post("/tickets/{$ticket->id}/generate-form")
+            ->post("/tickets/{$ticket->id}/generate-form", ['digital_signature_consent' => 'on'])
             ->assertForbidden();
     }
 });
@@ -54,7 +54,7 @@ test('non-department-head cannot decide on a ticket', function () {
         $user   = User::factory()->$role()->create();
 
         $this->actingAs($user)
-            ->post("/tickets/{$ticket->id}/decide", ['action' => 'approve'])
+            ->post("/tickets/{$ticket->id}/decide", ['action' => 'approve', 'digital_signature_consent' => 'on'])
             ->assertForbidden();
     }
 });

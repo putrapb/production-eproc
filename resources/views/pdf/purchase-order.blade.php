@@ -569,8 +569,10 @@
             <div class="signature-cell">
                 <div class="sig-role">Dibuat oleh / Requester</div>
                 <div class="sig-name-box">
-                    <div class="sig-stamp"></div>
-                    <div class="sig-approved-text">APPROVED</div>
+                    @php $qrUrl = \Illuminate\Support\Facades\URL::signedRoute('tickets.verify', ['ticket' => $ticket->id]); @endphp
+                    <div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; text-align: center;">
+                        <img src="data:image/png;base64,{{ \Milon\Barcode\Facades\DNS2DFacade::getBarcodePNG($qrUrl, 'QRCODE', 1.8, 1.8) }}" alt="QR Code" />
+                    </div>
                     <div class="sig-name">{{ $ticket->user->name }}</div>
                     <div class="sig-title">
                         @if($ticket->user->hrEmployee)
@@ -586,8 +588,9 @@
             <div class="signature-cell">
                 <div class="sig-role">Diterbitkan oleh / Team Leader</div>
                 <div class="sig-name-box">
-                    <div class="sig-stamp"></div>
-                    <div class="sig-approved-text">APPROVED</div>
+                    <div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; text-align: center;">
+                        <img src="data:image/png;base64,{{ \Milon\Barcode\Facades\DNS2DFacade::getBarcodePNG($qrUrl, 'QRCODE', 1.8, 1.8) }}" alt="QR Code" />
+                    </div>
                     <div class="sig-name">{{ $generated_by->name }}</div>
                     <div class="sig-title">
                         @if($generated_by->hrEmployee)
@@ -606,9 +609,10 @@
             <div class="signature-cell">
                 <div class="sig-role">Disetujui oleh / Dept. Head</div>
                 <div class="sig-name-box">
-                    <div class="sig-stamp"></div>
-                    <div class="sig-approved-text">APPROVED</div>
                     @if($divHeadLog)
+                        <div style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; text-align: center;">
+                            <img src="data:image/png;base64,{{ \Milon\Barcode\Facades\DNS2DFacade::getBarcodePNG($qrUrl, 'QRCODE', 1.8, 1.8) }}" alt="QR Code" />
+                        </div>
                         <div class="sig-name">{{ $divHeadLog->user->name }}</div>
                         <div class="sig-title">{{ $divHeadLog->user->role_label }}</div>
                     @else

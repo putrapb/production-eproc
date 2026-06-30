@@ -459,6 +459,12 @@ function toggleDocFeedback(docId, show) {
     </div>
     <form method="POST" action="{{ route('tickets.validate', $ticket) }}">
       @csrf
+      <div class="form-group" style="text-align:left; margin-bottom:var(--space-md);">
+        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:13px;">
+          <input type="checkbox" name="digital_signature_consent" required style="margin-top:2px;">
+          <span>Saya menyetujui syarat & ketentuan dan menandatangani dokumen ini secara digital.</span>
+        </label>
+      </div>
       <div class="modal-footer">
         <button type="button" onclick="closeModal('modal-validate')" class="btn btn-secondary">Batal</button>
         <button type="submit" class="btn btn-primary">Jalankan Validasi</button>
@@ -507,6 +513,12 @@ function toggleDocFeedback(docId, show) {
     </div>
     <form method="POST" action="{{ route('tickets.generate-form', $ticket) }}">
       @csrf
+      <div class="form-group" style="text-align:left; margin-bottom:var(--space-md);">
+        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:13px;">
+          <input type="checkbox" name="digital_signature_consent" required style="margin-top:2px;">
+          <span>Saya menyetujui syarat & ketentuan dan menandatangani dokumen ini secara digital.</span>
+        </label>
+      </div>
       <div class="modal-footer">
         <button type="button" onclick="closeModal('modal-generate-form')" class="btn btn-secondary">Batal</button>
         <button type="submit" class="btn btn-primary">Generate Form</button>
@@ -533,6 +545,12 @@ function toggleDocFeedback(docId, show) {
       <div class="form-group">
         <label class="form-label">Catatan (opsional)</label>
         <textarea name="notes" class="form-control" rows="2" placeholder="Tambahkan catatan persetujuan..."></textarea>
+      </div>
+      <div class="form-group" style="text-align:left; margin-bottom:var(--space-md); margin-top:var(--space-sm);">
+        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:13px;">
+          <input type="checkbox" name="digital_signature_consent" required style="margin-top:2px;">
+          <span>Saya menyetujui syarat & ketentuan dan menandatangani dokumen ini secara digital.</span>
+        </label>
       </div>
       <div class="modal-footer">
         <button type="button" onclick="closeModal('modal-approve')" class="btn btn-secondary">Batal</button>

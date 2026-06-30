@@ -20,7 +20,7 @@ test('department head can approve ticket — budget permanently deducted', funct
         ->create(['locked_amount' => 50_000_000]);
 
     $this->actingAs($deptHead)
-        ->post("/tickets/{$ticket->id}/decide", ['action' => 'approve']);
+        ->post("/tickets/{$ticket->id}/decide", ['action' => 'approve', 'digital_signature_consent' => 'on']);
 
     expect($ticket->fresh()->status)->toBe(Ticket::STATUS_APPROVED);
     expect($budget->fresh()->locked_amount)->toBe('0.00');
@@ -52,6 +52,6 @@ test('requester cannot decide on a ticket', function () {
     $ticket    = Ticket::factory()->pendingDeptHead()->create();
 
     $this->actingAs($requester)
-        ->post("/tickets/{$ticket->id}/decide", ['action' => 'approve'])
+        ->post("/tickets/{$ticket->id}/decide", ['action' => 'approve', 'digital_signature_consent' => 'on'])
         ->assertForbidden();
 });

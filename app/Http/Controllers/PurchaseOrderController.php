@@ -19,6 +19,13 @@ class PurchaseOrderController extends Controller
      */
     public function generate(Request $request, Ticket $ticket): RedirectResponse
     {
+        $request->validate([
+            'digital_signature_consent' => 'required|accepted',
+        ], [
+            'digital_signature_consent.required' => 'Anda harus menyetujui syarat & ketentuan digital signature.',
+            'digital_signature_consent.accepted' => 'Anda harus menyetujui syarat & ketentuan digital signature.',
+        ]);
+
         if (! $ticket->isApproved()) {
             return redirect()->route('tickets.show', $ticket)
                 ->with('error', 'Form Pengadaan hanya dapat diterbitkan untuk tiket yang berstatus Disetujui. Status saat ini: ' . $ticket->status_label . '.');

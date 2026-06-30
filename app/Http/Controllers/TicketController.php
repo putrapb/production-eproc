@@ -301,6 +301,14 @@ class TicketController extends Controller
      */
     public function runSmartValidation(Request $request, Ticket $ticket): RedirectResponse
     {
+        if (!$request->has('duplicate_confirmed') && !$request->has('nominal_confirmed')) {
+            $request->validate([
+                'digital_signature_consent' => 'required|accepted',
+            ], [
+                'digital_signature_consent.required' => 'Anda harus menyetujui syarat & ketentuan digital signature.',
+                'digital_signature_consent.accepted' => 'Anda harus menyetujui syarat & ketentuan digital signature.',
+            ]);
+        }
         if (auth()->user()->isRequester()) {
             abort_if($ticket->user_id !== auth()->id(), 403);
         }
@@ -491,9 +499,18 @@ class TicketController extends Controller
      */
     public function decide(Request $request, Ticket $ticket): RedirectResponse
     {
-        $request->validate([
+        $rules = [
             'action' => ['required', 'in:approve,decline'],
             'notes'  => ['nullable', 'string', 'max:1000'],
+        ];
+
+        if ($request->action === 'approve') {
+            $rules['digital_signature_consent'] = ['required', 'accepted'];
+        }
+
+        $request->validate($rules, [
+            'digital_signature_consent.required' => 'Anda harus menyetujui syarat & ketentuan digital signature.',
+            'digital_signature_consent.accepted' => 'Anda harus menyetujui syarat & ketentuan digital signature.',
         ]);
 
         $this->ensureStatus($ticket, Ticket::STATUS_PENDING_DEPT_HEAD);
@@ -666,6 +683,28 @@ class TicketController extends Controller
         ];
 
         return response()->file($path, $headers);
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // Public Verification
+    // ──────────────────────────────────────────────────────────
+
+    public function verifyPublic(Request $request, Ticket $ticket)
+    {
+        if (!$request->hasValidSignature()) {
+            abort(401, 'Tautan verifikasi tidak valid atau telah kadaluarsa.');
+        }
+
+        if (!$ticket->po_path || !Storage::disk('public')->exists($ticket->po_path)) {
+            abort(404, 'Dokumen Form Pengadaan belum tersedia.');
+        }
+
+        $path = Storage::disk('public')->path($ticket->po_path);
+
+        return response()->file($path, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="FORM-' . str_pad($ticket->id, 6, '0', STR_PAD_LEFT) . '.pdf"'
+        ]);
     }
 
     // ──────────────────────────────────────────────────────────
