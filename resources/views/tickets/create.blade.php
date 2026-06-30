@@ -64,7 +64,7 @@
 
           <div class="form-group">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-              <label class="form-label" style="margin-bottom: 0;">PIC (Person In Charge)</label>
+              <label class="form-label" style="margin-bottom: 0;">PIC (Person In Charge) <span class="required">*</span></label>
               <button type="button" id="btn-add-pic" onclick="addPicRow()" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11px; {{ count(old('pic_name', [''])) >= 2 ? 'display: none;' : '' }}">
                 + Tambah PIC
               </button>
@@ -78,7 +78,7 @@
               @foreach($oldPics as $index => $pic)
               <div class="pic-row" style="display: flex; gap: var(--space-sm); align-items: center;">
                 <div style="flex: 1;">
-                  <input type="text" name="pic_name[]" class="form-control" value="{{ $pic }}" placeholder="Nama PIC" maxlength="255">
+                  <input type="text" name="pic_name[]" class="form-control" value="{{ $pic }}" placeholder="Nama PIC" maxlength="255" required>
                 </div>
                 <button type="button" onclick="removePicRow(this)" class="btn btn-danger btn-icon btn-sm" style="display: {{ count($oldPics) > 1 ? 'inline-flex' : 'none' }};" title="Hapus PIC">
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -258,7 +258,7 @@ function addPicRow() {
   newRow.style = 'display: flex; gap: var(--space-sm); align-items: center; margin-top: var(--space-xs);';
   newRow.innerHTML = `
     <div style="flex: 1;">
-      <input type="text" name="pic_name[]" class="form-control" placeholder="Nama PIC" maxlength="255">
+      <input type="text" name="pic_name[]" class="form-control" placeholder="Nama PIC" maxlength="255" required>
     </div>
     <button type="button" onclick="removePicRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus PIC">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>

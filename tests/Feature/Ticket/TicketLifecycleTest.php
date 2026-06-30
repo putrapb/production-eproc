@@ -22,6 +22,7 @@ test('requester can create a ticket which starts at pending_review', function ()
         'item_name'   => 'Server Rack Dell PowerEdge',
         'category'    => 'infrastruktur_utama',
         'description' => 'Server rack untuk data center',
+        'pic_name'    => ['John Doe'],
         'quantity'    => 2,
         'vendor_name' => 'PT Dell Indonesia',
         'amount'      => 350_000_000,
