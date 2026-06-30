@@ -472,7 +472,15 @@
                             <br><span style="font-size: 8px; color: #666; font-style: italic; white-space: pre-wrap; word-break: break-word; display: block; margin-top: 2px;">{{ $ticket->description }}</span>
                         @endif
                     </td>
-                    <td style="white-space: pre-wrap; word-break: break-word; vertical-align: top;">{{ $ticket->pic_name ?? '-' }}</td>
+                    <td style="white-space: pre-wrap; word-break: break-word; vertical-align: top;">
+                        @if(is_array($ticket->pic_name) && count($ticket->pic_name) > 0)
+                            {!! implode('<br>', array_map('htmlspecialchars', $ticket->pic_name)) !!}
+                        @elseif(is_string($ticket->pic_name) && !empty($ticket->pic_name))
+                            {{ $ticket->pic_name }}
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td>{{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</td>
                     <td style="text-align: center;">{{ number_format($ticket->quantity) }} unit</td>
                     <td style="text-align: right;">{{ $ticket->formatted_amount }}</td>

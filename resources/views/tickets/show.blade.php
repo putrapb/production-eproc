@@ -74,7 +74,19 @@
             </div>
             <div class="detail-field">
               <div class="detail-field-label">PIC (Person In Charge)</div>
-              <div class="detail-field-value">{{ $ticket->pic_name ?? '-' }}</div>
+              <div class="detail-field-value">
+                @if(is_array($ticket->pic_name) && count($ticket->pic_name) > 0)
+                  <ul style="margin:0; padding-left:16px;">
+                    @foreach($ticket->pic_name as $pic)
+                      <li>{{ $pic }}</li>
+                    @endforeach
+                  </ul>
+                @elseif(is_string($ticket->pic_name) && !empty($ticket->pic_name))
+                  {{ $ticket->pic_name }}
+                @else
+                  -
+                @endif
+              </div>
             </div>
 
             <div class="detail-field">

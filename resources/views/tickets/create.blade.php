@@ -63,13 +63,31 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="pic_name">PIC (Person In Charge)</label>
-            <input type="text" id="pic_name" name="pic_name"
-              class="form-control {{ $errors->has('pic_name') ? 'is-invalid' : '' }}"
-              value="{{ old('pic_name') }}"
-              placeholder="Nama penanggung jawab pengadaan ini"
-              maxlength="255">
-            @error('pic_name') <div class="form-error">{{ $message }}</div> @enderror
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
+              <label class="form-label" style="margin-bottom: 0;">PIC (Person In Charge)</label>
+              <button type="button" onclick="addPicRow()" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11px;">
+                + Tambah PIC
+              </button>
+            </div>
+            
+            <div id="pic-container" style="display: flex; flex-direction: column; gap: var(--space-xs);">
+              @php
+                  $oldPics = old('pic_name', ['']);
+                  if (!is_array($oldPics)) $oldPics = [$oldPics];
+              @endphp
+              @foreach($oldPics as $index => $pic)
+              <div class="pic-row" style="display: flex; gap: var(--space-sm); align-items: center;">
+                <div style="flex: 1;">
+                  <input type="text" name="pic_name[]" class="form-control" value="{{ $pic }}" placeholder="Nama PIC" maxlength="255">
+                </div>
+                <button type="button" onclick="removePicRow(this)" class="btn btn-danger btn-icon btn-sm" style="display: {{ count($oldPics) > 1 ? 'inline-flex' : 'none' }};" title="Hapus PIC">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+              @endforeach
+            </div>
+            @error('pic_name') <div class="form-error" style="margin-top: 4px;">{{ $message }}</div> @enderror
+            @error('pic_name.*') <div class="form-error" style="margin-top: 4px;">{{ $message }}</div> @enderror
           </div>
         </div>
 
@@ -224,6 +242,40 @@ function updateDeleteButtons() {
   const rows = document.querySelectorAll('.document-row');
   rows.forEach(row => {
     const delBtn = row.querySelector('button[onclick="removeDocumentRow(this)"]');
+    if (delBtn) {
+      delBtn.style.display = rows.length > 1 ? 'inline-flex' : 'none';
+    }
+  });
+}
+
+// Dynamic PIC Rows
+function addPicRow() {
+  const container = document.getElementById('pic-container');
+  const newRow = document.createElement('div');
+  newRow.className = 'pic-row';
+  newRow.style = 'display: flex; gap: var(--space-sm); align-items: center; margin-top: var(--space-xs);';
+  newRow.innerHTML = `
+    <div style="flex: 1;">
+      <input type="text" name="pic_name[]" class="form-control" placeholder="Nama PIC" maxlength="255">
+    </div>
+    <button type="button" onclick="removePicRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus PIC">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+    </button>
+  `;
+  container.appendChild(newRow);
+  updatePicDeleteButtons();
+}
+
+function removePicRow(button) {
+  const row = button.closest('.pic-row');
+  row.remove();
+  updatePicDeleteButtons();
+}
+
+function updatePicDeleteButtons() {
+  const rows = document.querySelectorAll('.pic-row');
+  rows.forEach(row => {
+    const delBtn = row.querySelector('button[onclick="removePicRow(this)"]');
     if (delBtn) {
       delBtn.style.display = rows.length > 1 ? 'inline-flex' : 'none';
     }

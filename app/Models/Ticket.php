@@ -63,6 +63,7 @@ class Ticket extends Model
             'amount'        => 'decimal:2',
             'is_cross_fund' => 'boolean',
             'quantity'      => 'integer',
+            'pic_name'      => 'array',
         ];
     }
 

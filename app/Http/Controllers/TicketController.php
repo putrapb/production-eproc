@@ -82,7 +82,7 @@ class TicketController extends Controller
             'item_name'   => $request->item_name,
             'category'    => $request->category,
             'description' => $request->description,
-            'pic_name'    => $request->pic_name,
+            'pic_name'    => empty(array_filter((array) $request->pic_name, fn($name) => !empty(trim($name)))) ? null : array_values(array_filter((array) $request->pic_name, fn($name) => !empty(trim($name)))),
             'quantity'    => $request->quantity,
             'vendor_name' => $request->vendor_name,
             'amount'      => $request->amount,
