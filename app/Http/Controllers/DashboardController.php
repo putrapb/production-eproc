@@ -27,6 +27,8 @@ class DashboardController extends Controller
         // ─── Recent Activity ───
         $recentTickets = Ticket::with(['user', 'approvalLogs.user'])
             ->forRole($user)
+            ->where('id', '!=', 5)
+            ->where('title', '!=', 'Pengadaan Penambahan Kapasitas Storage BNI')
             ->latest('updated_at')
             ->limit(10)
             ->get();
@@ -36,7 +38,10 @@ class DashboardController extends Controller
 
         // ─── Chart Data (Trend & Composition) ───
         $year = now()->year;
-        $monthlyTickets = Ticket::whereYear('created_at', $year)->get();
+        $monthlyTickets = Ticket::whereYear('created_at', $year)
+            ->where('id', '!=', 5)
+            ->where('title', '!=', 'Pengadaan Penambahan Kapasitas Storage BNI')
+            ->get();
         
         $trendMonths = [];
         $trendTotals = [];
