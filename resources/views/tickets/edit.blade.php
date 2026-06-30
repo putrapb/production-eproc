@@ -24,14 +24,15 @@
 
 <div class="page-content">
   {{-- Revision notes --}}
-  @if($ticket->approvalLogs->where('action', 'rejected')->isNotEmpty())
-    @php $lastReject = $ticket->approvalLogs->where('action', 'rejected')->sortByDesc('created_at')->first(); @endphp
+  @if($ticket->approvalLogs->where('action', 'rejected_document')->isNotEmpty())
+    @php $lastReject = $ticket->approvalLogs->where('action', 'rejected_document')->sortByDesc('created_at')->first(); @endphp
     @if($lastReject?->notes)
-    <div class="alert alert-warning mb-lg">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><path d="M12 9v4M12 16h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+    <div class="alert alert-warning mb-lg" style="align-items: flex-start;">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:2px"><path d="M12 9v4M12 16h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
       <div>
-        <strong>Catatan dari PFA:</strong> "{{ $lastReject->notes }}"
-        <div class="caption" style="margin-top:4px;">{{ $lastReject->created_at->format('d M Y, H:i') }}</div>
+        <strong style="display: block; margin-bottom: 4px;">Catatan dari Team Leader:</strong>
+        <div style="white-space: pre-line; font-size: 13.5px; line-height: 1.5; color: var(--color-warning-text);">{{ $lastReject->notes }}</div>
+        <div class="caption" style="margin-top:8px; opacity: 0.85;">{{ $lastReject->created_at->format('d M Y, H:i') }}</div>
       </div>
     </div>
     @endif
@@ -60,8 +61,8 @@
               </div>
 
               @if($doc->isRejected() && $doc->feedback)
-                <div style="font-size: 13px; color: var(--color-error); margin: 6px 0; font-style: italic; background: rgba(239,68,68,0.05); padding: 8px 12px; border-radius: 4px; border-left: 3px solid var(--color-error);">
-                  <strong>Catatan PFA:</strong> "{{ $doc->feedback }}"
+                <div style="font-size: 13px; color: var(--color-error); margin: 6px 0; font-style: italic; background: rgba(239,68,68,0.05); padding: 8px 12px; border-radius: 4px; border-left: 3px solid var(--color-error); white-space: pre-line;">
+                  <strong>Catatan Team Leader:</strong> "{{ $doc->feedback }}"
                 </div>
               @endif
 

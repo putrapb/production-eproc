@@ -84,22 +84,22 @@
 @endphp
 
 @if($isBulkRole && $hasBulkTickets)
-<div id="bulk-action-bar" style="display:none; position:sticky; top:0; z-index:100; background:var(--color-primary); color:#fff; padding:12px var(--space-lg); border-radius:var(--radius-md); margin-bottom:var(--space-md); align-items:center; gap:var(--space-md); justify-content:space-between; box-shadow:var(--shadow-md);">
-  <span id="bulk-count-label" style="font-weight:600; font-size:14px;">0 tiket dipilih</span>
+<div id="bulk-action-bar" style="display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:9999; background:#1A1C23; color:#fff; padding:14px 24px; border-radius:var(--radius-lg); align-items:center; gap:var(--space-md); justify-content:space-between; box-shadow:0 8px 30px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); width:calc(100% - 48px); max-width:800px;">
+  <span id="bulk-count-label" style="font-weight:600; font-size:14px; color:rgba(255,255,255,0.9);">0 tiket dipilih</span>
   <div style="display:flex; gap:var(--space-sm); align-items:center;">
 
     @if(auth()->user()->isTeamLeader())
       {{-- Bulk Review Form: Accept or Reject --}}
-      <form id="bulk-review-form" method="POST" action="{{ route('tickets.bulk-review') }}" style="margin:0;">
+      <form id="bulk-review-form" method="POST" action="{{ route('tickets.bulk-review') }}" style="margin:0; display:inline-flex; gap:var(--space-sm);">
         @csrf
         <input type="hidden" name="action" id="bulk-review-action" value="">
         <input type="hidden" name="notes" id="bulk-review-notes" value="">
         <div id="bulk-review-inputs"></div>
-        <button type="button" onclick="confirmBulkReview('reject')" class="btn btn-danger" style="font-size:13px;">
+        <button type="button" onclick="openBulkRejectModal('review')" class="btn btn-danger" style="font-size:13px;">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
           Tolak Dokumen
         </button>
-        <button type="button" onclick="confirmBulkReview('accept')" class="btn" style="background:#fff; color:var(--color-primary); font-size:13px; font-weight:600;">
+        <button type="button" onclick="confirmBulkReview('accept')" class="btn btn-success" style="font-size:13px; font-weight:600;">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
           Terima Dokumen
         </button>
@@ -107,24 +107,46 @@
     @endif
 
     @if(auth()->user()->isDepartmentHead())
-      <form id="bulk-decide-form" method="POST" action="{{ route('tickets.bulk-decide') }}" style="margin:0;">
+      <form id="bulk-decide-form" method="POST" action="{{ route('tickets.bulk-decide') }}" style="margin:0; display:inline-flex; gap:var(--space-sm);">
         @csrf
         <input type="hidden" name="action" id="bulk-action-input" value="">
+        <input type="hidden" name="notes" id="bulk-decide-notes" value="">
         <div id="bulk-decide-inputs"></div>
-        <button type="button" onclick="confirmBulkAction('decline')" class="btn btn-danger" style="font-size:13px;">
+        <button type="button" onclick="openBulkRejectModal('decide')" class="btn btn-danger" style="font-size:13px;">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
           Tolak
         </button>
-        <button type="button" onclick="confirmBulkAction('approve')" class="btn" style="background:#fff; color:var(--color-primary); font-size:13px; font-weight:600;">
+        <button type="button" onclick="confirmBulkAction('approve')" class="btn btn-success" style="font-size:13px; font-weight:600;">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
           Setujui
         </button>
       </form>
     @endif
 
-    <button onclick="clearSelection()" style="background:rgba(255,255,255,0.15); border:none; color:#fff; border-radius:var(--radius-sm); padding:6px 12px; cursor:pointer; font-size:12px;">
+    <button onclick="clearSelection()" style="background:rgba(255,255,255,0.1); border:none; color:rgba(255,255,255,0.6); border-radius:var(--radius-sm); padding:6px 12px; cursor:pointer; font-size:12px; font-weight:600; transition:color 0.15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
       Batal
     </button>
+  </div>
+</div>
+
+{{-- Modal Custom untuk Bulk Reject Notes --}}
+<div class="modal-overlay" id="modal-bulk-reject-notes" style="display:none; z-index:10000;">
+  <div class="modal-card">
+    <div class="modal-icon danger">
+      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+    </div>
+    <div class="modal-title">Masukkan Alasan Penolakan</div>
+    <div class="modal-body" style="text-align:left;">
+      Catatan penolakan ini akan dikirimkan kepada masing-masing Requester dari tiket yang Anda pilih.
+      <div class="form-group" style="margin-top:16px;">
+        <label class="form-label" style="font-weight:600;">Catatan Penolakan/Revisi <span class="required">*</span></label>
+        <textarea id="bulk-reject-textarea" class="form-control" rows="4" placeholder="Tuliskan detail revisi di sini... (Tekan Enter untuk baris baru)" style="width:100%; border-radius:var(--radius-md); font-family:inherit;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" onclick="closeBulkRejectModal()" class="btn btn-secondary">Kembali</button>
+      <button type="button" id="btn-submit-bulk-reject" class="btn btn-danger">Tolak Tiket</button>
+    </div>
   </div>
 </div>
 @endif
@@ -336,24 +358,54 @@ function handleRowClick(e, row) {
   window.location.href = row.dataset.url;
 }
 
-// ── Bulk Review (Team Leader) ──────────────────────────────────
-function confirmBulkReview(action) {
+// ── Bulk Custom Modal Handlers ─────────────────────────────────
+let activeBulkActionType = ''; // 'review' or 'decide'
+
+function openBulkRejectModal(type) {
   const checked = getCheckedBoxes();
   if (checked.length === 0) return;
-  const label = action === 'accept' ? 'menerima dokumen' : 'menolak dokumen';
+  
+  activeBulkActionType = type;
+  
+  // Reset textarea
+  document.getElementById('bulk-reject-textarea').value = '';
+  
+  // Show modal
+  const modal = document.getElementById('modal-bulk-reject-notes');
+  if (modal) modal.style.display = 'flex';
+  
+  // Set up click handler for the submit button inside modal
+  const submitBtn = document.getElementById('btn-submit-bulk-reject');
+  submitBtn.onclick = function() {
+    const notes = document.getElementById('bulk-reject-textarea').value.trim();
+    if (!notes) {
+      alert('Catatan penolakan wajib diisi!');
+      return;
+    }
+    
+    if (activeBulkActionType === 'review') {
+      executeBulkReviewReject(notes);
+    } else if (activeBulkActionType === 'decide') {
+      executeBulkDecideDecline(notes);
+    }
+  };
+}
 
-  let notes = '';
-  if (action === 'reject') {
-    notes = prompt(`Masukkan catatan penolakan untuk ${checked.length} tiket yang dipilih:`, '');
-    if (notes === null) return; // User cancelled
-  }
+function closeBulkRejectModal() {
+  const modal = document.getElementById('modal-bulk-reject-notes');
+  if (modal) modal.style.display = 'none';
+}
 
-  if (!confirm(`Anda yakin ingin ${label} untuk ${checked.length} tiket?`)) return;
+function executeBulkReviewReject(notes) {
+  const checked = getCheckedBoxes();
+  if (!confirm(`Anda yakin ingin menolak dokumen untuk ${checked.length} tiket ini?`)) return;
 
-  const form    = document.getElementById('bulk-review-form');
+  const form      = document.getElementById('bulk-review-form');
   const container = document.getElementById('bulk-review-inputs');
-  document.getElementById('bulk-review-action').value = action;
+  
+  document.getElementById('bulk-review-action').value = 'reject';
   document.getElementById('bulk-review-notes').value  = notes;
+  
   container.innerHTML = '';
   checked.forEach(cb => {
     const inp = document.createElement('input');
@@ -362,19 +414,22 @@ function confirmBulkReview(action) {
     inp.value = cb.value;
     container.appendChild(inp);
   });
-  localStorage.removeItem(LS_KEY); // Clear after submit
+  
+  localStorage.removeItem(LS_KEY);
+  closeBulkRejectModal();
   form.submit();
 }
 
-// ── Bulk Decide (Dept Head) ────────────────────────────────────
-function confirmBulkAction(action) {
+function executeBulkDecideDecline(notes) {
   const checked = getCheckedBoxes();
-  if (checked.length === 0) return;
-  const label = action === 'approve' ? 'menyetujui' : 'menolak';
-  if (!confirm(`Anda yakin ingin ${label} ${checked.length} tiket?`)) return;
+  if (!confirm(`Anda yakin ingin menolak ${checked.length} pengadaan ini?`)) return;
+
   const form      = document.getElementById('bulk-decide-form');
   const container = document.getElementById('bulk-decide-inputs');
-  document.getElementById('bulk-action-input').value = action;
+  
+  document.getElementById('bulk-action-input').value = 'decline';
+  document.getElementById('bulk-decide-notes').value  = notes;
+  
   container.innerHTML = '';
   checked.forEach(cb => {
     const inp = document.createElement('input');
@@ -383,8 +438,65 @@ function confirmBulkAction(action) {
     inp.value = cb.value;
     container.appendChild(inp);
   });
-  localStorage.removeItem(LS_KEY); // Clear after submit
+  
+  localStorage.removeItem(LS_KEY);
+  closeBulkRejectModal();
   form.submit();
+}
+
+// ── Bulk Review - Accept (Team Leader) ─────────────────────────
+function confirmBulkReview(action) {
+  const checked = getCheckedBoxes();
+  if (checked.length === 0) return;
+  
+  if (action === 'accept') {
+    if (!confirm(`Anda yakin ingin menyetujui (terima dokumen) untuk ${checked.length} tiket ini?`)) return;
+
+    const form      = document.getElementById('bulk-review-form');
+    const container = document.getElementById('bulk-review-inputs');
+    
+    document.getElementById('bulk-review-action').value = 'accept';
+    document.getElementById('bulk-review-notes').value  = 'Semua dokumen diterima.';
+    
+    container.innerHTML = '';
+    checked.forEach(cb => {
+      const inp = document.createElement('input');
+      inp.type  = 'hidden';
+      inp.name  = 'ticket_ids[]';
+      inp.value = cb.value;
+      container.appendChild(inp);
+    });
+    
+    localStorage.removeItem(LS_KEY);
+    form.submit();
+  }
+}
+
+// ── Bulk Decide - Approve (Dept Head) ──────────────────────────
+function confirmBulkAction(action) {
+  const checked = getCheckedBoxes();
+  if (checked.length === 0) return;
+  
+  if (action === 'approve') {
+    if (!confirm(`Anda yakin ingin menyetujui ${checked.length} pengadaan ini?`)) return;
+
+    const form      = document.getElementById('bulk-decide-form');
+    const container = document.getElementById('bulk-decide-inputs');
+    
+    document.getElementById('bulk-action-input').value = 'approve';
+    
+    container.innerHTML = '';
+    checked.forEach(cb => {
+      const inp = document.createElement('input');
+      inp.type  = 'hidden';
+      inp.name  = 'ticket_ids[]';
+      inp.value = cb.value;
+      container.appendChild(inp);
+    });
+    
+    localStorage.removeItem(LS_KEY);
+    form.submit();
+  }
 }
 
 // Restore selection state when page loads

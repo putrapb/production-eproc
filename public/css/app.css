@@ -571,7 +571,7 @@ img, svg { display: block; }
 }
 .badge-revision   { background: var(--color-warning-soft); color: var(--color-warning-text); }
 .badge-declined   { background: var(--color-error-soft);   color: var(--color-error-text); }
-.badge-approved, .badge-po-generated { background: var(--color-success-soft); color: var(--color-success-text); }
+.badge-approved, .badge-po-generated, .badge-form-generated { background: var(--color-success-soft); color: var(--color-success-text); }
 
 /* Expenditure badges */
 .badge-capex { background: var(--color-secondary-soft); color: var(--color-secondary-active); }
@@ -585,6 +585,17 @@ img, svg { display: block; }
   background: var(--color-primary-soft);
   color: var(--color-primary-active);
   border: 1px solid var(--color-primary-disabled);
+}
+
+/* Success Button Utility */
+.btn-success {
+  background: var(--color-success);
+  color: #fff;
+}
+.btn-success:hover {
+  background: var(--color-success-text);
+  color: #fff;
+  text-decoration: none;
 }
 
 /* ─────────────────────────────────────────────
