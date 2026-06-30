@@ -204,8 +204,8 @@
                       <div class="caption text-muted">Klik untuk melihat file (PDF) · Diterbitkan {{ $ticket->po_generated_at?->format('d M Y') }}</div>
                     </div>
                   </a>
-                  {{-- Download hanya untuk Requester dan PFA --}}
-                  @if($user->isRequester() || $user->isPfa())
+                  {{-- Download hanya untuk Requester dan Team Leader --}}
+                  @if($user->isRequester() || $user->isTeamLeader())
                   <a href="{{ route('tickets.download-po', ['ticket' => $ticket->id, 'download' => 1]) }}" class="btn btn-ghost btn-sm">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Unduh PO
@@ -287,9 +287,8 @@
 @php $user = auth()->user(); $status = $ticket->status; @endphp
 
 @if(
-  ($user->isRequester() && in_array($status, ['need_to_validate', 'revision', 'po_generated'])) ||
-  ($user->isPfa() && in_array($status, ['pending_review', 'approved', 'po_generated'])) ||
-  ($user->isTeamLeader() && $status === 'pending_team_leader') ||
+  ($user->isRequester() && in_array($status, ['need_to_validate', 'revision', 'form_generated'])) ||
+  ($user->isTeamLeader() && in_array($status, ['pending_review', 'approved', 'form_generated'])) ||
   ($user->isDepartmentHead() && $status === 'pending_dept_head')
 )
 <div class="action-panel">
