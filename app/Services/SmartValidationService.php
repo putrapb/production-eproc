@@ -134,8 +134,9 @@ class SmartValidationService
                 ];
             }
 
-            // Budget tersedia — advance tiket ke Team Leader (NO BUDGET LOCK HERE)
-            $ticket->update(['status' => Ticket::STATUS_PENDING_TEAM_LEADER]);
+            // Budget tersedia — advance tiket langsung ke Department Head
+            // (Team Leader tidak lagi meneruskan; TL hanya cek dokumen)
+            $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
 
             $toleranceNote = ($monthlyLimit > 0 && $amount > $monthlyLimit)
                 ? ' (Kelebihan pagu bulanan dalam batas toleransi 10–30%.)'
@@ -168,7 +169,7 @@ class SmartValidationService
         return [
             'success'                      => true,
             'gate'                         => 4,
-            'message'                      => 'Validasi berhasil. Tiket diteruskan ke Team Leader.',
+            'message'                      => 'Validasi berhasil. Tiket diteruskan ke Department Head untuk persetujuan.',
             'needs_duplicate_confirmation' => false,
             'needs_nominal_confirmation'   => false,
             'over_budget'                  => false,
@@ -204,7 +205,7 @@ class SmartValidationService
             $ticket->update([
                 'expenditure_type' => $alternativeType,
                 'is_cross_fund'    => true,
-                'status'           => Ticket::STATUS_PENDING_TEAM_LEADER,
+                'status'           => Ticket::STATUS_PENDING_DEPT_HEAD,
             ]);
 
             // Budget lock happens here — after cross-fund decision confirmed
@@ -229,7 +230,7 @@ class SmartValidationService
 
         return [
             'success' => true,
-            'message' => 'Silang dana berhasil diajukan. Tiket diteruskan ke Team Leader.',
+            'message' => 'Silang dana berhasil diajukan. Tiket diteruskan ke Department Head.',
         ];
     }
 

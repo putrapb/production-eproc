@@ -15,14 +15,13 @@ class Ticket extends Model
     // Status Constants
     // ─────────────────────────────────────────────
 
-    const STATUS_PENDING_REVIEW      = 'pending_review';
-    const STATUS_REVISION            = 'revision';
-    const STATUS_NEED_TO_VALIDATE    = 'need_to_validate';
-    const STATUS_PENDING_TEAM_LEADER = 'pending_team_leader'; // Menunggu Team Leader (forwarder)
-    const STATUS_PENDING_DEPT_HEAD   = 'pending_dept_head';   // Menunggu Department Head (decision maker)
-    const STATUS_DECLINED            = 'declined';
-    const STATUS_APPROVED            = 'approved';
-    const STATUS_PO_GENERATED        = 'po_generated';
+    const STATUS_PENDING_REVIEW    = 'pending_review';
+    const STATUS_REVISION          = 'revision';
+    const STATUS_NEED_TO_VALIDATE  = 'need_to_validate';
+    const STATUS_PENDING_DEPT_HEAD = 'pending_dept_head';  // Menunggu Department Head (decision maker)
+    const STATUS_DECLINED          = 'declined';
+    const STATUS_APPROVED          = 'approved';
+    const STATUS_FORM_GENERATED    = 'form_generated';     // Form pengadaan diterbitkan oleh Team Leader
 
     // ─────────────────────────────────────────────
     // Category Constants
@@ -96,7 +95,7 @@ class Ticket extends Model
         return $query->where('user_id', $userId);
     }
 
-    /** Tiket yang antri di PFA (pending_review) */
+    /** Tiket yang antri di Team Leader untuk cek dokumen (pending_review) */
     public function scopePendingReview($query)
     {
         return $query->where('status', self::STATUS_PENDING_REVIEW);
@@ -106,12 +105,6 @@ class Ticket extends Model
     public function scopeNeedToValidate($query)
     {
         return $query->where('status', self::STATUS_NEED_TO_VALIDATE);
-    }
-
-    /** Tiket di antrian Team Leader */
-    public function scopePendingTeamLeader($query)
-    {
-        return $query->where('status', self::STATUS_PENDING_TEAM_LEADER);
     }
 
     /** Tiket di antrian Department Head (decision maker) */
@@ -131,23 +124,19 @@ class Ticket extends Model
     {
         return match ($user->role) {
             'requester'       => $query->where('user_id', $user->id),
-            'pfa'             => $query->whereIn('status', [
+            // Team Leader: cek dokumen (pending_review) + generate form (approved) + arsip (form_generated)
+            'team_leader'     => $query->whereIn('status', [
                 self::STATUS_PENDING_REVIEW,
                 self::STATUS_APPROVED,
-                self::STATUS_PO_GENERATED,
-            ]),
-            'team_leader'     => $query->whereIn('status', [
-                self::STATUS_PENDING_TEAM_LEADER,
-                self::STATUS_PENDING_DEPT_HEAD,
-                self::STATUS_APPROVED,
                 self::STATUS_DECLINED,
-                self::STATUS_PO_GENERATED,
+                self::STATUS_FORM_GENERATED,
             ]),
+            // Department Head: keputusan final (pending_dept_head) + arsip
             'department_head' => $query->whereIn('status', [
                 self::STATUS_PENDING_DEPT_HEAD,
                 self::STATUS_APPROVED,
                 self::STATUS_DECLINED,
-                self::STATUS_PO_GENERATED,
+                self::STATUS_FORM_GENERATED,
             ]),
             default           => $query,
         };
@@ -172,11 +161,6 @@ class Ticket extends Model
         return $this->status === self::STATUS_NEED_TO_VALIDATE;
     }
 
-    public function isPendingTeamLeader(): bool
-    {
-        return $this->status === self::STATUS_PENDING_TEAM_LEADER;
-    }
-
     public function isPendingDeptHead(): bool
     {
         return $this->status === self::STATUS_PENDING_DEPT_HEAD;
@@ -192,9 +176,15 @@ class Ticket extends Model
         return $this->status === self::STATUS_DECLINED;
     }
 
+    public function isFormGenerated(): bool
+    {
+        return $this->status === self::STATUS_FORM_GENERATED;
+    }
+
+    /** @deprecated Use isFormGenerated() — kept for backward compatibility with old data */
     public function isPoGenerated(): bool
     {
-        return $this->status === self::STATUS_PO_GENERATED;
+        return $this->isFormGenerated();
     }
 
     /**
@@ -203,15 +193,14 @@ class Ticket extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            self::STATUS_PENDING_REVIEW      => 'Menunggu Review',
-            self::STATUS_REVISION            => 'Revisi',
-            self::STATUS_NEED_TO_VALIDATE    => 'Perlu Validasi',
-            self::STATUS_PENDING_TEAM_LEADER => 'Menunggu Team Leader',
-            self::STATUS_PENDING_DEPT_HEAD   => 'Menunggu Dept Head',
-            self::STATUS_DECLINED            => 'Ditolak',
-            self::STATUS_APPROVED            => 'Disetujui',
-            self::STATUS_PO_GENERATED        => 'PO Diterbitkan',
-            default                          => $this->status,
+            self::STATUS_PENDING_REVIEW    => 'Menunggu Cek Dokumen',
+            self::STATUS_REVISION          => 'Revisi Dokumen',
+            self::STATUS_NEED_TO_VALIDATE  => 'Perlu Validasi',
+            self::STATUS_PENDING_DEPT_HEAD => 'Menunggu Dept Head',
+            self::STATUS_DECLINED          => 'Ditolak',
+            self::STATUS_APPROVED          => 'Disetujui',
+            self::STATUS_FORM_GENERATED    => 'Form Diterbitkan',
+            default                        => $this->status,
         };
     }
 
@@ -223,13 +212,12 @@ class Ticket extends Model
         return match ($this->status) {
             self::STATUS_PENDING_REVIEW,
             self::STATUS_NEED_TO_VALIDATE,
-            self::STATUS_PENDING_TEAM_LEADER,
-            self::STATUS_PENDING_DEPT_HEAD   => 'blue',
-            self::STATUS_REVISION            => 'yellow',
-            self::STATUS_DECLINED            => 'red',
+            self::STATUS_PENDING_DEPT_HEAD => 'blue',
+            self::STATUS_REVISION          => 'yellow',
+            self::STATUS_DECLINED          => 'red',
             self::STATUS_APPROVED,
-            self::STATUS_PO_GENERATED        => 'green',
-            default                          => 'gray',
+            self::STATUS_FORM_GENERATED    => 'green',
+            default                        => 'gray',
         };
     }
 
@@ -278,9 +266,15 @@ class Ticket extends Model
         return $log?->created_at;
     }
 
+    public function getFormGeneratedAtAttribute(): ?\Illuminate\Support\Carbon
+    {
+        $log = $this->approvalLogs()->whereIn('action', ['form_issued', 'po_generated'])->first();
+        return $log?->created_at;
+    }
+
+    /** @deprecated Use getFormGeneratedAtAttribute — kept for backward compat */
     public function getPoGeneratedAtAttribute(): ?\Illuminate\Support\Carbon
     {
-        $log = $this->approvalLogs()->where('action', 'po_generated')->first();
-        return $log?->created_at;
+        return $this->form_generated_at;
     }
 }

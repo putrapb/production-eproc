@@ -14,22 +14,22 @@ use Illuminate\Support\Facades\Storage;
 class PurchaseOrderController extends Controller
 {
     /**
-     * PFA: Generate Purchase Order PDF and save to local public storage.
+     * Team Leader: Generate Form Pengadaan PDF and save to local public storage.
      * Only available when ticket status is 'approved'.
      */
     public function generate(Request $request, Ticket $ticket): RedirectResponse
     {
         if (! $ticket->isApproved()) {
             return redirect()->route('tickets.show', $ticket)
-                ->with('error', 'Purchase Order hanya dapat diterbitkan untuk tiket yang berstatus Disetujui. Status saat ini: ' . $ticket->status_label . '.');
+                ->with('error', 'Form Pengadaan hanya dapat diterbitkan untuk tiket yang berstatus Disetujui. Status saat ini: ' . $ticket->status_label . '.');
         }
 
         $ticket->load(['user.hrEmployee', 'approvalLogs.user.hrEmployee']);
 
-        // Eager-load the generating user's HR data for PO template
+        // Eager-load the generating user's HR data for Form template
         $generatedBy = $request->user()->load('hrEmployee');
 
-        // Generate PDF content — uses Blade view for PO document layout
+        // Generate PDF content — uses Blade view for Form Pengadaan layout
         $pdf = Pdf::loadView('pdf.purchase-order', [
             'ticket'       => $ticket,
             'generated_at' => now(),
@@ -40,7 +40,7 @@ class PurchaseOrderController extends Controller
 
         // Save to local public storage
         $folder   = config('eprocurement.storage.purchase_orders_folder', 'purchase_orders');
-        $filename = "PO-{$ticket->id}-" . \Illuminate\Support\Str::random(16) . '.pdf';
+        $filename = "FORM-{$ticket->id}-" . \Illuminate\Support\Str::random(16) . '.pdf';
         $path     = $folder . '/' . $filename;
 
         Storage::disk('public')->put($path, $pdfContent);
@@ -48,32 +48,31 @@ class PurchaseOrderController extends Controller
         // Update ticket
         $ticket->update([
             'document_po_path' => $path,
-            'status'           => Ticket::STATUS_PO_GENERATED,
+            'status'           => Ticket::STATUS_FORM_GENERATED,
         ]);
 
         ApprovalLog::create([
             'ticket_id' => $ticket->id,
             'user_id'   => $request->user()->id,
-            'action'    => ApprovalLog::ACTION_PO_ISSUED,
-            'notes'     => "Purchase Order diterbitkan: {$filename}",
+            'action'    => 'form_issued',
+            'notes'     => "Form Pengadaan diterbitkan: {$filename}",
         ]);
 
-        // Notify Requester that PO is ready
+        // Notify Requester that Form is ready
         Notification::notify(
             $ticket->user_id,
-            'po_generated',
-            'Purchase Order Siap Diunduh',
-            "Purchase Order untuk tiket \"{$ticket->title}\" telah diterbitkan oleh PFA.",
+            'form_generated',
+            'Form Pengadaan Siap Diunduh',
+            "Form Pengadaan untuk tiket \"{$ticket->title}\" telah diterbitkan oleh Team Leader.",
             $ticket->id
         );
 
         return redirect()->route('tickets.show', $ticket)
-            ->with('success', 'Purchase Order berhasil diterbitkan. Klik "Unduh PO" untuk mengunduh dokumen.');
+            ->with('success', 'Form Pengadaan berhasil diterbitkan. Klik "Unduh Form" untuk mengunduh dokumen.');
     }
 
     /**
-     * Requester & PFA: Download PO PDF as attachment.
-     * Route is protected by role:requester,pfa middleware.
+     * Requester & Team Leader: Download Form PDF as attachment.
      */
     public function download(Request $request, Ticket $ticket): \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response|RedirectResponse
     {
@@ -81,23 +80,23 @@ class PurchaseOrderController extends Controller
             abort_if($ticket->user_id !== auth()->id(), 403);
         }
 
-        if (! $ticket->isPoGenerated()) {
+        if (! $ticket->isFormGenerated()) {
             return redirect()->route('tickets.show', $ticket)
-                ->with('error', 'Purchase Order belum tersedia untuk tiket ini.');
+                ->with('error', 'Form Pengadaan belum tersedia untuk tiket ini.');
         }
 
         if (! $ticket->document_po_path) {
             return redirect()->route('tickets.show', $ticket)
-                ->with('error', 'File Purchase Order tidak ditemukan di storage.');
+                ->with('error', 'File Form Pengadaan tidak ditemukan di storage.');
         }
 
         if (! Storage::disk('public')->exists($ticket->document_po_path)) {
             return redirect()->route('tickets.show', $ticket)
-                ->with('error', 'File Purchase Order tidak dapat diakses. Hubungi administrator.');
+                ->with('error', 'File Form Pengadaan tidak dapat diakses. Hubungi administrator.');
         }
 
-        $path = Storage::disk('public')->path($ticket->document_po_path);
-        $filename = 'PO-' . str_pad($ticket->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+        $path     = Storage::disk('public')->path($ticket->document_po_path);
+        $filename = 'FORM-' . str_pad($ticket->id, 6, '0', STR_PAD_LEFT) . '.pdf';
 
         if ($request->query('download')) {
             return response()->download($path, $filename);

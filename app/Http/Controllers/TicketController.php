@@ -123,9 +123,9 @@ class TicketController extends Controller
             'action'    => ApprovalLog::ACTION_SUBMITTED,
         ]);
 
-        // Notify all PFAs about new submission
+        // Notify all Team Leaders about new submission (they are now responsible for doc review)
         Notification::notifyRole(
-            'pfa',
+            'team_leader',
             'ticket_submitted',
             'Pengajuan Baru Masuk',
             "{$user->name} mengajukan tiket: {$ticket->title}",
@@ -279,7 +279,7 @@ class TicketController extends Controller
                 $ticket->user_id,
                 'ticket_reviewed',
                 'Dokumen Diterima',
-                "Dokumen tiket \"{$ticket->title}\" diterima oleh PFA. Silakan jalankan Smart Validation.",
+                "Dokumen tiket \"{$ticket->title}\" diterima oleh Team Leader. Silakan jalankan Smart Validation.",
                 $ticket->id
             );
         }
@@ -316,12 +316,12 @@ class TicketController extends Controller
         );
 
         if ($result['success']) {
-            // Notify all Team Leaders that a ticket is ready for review
+            // Notify all Department Heads that a ticket is ready for their decision
             Notification::notifyRole(
-                'team_leader',
+                'department_head',
                 'ticket_validated',
-                'Tiket Siap Ditinjau',
-                "Tiket \"{$ticket->title}\" telah tervalidasi dan menunggu tinjauan Team Leader.",
+                'Tiket Siap Disetujui',
+                "Tiket \"{$ticket->title}\" telah tervalidasi dan menunggu keputusan Department Head.",
                 $ticket->id
             );
             return redirect()->route('tickets.show', $ticket)
@@ -403,73 +403,86 @@ class TicketController extends Controller
     }
 
     /**
-     * Team Leader: Forward ticket to Department Head (decision maker).
+     * Team Leader: Bulk review documents — accept or reject multiple tickets at once.
+     *
+     * Action 'accept': All docs set to accepted → ticket status: need_to_validate
+     * Action 'reject': All docs set to rejected → ticket status: revision
+     * Notes: One shared note applied to all selected tickets.
      */
-    public function forward(Request $request, Ticket $ticket): RedirectResponse
+    public function bulkReview(Request $request): RedirectResponse
     {
         $request->validate([
-            'notes' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $this->ensureStatus($ticket, Ticket::STATUS_PENDING_TEAM_LEADER);
-
-        $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
-
-        ApprovalLog::create([
-            'ticket_id' => $ticket->id,
-            'user_id'   => $request->user()->id,
-            'action'    => ApprovalLog::ACTION_FORWARDED,
-            'notes'     => $request->notes,
-        ]);
-
-        // Notify all Department Heads
-        Notification::notifyRole(
-            'department_head',
-            'ticket_forwarded',
-            'Tiket Diteruskan',
-            "Tiket \"{$ticket->title}\" diteruskan oleh Team Leader untuk keputusan Anda.",
-            $ticket->id
-        );
-
-        return redirect()->route('tickets.show', $ticket)
-            ->with('success', 'Tiket berhasil diteruskan ke Department Head.');
-    }
-
-    /**
-     * Team Leader: Bulk forward multiple tickets to Department Head.
-     */
-    public function bulkForward(Request $request): RedirectResponse
-    {
-        $request->validate([
+            'action'       => ['required', 'in:accept,reject'],
             'ticket_ids'   => ['required', 'array', 'min:1'],
             'ticket_ids.*' => ['integer', 'exists:tickets,id'],
             'notes'        => ['nullable', 'string', 'max:1000'],
         ]);
 
         $user    = $request->user();
-        $ids     = $request->ticket_ids;
-        $tickets = Ticket::whereIn('id', $ids)
-            ->where('status', Ticket::STATUS_PENDING_TEAM_LEADER)
+        $tickets = Ticket::with('documents')
+            ->whereIn('id', $request->ticket_ids)
+            ->where('status', Ticket::STATUS_PENDING_REVIEW)
             ->get();
 
         if ($tickets->isEmpty()) {
-            return back()->with('error', 'Tidak ada tiket valid untuk diteruskan.');
+            return back()->with('error', 'Tidak ada tiket valid untuk diproses. Pastikan tiket berstatus Menunggu Cek Dokumen.');
         }
 
-        DB::transaction(function () use ($tickets, $user, $request) {
+        $isAccept = $request->action === 'accept';
+        $count    = $tickets->count();
+        $notes    = $request->notes ?? ($isAccept ? 'Semua dokumen diterima.' : 'Dokumen ditolak.');
+
+        DB::transaction(function () use ($tickets, $user, $isAccept, $notes) {
             foreach ($tickets as $ticket) {
-                $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
+                // Update all documents on this ticket
+                foreach ($ticket->documents as $doc) {
+                    $doc->update([
+                        'status'   => $isAccept ? 'accepted' : 'rejected',
+                        'feedback' => $isAccept ? null : $notes,
+                    ]);
+                }
+
+                // Update ticket status
+                $ticket->update([
+                    'status' => $isAccept
+                        ? Ticket::STATUS_NEED_TO_VALIDATE
+                        : Ticket::STATUS_REVISION,
+                ]);
+
+                // Log per ticket
                 ApprovalLog::create([
                     'ticket_id' => $ticket->id,
                     'user_id'   => $user->id,
-                    'action'    => ApprovalLog::ACTION_FORWARDED,
-                    'notes'     => $request->notes,
+                    'action'    => $isAccept ? ApprovalLog::ACTION_FOLLOWED_UP : ApprovalLog::ACTION_REJECTED_DOCUMENT,
+                    'notes'     => $notes,
                 ]);
+
+                // Notify each requester
+                if ($isAccept) {
+                    Notification::notify(
+                        $ticket->user_id,
+                        'ticket_reviewed',
+                        'Dokumen Diterima',
+                        "Dokumen tiket \"{$ticket->title}\" diterima. Silakan jalankan Smart Validation.",
+                        $ticket->id
+                    );
+                } else {
+                    Notification::notify(
+                        $ticket->user_id,
+                        'ticket_revised',
+                        'Dokumen Perlu Revisi',
+                        "Dokumen tiket \"{$ticket->title}\" ditolak. Catatan: {$notes}",
+                        $ticket->id
+                    );
+                }
             }
         });
 
-        return redirect()->route('tickets.index', ['status' => 'pending_dept_head'])
-            ->with('success', "{$tickets->count()} tiket berhasil diteruskan ke Department Head.");
+        $verb      = $isAccept ? 'diterima' : 'ditolak';
+        $newStatus = $isAccept ? 'need_to_validate' : 'revision';
+
+        return redirect()->route('tickets.index', ['status' => $newStatus])
+            ->with('success', "{$count} tiket berhasil diproses — dokumen {$verb}.");
     }
 
     /**
@@ -511,7 +524,7 @@ class TicketController extends Controller
                     'notes'     => $request->notes,
                 ]);
 
-                // Notify Requester and PFAs
+                // Notify Requester and Team Leaders (TL generates the form)
                 Notification::notify(
                     $ticket->user_id,
                     'ticket_approved',
@@ -520,14 +533,14 @@ class TicketController extends Controller
                     $ticket->id
                 );
                 Notification::notifyRole(
-                    'pfa',
+                    'team_leader',
                     'ticket_approved',
-                    'Siap Generate PO',
-                    "Tiket \"{$ticket->title}\" disetujui. Silakan terbitkan Purchase Order.",
+                    'Siap Generate Form',
+                    "Tiket \"{$ticket->title}\" disetujui. Silakan terbitkan Form Pengadaan.",
                     $ticket->id
                 );
 
-                return 'Pengadaan disetujui. PFA dapat menerbitkan Purchase Order.';
+                return 'Pengadaan disetujui. Team Leader dapat menerbitkan Form Pengadaan.';
             } else {
                 // Decline: only release lock if this was a cross-fund ticket
                 // Normal flow tickets have no lock to release (lock removed at Gate 4 per Revisi 3)
@@ -666,14 +679,13 @@ class TicketController extends Controller
     {
         if ($ticket->status !== $expectedStatus) {
             $statusLabels = [
-                'pending_review'      => 'Menunggu Tinjauan PFA',
-                'need_to_validate'    => 'Menunggu Smart Validation',
-                'pending_team_leader' => 'Menunggu Team Leader',
-                'pending_dept_head'   => 'Menunggu Department Head',
-                'approved'            => 'Disetujui',
-                'declined'            => 'Ditolak',
-                'revision'            => 'Perlu Revisi',
-                'po_generated'        => 'PO Diterbitkan',
+                'pending_review'   => 'Menunggu Cek Dokumen (Team Leader)',
+                'need_to_validate' => 'Menunggu Smart Validation',
+                'pending_dept_head'=> 'Menunggu Department Head',
+                'approved'         => 'Disetujui',
+                'declined'         => 'Ditolak',
+                'revision'         => 'Perlu Revisi Dokumen',
+                'form_generated'   => 'Form Diterbitkan',
             ];
             $label = $statusLabels[$ticket->status] ?? $ticket->status;
 

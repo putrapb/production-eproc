@@ -297,19 +297,17 @@
     @if($user->isRequester() && $status === 'revision')
       Dokumen Anda memerlukan revisi. Unggah ulang dokumen untuk melanjutkan proses.
     @elseif($user->isRequester() && $status === 'need_to_validate')
-      Dokumen Pendukung Anda telah diterima oleh PFA. Jalankan Smart Validation untuk mengklasifikasikan anggaran.
-    @elseif($user->isPfa() && $status === 'pending_review')
-      Tinjau Dokumen Pendukung. Terima jika valid, atau minta revisi.
-    @elseif($user->isPfa() && $status === 'approved')
-      Tiket disetujui oleh Department Head. Generate Purchase Order sekarang.
-    @elseif($user->isTeamLeader() && $status === 'pending_team_leader')
-      Tinjau dan teruskan ke Department Head jika pengajuan valid.
+      Dokumen Pendukung Anda telah diterima oleh Team Leader. Jalankan Smart Validation untuk mengklasifikasikan anggaran.
+    @elseif($user->isTeamLeader() && $status === 'pending_review')
+      Tinjau Dokumen Pendukung. Terima jika valid, atau minta revisi dokumen.
+    @elseif($user->isTeamLeader() && $status === 'approved')
+      Tiket disetujui oleh Department Head. Generate Form Pengadaan sekarang.
     @elseif($user->isDepartmentHead() && $status === 'pending_dept_head')
       Berikan keputusan final: setujui atau tolak pengajuan pengadaan ini.
-    @elseif($status === 'po_generated' && $user->isRequester())
-      Purchase Order telah diterbitkan oleh PFA. Anda dapat mengunduh dokumen PO.
-    @elseif($status === 'po_generated' && $user->isPfa())
-      Purchase Order telah berhasil diterbitkan. Anda dapat mengunduh dokumen PO.
+    @elseif($status === 'form_generated' && $user->isRequester())
+      Form Pengadaan telah diterbitkan oleh Team Leader. Anda dapat mengunduh dokumen.
+    @elseif($status === 'form_generated' && $user->isTeamLeader())
+      Form Pengadaan telah berhasil diterbitkan. Anda dapat mengunduh dokumen.
     @endif
   </div>
 
@@ -322,8 +320,8 @@
       </a>
     @endif
 
-    {{-- PFA: Document review --}}
-    @if($user->isPfa() && $status === 'pending_review')
+    {{-- TEAM LEADER: Document review --}}
+    @if($user->isTeamLeader() && $status === 'pending_review')
       <button onclick="openModal('modal-review-documents')" class="btn btn-primary">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
         Tinjau Dokumen Pendukung
@@ -342,29 +340,20 @@
       </button>
     @endif
 
-
-    {{-- PFA: Generate PO --}}
-    @if($user->isPfa() && $status === 'approved')
-      <button onclick="openModal('modal-generate-po')" class="btn btn-primary">
+    {{-- TEAM LEADER: Generate Form --}}
+    @if($user->isTeamLeader() && $status === 'approved')
+      <button onclick="openModal('modal-generate-form')" class="btn btn-primary">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 12l2 2 4-4"/></svg>
-        Generate Purchase Order
+        Generate Form Pengadaan
       </button>
     @endif
 
-    {{-- REQUESTER & PFA: Unduh PO (when po_generated) --}}
-    @if(($user->isRequester() || $user->isPfa()) && $status === 'po_generated' && $ticket->po_path)
+    {{-- REQUESTER & TEAM LEADER: Unduh Form (when form_generated) --}}
+    @if(($user->isRequester() || $user->isTeamLeader()) && $status === 'form_generated' && $ticket->po_path)
       <a href="{{ route('tickets.download-po', ['ticket' => $ticket->id, 'download' => 1]) }}" class="btn btn-orient">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Unduh Purchase Order
+        Unduh Form Pengadaan
       </a>
-    @endif
-
-    {{-- TEAM LEADER: Forward --}}
-    @if($user->isTeamLeader() && $status === 'pending_team_leader')
-      <button onclick="openModal('modal-forward')" class="btn btn-orient">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-        Teruskan ke Department Head
-      </button>
     @endif
 
     {{-- DEPT HEAD: Decline / Approve --}}
@@ -384,8 +373,8 @@
 
 {{-- ═══════════════════ MODALS ═══════════════════ --}}
 
-{{-- Modal: Review Documents (PFA) --}}
-@if($user->isPfa() && $status === 'pending_review')
+{{-- Modal: Review Documents (Team Leader) --}}
+@if($user->isTeamLeader() && $status === 'pending_review')
 <div class="modal-overlay" id="modal-review-documents">
   <div class="modal-card" style="max-width: 650px;">
     <div class="modal-icon" style="background: var(--color-primary-soft);">
@@ -508,48 +497,22 @@ function toggleDocFeedback(docId, show) {
 </div>
 @endif
 
-{{-- Modal: Generate PO (PFA) --}}
-@if($user->isPfa() && $status === 'approved')
-<div class="modal-overlay" id="modal-generate-po">
+{{-- Modal: Generate Form (Team Leader) --}}
+@if($user->isTeamLeader() && $status === 'approved')
+<div class="modal-overlay" id="modal-generate-form">
   <div class="modal-card">
     <div class="modal-icon success">
       <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 12l2 2 4-4"/></svg>
     </div>
-    <div class="modal-title">Generate Purchase Order?</div>
+    <div class="modal-title">Generate Form Pengadaan?</div>
     <div class="modal-body">
-      Sistem akan membuat dokumen Purchase Order resmi dalam format PDF. Aksi ini akan menyelesaikan proses pengadaan dan tidak dapat dibatalkan.
+      Sistem akan membuat dokumen Form Pengadaan resmi dalam format PDF. Aksi ini akan menyelesaikan proses pengadaan dan tidak dapat dibatalkan.
     </div>
-    <form method="POST" action="{{ route('tickets.generate-po', $ticket) }}">
+    <form method="POST" action="{{ route('tickets.generate-form', $ticket) }}">
       @csrf
       <div class="modal-footer">
-        <button type="button" onclick="closeModal('modal-generate-po')" class="btn btn-secondary">Batal</button>
-        <button type="submit" class="btn btn-primary">Generate PO</button>
-      </div>
-    </form>
-  </div>
-</div>
-@endif
-
-{{-- Modal: Forward (Team Leader) --}}
-@if($user->isTeamLeader() && $status === 'pending_team_leader')
-<div class="modal-overlay" id="modal-forward">
-  <div class="modal-card">
-    <div class="modal-icon" style="background:var(--color-secondary-soft);">
-      <svg width="24" height="24" fill="none" stroke="var(--color-secondary)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-    </div>
-    <div class="modal-title">Teruskan ke Department Head?</div>
-    <div class="modal-body">
-      Pengajuan akan dikirimkan ke Department Head untuk keputusan final. Pastikan Anda telah memeriksa semua detail pengadaan.
-    </div>
-    <form method="POST" action="{{ route('tickets.forward', $ticket) }}">
-      @csrf
-      <div class="form-group">
-        <label class="form-label">Catatan (opsional)</label>
-        <textarea name="notes" class="form-control" rows="2" placeholder="Tambahkan catatan untuk Department Head..."></textarea>
-      </div>
-      <div class="modal-footer">
-        <button type="button" onclick="closeModal('modal-forward')" class="btn btn-secondary">Batal</button>
-        <button type="submit" class="btn btn-orient">Teruskan</button>
+        <button type="button" onclick="closeModal('modal-generate-form')" class="btn btn-secondary">Batal</button>
+        <button type="submit" class="btn btn-primary">Generate Form</button>
       </div>
     </form>
   </div>

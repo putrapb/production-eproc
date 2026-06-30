@@ -75,7 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/tickets/{ticket}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
         Route::put('/tickets/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
 
-        // Smart Validation — Requester triggers this after PFA accepts the document
+        // Smart Validation — Requester triggers this after Team Leader accepts the document
         Route::post('/tickets/{ticket}/validate', [TicketController::class, 'runSmartValidation'])->name('tickets.validate');
 
         // Cross-fund confirmation — Requester confirms silang dana when over-budget
@@ -90,16 +90,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tickets/document/{ticketDocument}', [TicketController::class, 'streamDocument'])->name('tickets.document');
     Route::get('/tickets/{ticket}/download-po', [PurchaseOrderController::class, 'download'])->name('tickets.download-po');
 
-    // [PFA only] Document review + PO generation
-    Route::middleware('role:pfa')->group(function () {
-        Route::post('/tickets/{ticket}/review', [TicketController::class, 'review'])->name('tickets.review');
-        Route::post('/tickets/{ticket}/generate-po', [PurchaseOrderController::class, 'generate'])->name('tickets.generate-po');
-    });
-
-    // [Team Leader only] Forward ticket + Bulk Forward
+    // [Team Leader only] Document review (was PFA) + Generate Form + Bulk Review
     Route::middleware('role:team_leader')->group(function () {
-        Route::post('/tickets/{ticket}/forward', [TicketController::class, 'forward'])->name('tickets.forward');
-        Route::post('/tickets/bulk-forward', [TicketController::class, 'bulkForward'])->name('tickets.bulk-forward');
+        Route::post('/tickets/{ticket}/review', [TicketController::class, 'review'])->name('tickets.review');
+        Route::post('/tickets/{ticket}/generate-form', [PurchaseOrderController::class, 'generate'])->name('tickets.generate-form');
+        Route::post('/tickets/bulk-review', [TicketController::class, 'bulkReview'])->name('tickets.bulk-review');
     });
 
     // [Department Head only] Final decision + Bulk Decide
@@ -108,8 +103,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/tickets/bulk-decide', [TicketController::class, 'bulkDecide'])->name('tickets.bulk-decide');
     });
 
-    // [PFA & Department Head only] Audit Logs
-    Route::middleware('role:pfa,department_head')->group(function () {
+    // [Team Leader & Department Head only] Audit Logs
+    Route::middleware('role:team_leader,department_head')->group(function () {
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     });
 

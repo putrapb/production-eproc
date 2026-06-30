@@ -28,14 +28,13 @@
       Semua
     </a>
     @foreach([
-      'pending_review'      => 'Pending Review',
-      'revision'            => 'Revisi',
-      'need_to_validate'    => 'Validasi',
-      'pending_team_leader' => 'Team Leader',
-      'pending_dept_head'   => 'Dept Head',
-      'approved'            => 'Disetujui',
-      'declined'            => 'Ditolak',
-      'po_generated'        => 'PO Terbit',
+      'pending_review'    => 'Cek Dokumen',
+      'revision'          => 'Revisi',
+      'need_to_validate'  => 'Validasi',
+      'pending_dept_head' => 'Dept Head',
+      'approved'          => 'Disetujui',
+      'declined'          => 'Ditolak',
+      'form_generated'    => 'Form Terbit',
     ] as $val => $label)
       <a href="{{ route('tickets.index', ['status' => $val, 'per_page' => $perPage]) }}"
          class="filter-tab {{ request('status') === $val ? 'active' : '' }}">
@@ -77,21 +76,32 @@
 {{-- Bulk Action Bar (shown when checkboxes are selected) --}}
 @php
   $isBulkRole = auth()->user()->isTeamLeader() || auth()->user()->isDepartmentHead();
-  $bulkStatus = auth()->user()->isTeamLeader() ? 'pending_team_leader' : 'pending_dept_head';
+  // TL: bulk review documents from pending_review queue
+  // DH: bulk decide from pending_dept_head queue
+  $bulkStatus = auth()->user()->isTeamLeader() ? 'pending_review' : 'pending_dept_head';
   $hasBulkTickets = $tickets->where('status', $bulkStatus)->count() > 0;
+  $lsKey = 'bulk_selected_' . auth()->user()->role;
 @endphp
 
 @if($isBulkRole && $hasBulkTickets)
-<div id="bulk-action-bar" style="display:none; position:sticky; top:0; z-index:100; background:var(--color-primary); color:#fff; padding:12px var(--space-lg); border-radius:var(--radius-md); margin-bottom:var(--space-md); display:none; align-items:center; gap:var(--space-md); justify-content:space-between; box-shadow:var(--shadow-md);">
+<div id="bulk-action-bar" style="display:none; position:sticky; top:0; z-index:100; background:var(--color-primary); color:#fff; padding:12px var(--space-lg); border-radius:var(--radius-md); margin-bottom:var(--space-md); align-items:center; gap:var(--space-md); justify-content:space-between; box-shadow:var(--shadow-md);">
   <span id="bulk-count-label" style="font-weight:600; font-size:14px;">0 tiket dipilih</span>
   <div style="display:flex; gap:var(--space-sm); align-items:center;">
+
     @if(auth()->user()->isTeamLeader())
-      <form id="bulk-forward-form" method="POST" action="{{ route('tickets.bulk-forward') }}" style="margin:0;">
+      {{-- Bulk Review Form: Accept or Reject --}}
+      <form id="bulk-review-form" method="POST" action="{{ route('tickets.bulk-review') }}" style="margin:0;">
         @csrf
-        <div id="bulk-forward-inputs"></div>
-        <button type="button" onclick="confirmBulkForward()" class="btn btn-orient" style="font-size:13px;">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-          Teruskan ke Dept Head
+        <input type="hidden" name="action" id="bulk-review-action" value="">
+        <input type="hidden" name="notes" id="bulk-review-notes" value="">
+        <div id="bulk-review-inputs"></div>
+        <button type="button" onclick="confirmBulkReview('reject')" class="btn btn-danger" style="font-size:13px;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+          Tolak Dokumen
+        </button>
+        <button type="button" onclick="confirmBulkReview('accept')" class="btn" style="background:#fff; color:var(--color-primary); font-size:13px; font-weight:600;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
+          Terima Dokumen
         </button>
       </form>
     @endif
@@ -249,6 +259,8 @@
 
 @push('scripts')
 <script>
+const LS_KEY = '{{ $lsKey ?? "bulk_selected" }}';
+
 // ── Search ────────────────────────────────────────────────────
 function applySearch() {
   const q = document.getElementById('search-input').value;
@@ -260,11 +272,32 @@ function applySearch() {
 }
 
 // ── Bulk Selection ────────────────────────────────────────────
-const bulkBar      = document.getElementById('bulk-action-bar');
-const selectAllCb  = document.getElementById('select-all-checkbox');
+const bulkBar     = document.getElementById('bulk-action-bar');
+const selectAllCb = document.getElementById('select-all-checkbox');
 
+function getAllCheckboxes() {
+  return [...document.querySelectorAll('.bulk-checkbox')];
+}
 function getCheckedBoxes() {
   return [...document.querySelectorAll('.bulk-checkbox:checked')];
+}
+
+// Save current selection to localStorage
+function saveSelection() {
+  const selected = getCheckedBoxes().map(cb => cb.value);
+  localStorage.setItem(LS_KEY, JSON.stringify(selected));
+}
+
+// Restore selection from localStorage on page load
+function restoreSelection() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+    if (saved.length === 0) return;
+    getAllCheckboxes().forEach(cb => {
+      if (saved.includes(cb.value)) cb.checked = true;
+    });
+    updateBulkBar();
+  } catch (e) { localStorage.removeItem(LS_KEY); }
 }
 
 function updateBulkBar() {
@@ -277,23 +310,23 @@ function updateBulkBar() {
     bulkBar.style.display = 'none';
   }
   // Update select-all indeterminate state
-  const all = document.querySelectorAll('.bulk-checkbox');
+  const all = getAllCheckboxes();
   if (selectAllCb) {
     selectAllCb.checked = all.length > 0 && checked.length === all.length;
     selectAllCb.indeterminate = checked.length > 0 && checked.length < all.length;
   }
+  saveSelection();
 }
 
 function toggleSelectAll(cb) {
-  document.querySelectorAll('.bulk-checkbox').forEach(box => {
-    box.checked = cb.checked;
-  });
+  getAllCheckboxes().forEach(box => { box.checked = cb.checked; });
   updateBulkBar();
 }
 
 function clearSelection() {
-  document.querySelectorAll('.bulk-checkbox').forEach(box => box.checked = false);
+  getAllCheckboxes().forEach(box => box.checked = false);
   if (selectAllCb) selectAllCb.checked = false;
+  localStorage.removeItem(LS_KEY);
   updateBulkBar();
 }
 
@@ -303,21 +336,33 @@ function handleRowClick(e, row) {
   window.location.href = row.dataset.url;
 }
 
-// ── Bulk Forward (Team Leader) ─────────────────────────────────
-function confirmBulkForward() {
+// ── Bulk Review (Team Leader) ──────────────────────────────────
+function confirmBulkReview(action) {
   const checked = getCheckedBoxes();
   if (checked.length === 0) return;
-  if (!confirm(`Teruskan ${checked.length} tiket ke Department Head?`)) return;
-  const form = document.getElementById('bulk-forward-form');
-  const container = document.getElementById('bulk-forward-inputs');
+  const label = action === 'accept' ? 'menerima dokumen' : 'menolak dokumen';
+
+  let notes = '';
+  if (action === 'reject') {
+    notes = prompt(`Masukkan catatan penolakan untuk ${checked.length} tiket yang dipilih:`, '');
+    if (notes === null) return; // User cancelled
+  }
+
+  if (!confirm(`Anda yakin ingin ${label} untuk ${checked.length} tiket?`)) return;
+
+  const form    = document.getElementById('bulk-review-form');
+  const container = document.getElementById('bulk-review-inputs');
+  document.getElementById('bulk-review-action').value = action;
+  document.getElementById('bulk-review-notes').value  = notes;
   container.innerHTML = '';
   checked.forEach(cb => {
     const inp = document.createElement('input');
-    inp.type = 'hidden';
-    inp.name = 'ticket_ids[]';
+    inp.type  = 'hidden';
+    inp.name  = 'ticket_ids[]';
     inp.value = cb.value;
     container.appendChild(inp);
   });
+  localStorage.removeItem(LS_KEY); // Clear after submit
   form.submit();
 }
 
@@ -327,19 +372,28 @@ function confirmBulkAction(action) {
   if (checked.length === 0) return;
   const label = action === 'approve' ? 'menyetujui' : 'menolak';
   if (!confirm(`Anda yakin ingin ${label} ${checked.length} tiket?`)) return;
-  const form = document.getElementById('bulk-decide-form');
+  const form      = document.getElementById('bulk-decide-form');
   const container = document.getElementById('bulk-decide-inputs');
   document.getElementById('bulk-action-input').value = action;
   container.innerHTML = '';
   checked.forEach(cb => {
     const inp = document.createElement('input');
-    inp.type = 'hidden';
-    inp.name = 'ticket_ids[]';
+    inp.type  = 'hidden';
+    inp.name  = 'ticket_ids[]';
     inp.value = cb.value;
     container.appendChild(inp);
   });
+  localStorage.removeItem(LS_KEY); // Clear after submit
   form.submit();
 }
+
+// Restore selection state when page loads
+document.addEventListener('DOMContentLoaded', restoreSelection);
+
+// Also re-attach onChange listener to checkboxes
+document.querySelectorAll('.bulk-checkbox').forEach(cb => {
+  cb.addEventListener('change', updateBulkBar);
+});
 </script>
 @endpush
 @endsection
