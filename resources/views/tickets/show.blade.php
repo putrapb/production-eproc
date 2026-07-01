@@ -78,7 +78,7 @@
                 @if(is_array($ticket->pic_name) && count($ticket->pic_name) > 0)
                   <ul style="margin:0; padding-left:16px;">
                     @foreach($ticket->pic_name as $pic)
-                      <li>{{ $pic }}</li>
+                      <li>{{ is_array($pic) ? json_encode($pic) : $pic }}</li>
                     @endforeach
                   </ul>
                 @elseif(is_string($ticket->pic_name) && !empty($ticket->pic_name))

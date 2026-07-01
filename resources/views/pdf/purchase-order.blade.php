@@ -474,7 +474,7 @@
                     </td>
                     <td style="white-space: pre-wrap; word-break: break-word; vertical-align: top;">
                         @if(is_array($ticket->pic_name) && count($ticket->pic_name) > 0)
-                            {!! implode('<br>', array_map('htmlspecialchars', $ticket->pic_name)) !!}
+                            {!! implode('<br>', array_map(fn($p) => htmlspecialchars(is_array($p) ? json_encode($p) : $p), $ticket->pic_name)) !!}
                         @elseif(is_string($ticket->pic_name) && !empty($ticket->pic_name))
                             {{ $ticket->pic_name }}
                         @else
