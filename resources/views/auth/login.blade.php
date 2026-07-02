@@ -67,10 +67,7 @@
     @enderror
   </div>
 
-  <div style="display:flex; align-items:center; gap:8px; margin-bottom: var(--space-lg);">
-    <input type="checkbox" id="remember" name="remember" style="width:16px;height:16px;accent-color:var(--color-primary);cursor:pointer;">
-    <label for="remember" style="font-size:13px;color:var(--color-muted);cursor:pointer;">Ingat saya</label>
-  </div>
+
 
   <button type="submit" class="btn btn-primary w-full" style="justify-content:center;">
     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

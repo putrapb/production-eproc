@@ -63,7 +63,7 @@
     </div>
 
     <div style="font-size:12px; color:rgba(255,255,255,0.35); margin-top:auto;">
-      © {{ date('Y') }} E-Procurement Pejompongan
+      &copy; 2026 Helpdesk E-Procurement Pejompongan
     </div>
   </div>
 

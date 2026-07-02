@@ -1005,6 +1005,8 @@ select.form-control {
   box-shadow: var(--shadow-lg);
   max-width: 480px;
   width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
   padding: var(--space-xxl);
   transform: scale(0.95);
   transition: transform 0.2s ease;
