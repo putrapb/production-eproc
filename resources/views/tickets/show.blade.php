@@ -385,7 +385,7 @@
 {{-- Modal: Review Documents (Team Leader) --}}
 @if($user->isTeamLeader() && $status === 'pending_review')
 <div class="modal-overlay" id="modal-review-documents">
-  <div class="modal-card" style="max-width: 650px;">
+  <div class="modal-card" style="max-width: 650px; max-height: 95vh; display: flex; flex-direction: column; overflow: hidden; padding: 24px;">
     <div class="modal-icon" style="background: var(--color-primary-soft);">
       <svg width="24" height="24" fill="none" stroke="var(--color-primary)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
     </div>
@@ -393,9 +393,9 @@
     <div class="modal-body" style="text-align: left; margin-bottom: var(--space-sm);">
       Evaluasi setiap dokumen pendukung di bawah ini. Jika ada satu atau lebih dokumen yang ditolak, tiket akan dikembalikan ke Requester untuk revisi.
     </div>
-    <form method="POST" action="{{ route('tickets.review', $ticket) }}">
+    <form method="POST" action="{{ route('tickets.review', $ticket) }}" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
       @csrf
-      <div style="display: flex; flex-direction: column; gap: var(--space-md); margin: var(--space-md) 0; text-align: left; max-height: 50vh; overflow-y: auto; padding-right: 8px;">
+      <div style="display: flex; flex-direction: column; gap: var(--space-md); margin: var(--space-sm) 0; text-align: left; flex: 1; overflow-y: auto; min-height: 0; padding-right: 8px;">
         @foreach($ticket->documents as $doc)
           <div style="background: var(--color-surface-soft); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
@@ -421,12 +421,12 @@
         @endforeach
       </div>
 
-      <div class="form-group" style="text-align: left; margin-top: var(--space-md);">
+      <div class="form-group" style="text-align: left; margin-top: var(--space-sm); margin-bottom: var(--space-md); flex-shrink: 0;">
         <label class="form-label">Catatan Tinjauan Global (opsional)</label>
         <textarea name="notes" class="form-control" rows="2" placeholder="Tambahkan catatan untuk seluruh proses pemeriksaan ini..."></textarea>
       </div>
 
-      <div class="modal-footer">
+      <div class="modal-footer" style="flex-shrink: 0; margin-top: auto;">
         <button type="button" onclick="closeModal('modal-review-documents')" class="btn btn-secondary">Batal</button>
         <button type="submit" class="btn btn-primary">Simpan Tinjauan</button>
       </div>
