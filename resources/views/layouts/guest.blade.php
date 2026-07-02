@@ -19,12 +19,12 @@
     </div>
 
     <div>
-      <div class="auth-brand-title">E-Procurement</div>
-      <div style="color:rgba(255,255,255,0.55); font-size:12px; text-align:center; margin-top:4px; letter-spacing:1px; text-transform:uppercase;">IT Infrastructure Management</div>
+      <div class="auth-brand-title">Helpdesk E-Procurement</div>
+      <div style="color:rgba(255,255,255,0.55); font-size:12px; text-align:center; margin-top:4px; letter-spacing:1px; text-transform:uppercase;">IT Infrastructure Project Management</div>
     </div>
 
     <div class="auth-brand-subtitle">
-      Sistem pengadaan digital untuk Departemen IT Infrastructure Pejompongan. Cepat, terstruktur, dan dapat diaudit.
+      Sistem pengadaan digital untuk Tim IT Infrastructure Project Management Pejompongan. Cepat, terstruktur, dan dapat diaudit.
     </div>
 
     <div style="display:flex; flex-direction:column; gap:12px; width:100%; max-width:280px;">
@@ -34,7 +34,7 @@
             <path d="M9 12l2 2 4-4"/><path d="M12 3a9 9 0 100 18A9 9 0 0012 3z"/>
           </svg>
         </div>
-        Smart Validation 4 Gate
+        Smart Validation 
       </div>
       <div class="auth-brand-feature">
         <div class="auth-brand-feature-icon">
@@ -42,7 +42,7 @@
             <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
           </svg>
         </div>
-        Approval Chain 3 Level
+        Persetujuan Berjenjang
       </div>
       <div class="auth-brand-feature">
         <div class="auth-brand-feature-icon">
@@ -50,7 +50,7 @@
             <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
           </svg>
         </div>
-        Form Pengadaan Otomatis
+        Form Tiket Pengadaan
       </div>
       <div class="auth-brand-feature">
         <div class="auth-brand-feature-icon">
@@ -58,7 +58,7 @@
             <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
           </svg>
         </div>
-        Monitoring Anggaran Real-time
+        Dashboard Monitoring Real-time
       </div>
     </div>
 
