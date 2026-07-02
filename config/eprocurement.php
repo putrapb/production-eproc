@@ -35,7 +35,7 @@ return [
     | Registrasi dari divisi lain akan ditolak.
     |
     */
-    'allowed_division_keyword' => env('ALLOWED_DIVISION', 'IT Infrastructure'),
+    'allowed_division_keyword' => env('ALLOWED_DIVISION', 'IT Infrastructure Management'),
 
     /*
     |--------------------------------------------------------------------------

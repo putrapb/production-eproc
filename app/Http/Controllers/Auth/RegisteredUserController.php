@@ -51,7 +51,7 @@ class RegisteredUserController extends Controller
         }
 
         // Step 2: Validate division
-        $allowedDivision = config('eprocurement.allowed_division_keyword', 'IT Infrastructure');
+        $allowedDivision = config('eprocurement.allowed_division_keyword', 'IT Infrastructure Management');
         if (! str_contains($hrEmployee->division, $allowedDivision)) {
             return back()->withErrors([
                 'nip' => 'NIP Anda tidak termasuk dalam Departemen IT Infrastructure Management.',
