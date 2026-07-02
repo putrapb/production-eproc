@@ -39,7 +39,7 @@ class HrEmployee extends Model
         $position = strtolower($this->position);
 
         // Department Head = decision maker role (formerly division_head)
-        if (str_contains($position, 'department head')) {
+        if (str_contains($position, 'department head') || str_contains($position, 'departement head')) {
             return 'department_head';
         }
 
