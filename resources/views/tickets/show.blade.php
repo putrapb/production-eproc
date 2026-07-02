@@ -395,7 +395,7 @@
     </div>
     <form method="POST" action="{{ route('tickets.review', $ticket) }}">
       @csrf
-      <div style="display: flex; flex-direction: column; gap: var(--space-md); margin: var(--space-md) 0; text-align: left;">
+      <div style="display: flex; flex-direction: column; gap: var(--space-md); margin: var(--space-md) 0; text-align: left; max-height: 50vh; overflow-y: auto; padding-right: 8px;">
         @foreach($ticket->documents as $doc)
           <div style="background: var(--color-surface-soft); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
