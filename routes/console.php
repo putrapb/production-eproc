@@ -40,6 +40,7 @@ Artisan::command('hris:sync', function () {
         $nip = trim($row[0]);
         $name = trim($row[1]);
         $position = trim($row[2]);
+        $department = trim($row[3]);
         $division = trim($row[4]);
 
         if (empty($nip)) {
@@ -51,6 +52,7 @@ Artisan::command('hris:sync', function () {
             [
                 'name' => $name,
                 'position' => $position,
+                'department' => $department,
                 'division' => $division,
             ]
         );

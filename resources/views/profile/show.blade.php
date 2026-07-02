@@ -49,6 +49,10 @@
         </div>
         <div class="form-group">
           <div class="detail-field-label">Departemen</div>
+          <div class="detail-field-value">{{ auth()->user()->employee->department ?? '-' }}</div>
+        </div>
+        <div class="form-group">
+          <div class="detail-field-label">Divisi</div>
           <div class="detail-field-value">{{ auth()->user()->employee->division ?? '-' }}</div>
         </div>
         <div class="form-group">

@@ -509,7 +509,11 @@
             </div>
             <div class="info-row">
                 <div class="info-key">Departemen</div>
-                <div class="info-val">{{ $ticket->user->hrEmployee->division }}</div>
+                <div class="info-val">{{ $ticket->user->hrEmployee->department ?? '-' }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-key">Divisi</div>
+                <div class="info-val">{{ $ticket->user->hrEmployee->division ?? '-' }}</div>
             </div>
             @endif
         </div>

@@ -32,6 +32,7 @@ class HrEmployeeSeeder extends Seeder
                 'name'     => 'Muhammad Raihan Fauzan',
                 'position' => 'IT Infrastructure Project Management Staff',
                 // deriveRole() → requester
+                'department' => 'IT Infrastructure Design, Governance, Hosting, and System Infrastructure',
                 'division' => 'IT Infrastructure Management',
             ],
             [
@@ -39,6 +40,7 @@ class HrEmployeeSeeder extends Seeder
                 'name'     => 'Bintang Mahaputra Nararya Rabbani',
                 'position' => 'Procurement & Fixed Assets Staff',
                 // deriveRole() → pfa
+                'department' => 'IT Infrastructure Design, Governance, Hosting, and System Infrastructure',
                 'division' => 'IT Infrastructure Management',
             ],
             [
@@ -46,6 +48,7 @@ class HrEmployeeSeeder extends Seeder
                 'name'     => 'Haikal Fadhilah',
                 'position' => 'Department Head IT Infrastructure',
                 // deriveRole() → department_head
+                'department' => 'IT Infrastructure Design, Governance, Hosting, and System Infrastructure',
                 'division' => 'IT Infrastructure Management',
             ],
             [
@@ -53,6 +56,7 @@ class HrEmployeeSeeder extends Seeder
                 'name'     => 'Putra Pertama Budianto',
                 'position' => 'Division Head IT Infrastructure Management',
                 // deriveRole() → division_head
+                'department' => 'IT Infrastructure Design, Governance, Hosting, and System Infrastructure',
                 'division' => 'IT Infrastructure Management',
             ],
         ];

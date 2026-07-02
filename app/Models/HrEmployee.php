@@ -14,6 +14,7 @@ class HrEmployee extends Model
         'nip',
         'name',
         'position',
+        'department',
         'division',
     ];
 
