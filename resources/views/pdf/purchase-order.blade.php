@@ -380,7 +380,7 @@
     <div class="header-band">
         <div class="header-left">
             <div class="org-name">Internal System</div>
-            <div class="org-sub">Departemen IT Infrastructure Management &middot; Kantor Pejompongan, Jakarta</div>
+            <div class="org-sub">Departemen IHS &middot; Kantor Pejompongan, Jakarta</div>
         </div>
         <div class="header-right">
             <div class="doc-type">Form Pengadaan</div>
@@ -551,7 +551,7 @@
         </table>
 
         {{-- ─── Informasi Penerbitan ─── --}}
-        <div class="section-header" style="margin-top:16px;">
+        <div class="section-header" style="margin-top:22px;">
             <div class="section-title">D. Informasi Penerbitan Form</div>
         </div>
         <div class="info-grid">
@@ -635,10 +635,10 @@
     {{-- ═══ FOOTER BAND ═══ --}}
     <div class="footer-band">
         <div class="footer-left">
-            E-Procurement Pejompongan &nbsp;&middot;&nbsp; Departemen IT Infrastructure Management
+            Helpdesk E-Procurement Pejompongan &nbsp;&middot;&nbsp; Departemen IT Infrastructure Management
         </div>
         <div class="footer-right">
-            Dokumen ini diterbitkan secara elektronik oleh Sistem E-Procurement &nbsp;&middot;&nbsp;
+            Dokumen ini diterbitkan secara elektronik oleh Sistem Helpdesk E-Procurement &nbsp;&middot;&nbsp;
             {{ $generated_at->format('d/m/Y H:i') }} WIB
         </div>
     </div>
