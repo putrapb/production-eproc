@@ -551,6 +551,7 @@
         </table>
 
         {{-- ─── Informasi Penerbitan ─── --}}
+        <div style="page-break-before: always;">
         <div class="section-header" style="margin-top:22px;">
             <div class="section-title">D. Informasi Penerbitan Form</div>
         </div>
@@ -630,6 +631,7 @@
             </div>
         </div>
 
+        </div>
     </div>{{-- end .body --}}
 
     {{-- ═══ FOOTER BAND ═══ --}}
