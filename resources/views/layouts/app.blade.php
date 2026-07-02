@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>@yield('title', 'Dashboard') | E-Procurement Pejompongan</title>
-  <meta name="description" content="Sistem E-Procurement IT Infrastructure Management Pejompongan">
+  <title>@yield('title', 'Dashboard') | Helpdesk E-Procurement Pejompongan</title>
+  <meta name="description" content="Sistem Helpdesk E-Procurement IT Infrastructure Project Management Pejompongan">
   <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=2" type="image/x-icon">
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -74,8 +74,8 @@
         <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
       </div>
       <div class="sidebar-logo-text">
-        E-Procurement
-        <span>IT Infrastructure</span>
+        Helpdesk E-Procurement
+        <span>IT Infrastructure Projects Management</span>
       </div>
     </div>
 
@@ -160,7 +160,7 @@
         </button>
 
         <nav class="topbar-breadcrumb" aria-label="Breadcrumb">
-          <a href="{{ route('dashboard') }}" class="breadcrumb-item">E-Procurement</a>
+          <a href="{{ route('dashboard') }}" class="breadcrumb-item">Helpdesk E-Procurement</a>
           @hasSection('breadcrumb')
             <span class="breadcrumb-sep">/</span>
             @yield('breadcrumb')
