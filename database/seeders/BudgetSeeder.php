@@ -61,12 +61,12 @@ class BudgetSeeder extends Seeder
             [
                 'expenditure_type' => 'OPEX',
                 'category'         => 'infrastruktur_utama',
-                'total_limit'      => 0.00, // OPEX infra — not allocated (CAPEX-only class)
+                'total_limit'      => 146_250_000_000.00, // Allocated same as CAPEX
             ],
             [
                 'expenditure_type' => 'OPEX',
                 'category'         => 'lisensi_sistem',
-                'total_limit'      => 0.00, // OPEX license — not allocated (CAPEX-only class)
+                'total_limit'      => 146_250_000_000.00, // Allocated same as CAPEX
             ],
             [
                 'expenditure_type' => 'OPEX',
