@@ -156,7 +156,7 @@
 
         /* ─── Amount Highlight ──────────────────────────── */
         .amount-box {
-            background: linear-gradient(135deg, #006885 0%, #004d63 100%);
+            background: #006885;
             border-radius: 6px;
             padding: 14px 20px;
             margin: 16px 0;
@@ -189,7 +189,7 @@
             color: white;
             font-size: 9px;
             font-weight: bold;
-            padding: 2px 8px;
+            padding: 2px 6px;
             border-radius: 10px;
             margin-left: 8px;
             letter-spacing: 0.5px;
@@ -472,7 +472,7 @@
                             <br><span style="font-size: 8px; color: #666; font-style: italic; white-space: pre-wrap; word-break: break-word; display: block; margin-top: 2px;">{{ $ticket->description }}</span>
                         @endif
                     </td>
-                    <td style="white-space: pre-wrap; word-break: break-word; vertical-align: top;">
+                    <td style="word-break: break-word; vertical-align: top; text-align: left;">
                         @if(is_array($ticket->pic_name) && count($ticket->pic_name) > 0)
                             {!! implode('<br>', array_map(fn($p) => htmlspecialchars(is_array($p) ? json_encode($p) : $p), $ticket->pic_name)) !!}
                         @elseif(is_string($ticket->pic_name) && !empty($ticket->pic_name))
@@ -637,7 +637,7 @@
     {{-- ═══ FOOTER BAND ═══ --}}
     <div class="footer-band">
         <div class="footer-left">
-            Helpdesk E-Procurement Pejompongan &nbsp;&middot;&nbsp; Departemen IT Infrastructure Management
+            Helpdesk E-Procurement Pejompongan &nbsp;&middot;&nbsp; Departemen IHS
         </div>
         <div class="footer-right">
             Dokumen ini diterbitkan secara elektronik oleh Sistem Helpdesk E-Procurement &nbsp;&middot;&nbsp;

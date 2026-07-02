@@ -216,7 +216,7 @@ class SmartValidationService
                 'ticket_id' => $ticket->id,
                 'user_id'   => $requester->id,
                 'action'    => ApprovalLog::ACTION_CROSS_FUND_REQUESTED,
-                'notes'     => "Silang dana dari {$ticket->expenditure_type} ke {$alternativeType}. Saldo dikunci sementara.",
+                'notes'     => "Silang dana dari {$originalType} ke {$alternativeType}. Saldo dikunci sementara.",
             ]);
 
             return ['success' => true];
