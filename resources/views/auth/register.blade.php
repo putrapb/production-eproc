@@ -35,7 +35,7 @@
       </div>
     @enderror
     <div style="font-size:12px; color:var(--color-muted-soft); margin-top:4px;">
-      NIP harus terdaftar dalam database karyawan Departemen IT Infrastructure.
+      NIP harus terdaftar dalam database karyawan Departemen IT Infrastructure Management.
     </div>
   </div>
 
