@@ -412,15 +412,27 @@ function markRead(id, el) {
 }
 
 function markAllRead() {
+  // Optimistic UI update: hapus badge & tanda unread secara instan!
+  if (notifBadge) notifBadge.style.display = 'none';
+  if (notifList) {
+    notifList.querySelectorAll('.notif-item.unread').forEach(el => {
+      el.classList.remove('unread');
+      const dot = el.querySelector('span[style*="border-radius:50%"]');
+      if (dot) dot.remove();
+    });
+  }
+
+  // Request ke server di background
   fetch('/notifications/read-all', {
     method: 'POST',
     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-  })
-  .then(() => fetchNotifications());
+  });
 }
 
-// Polling badge setiap 5 detik (background, tidak ganggu dropdown)
-setInterval(fetchBadge, 5000);
+// Polling badge setiap 5 detik (background), hanya jalan kalau tab aktif
+setInterval(() => {
+  if (!document.hidden) fetchBadge();
+}, 5000);
 </script>
 
 @stack('scripts')
