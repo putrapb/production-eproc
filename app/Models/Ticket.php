@@ -223,6 +223,22 @@ class Ticket extends Model
     }
 
     /**
+     * Get who currently "holds the ball" for this ticket.
+     * Returns the role label of who needs to act next.
+     */
+    public function getBallHolderAttribute(): string
+    {
+        return match ($this->status) {
+            self::STATUS_PENDING_REVIEW    => 'Team Leader',
+            self::STATUS_REVISION          => 'Requester',
+            self::STATUS_NEED_TO_VALIDATE  => 'Requester',
+            self::STATUS_PENDING_DEPT_HEAD => 'Dept Head',
+            self::STATUS_APPROVED          => 'Team Leader',  // TL must generate form
+            default                        => '',              // Final states (declined, form_generated)
+        };
+    }
+
+    /**
      * Get formatted amount in Rupiah.
      */
     public function getFormattedAmountAttribute(): string

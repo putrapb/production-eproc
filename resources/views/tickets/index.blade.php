@@ -237,6 +237,12 @@
             </td>
             <td>
               <span class="badge badge-{{ str_replace('_','-',$ticket->status) }}">{{ $ticket->status_label }}</span>
+              @if($ticket->ball_holder)
+                <br><span style="display:inline-flex;align-items:center;gap:3px;margin-top:4px;font-size:10px;font-weight:600;color:var(--color-muted);background:var(--color-surface);border:1px solid var(--color-hairline);border-radius:20px;padding:2px 8px;">
+                  <svg width="9" height="9" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  {{ $ticket->ball_holder }}
+                </span>
+              @endif
               @if($ticket->is_cross_fund)
                 <br><span class="badge badge-cross-fund" style="margin-top:4px; font-size:10px; padding:2px 8px;">⇄ Silang Dana</span>
               @endif

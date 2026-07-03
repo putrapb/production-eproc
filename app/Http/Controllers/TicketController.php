@@ -31,7 +31,6 @@ class TicketController extends Controller
             : 15;
 
         $tickets = Ticket::with(['user', 'approvalLogs.user'])
-            ->forRole($user)
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('title', 'like', "%{$s}%")
@@ -733,9 +732,7 @@ class TicketController extends Controller
 
     private function authorizeView(Ticket $ticket, $user): void
     {
-        // Requester can only see their own tickets
-        if ($user->isRequester() && $ticket->user_id !== $user->id) {
-            abort(403, 'Anda tidak memiliki akses ke tiket ini.');
-        }
+        // All roles can view all tickets (global visibility for tracking)
+        // Actions (approve, check, revise) are still role-gated separately
     }
 }
