@@ -45,7 +45,7 @@
       <label class="form-label" for="password" style="margin:0">Password</label>
       <a href="{{ route('password.request') }}" style="font-size:12px; color:var(--color-primary); font-weight:500;">Lupa Password?</a>
     </div>
-    <div style="position:relative;">
+    <div class="password-wrapper">
       <input
         type="password"
         id="password"
@@ -54,9 +54,8 @@
         placeholder="Masukkan password"
         required
         autocomplete="current-password"
-        style="padding-right: 44px;"
       >
-      <button type="button" onclick="togglePassword()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--color-muted);" id="pwd-toggle">
+      <button type="button" class="toggle-password" onclick="togglePassword()" id="pwd-toggle">
         <svg id="eye-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
         </svg>

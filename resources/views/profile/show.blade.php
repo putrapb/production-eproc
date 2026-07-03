@@ -84,23 +84,44 @@
 
           <div class="form-group">
             <label class="form-label" for="current_password">Password Saat Ini <span class="required">*</span></label>
-            <input type="password" id="current_password" name="current_password"
-              class="form-control {{ $errors->has('current_password') ? 'is-invalid' : '' }}"
-              placeholder="••••••••" required autocomplete="current-password">
+            <div class="password-wrapper">
+              <input type="password" id="current_password" name="current_password"
+                class="form-control {{ $errors->has('current_password') ? 'is-invalid' : '' }}"
+                placeholder="••••••••" required autocomplete="current-password">
+              <button type="button" class="toggle-password" onclick="togglePasswordVisibility('current_password', 'eye-icon-curr')">
+                <svg id="eye-icon-curr" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="new_password">Password Baru <span class="required">*</span></label>
-            <input type="password" id="new_password" name="new_password"
-              class="form-control {{ $errors->has('new_password') ? 'is-invalid' : '' }}"
-              placeholder="Minimal 8 karakter" required autocomplete="new-password">
+            <div class="password-wrapper">
+              <input type="password" id="new_password" name="new_password"
+                class="form-control {{ $errors->has('new_password') ? 'is-invalid' : '' }}"
+                placeholder="Minimal 8 karakter" required autocomplete="new-password">
+              <button type="button" class="toggle-password" onclick="togglePasswordVisibility('new_password', 'eye-icon-new')">
+                <svg id="eye-icon-new" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="new_password_confirmation">Konfirmasi Password Baru <span class="required">*</span></label>
-            <input type="password" id="new_password_confirmation" name="new_password_confirmation"
-              class="form-control"
-              placeholder="Ulangi password baru" required autocomplete="new-password">
+            <div class="password-wrapper">
+              <input type="password" id="new_password_confirmation" name="new_password_confirmation"
+                class="form-control"
+                placeholder="Ulangi password baru" required autocomplete="new-password">
+              <button type="button" class="toggle-password" onclick="togglePasswordVisibility('new_password_confirmation', 'eye-icon-conf')">
+                <svg id="eye-icon-conf" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="alert alert-info" style="font-size:13px; padding:var(--space-sm) var(--space-md); margin-bottom:var(--space-lg);">
@@ -132,4 +153,19 @@
   }
 }
 </style>
+@push('scripts')
+<script>
+function togglePasswordVisibility(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon  = document.getElementById(iconId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+  } else {
+    input.type = 'password';
+    icon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+  }
+}
+</script>
+@endpush
 @endsection
