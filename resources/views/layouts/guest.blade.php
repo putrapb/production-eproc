@@ -6,7 +6,7 @@
   <title>@yield('title', 'Masuk') | E-Procurement Pejompongan</title>
   <meta name="description" content="Login Sistem E-Procurement IT Infrastructure Management Pejompongan">
   <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=2" type="image/x-icon">
-  <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
   @stack('styles')
 </head>
 <body style="background: var(--color-surface-soft);">

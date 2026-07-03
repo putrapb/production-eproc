@@ -9,7 +9,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
   <!-- Design System -->
-  <link rel="stylesheet" href="{{ asset('css/app.css') }}?v=1.0.5">
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
 
   <style>
     /* Bulletproof fix for badge-form-generated styling to bypass any server-side static file cache */
