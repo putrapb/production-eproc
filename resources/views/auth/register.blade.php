@@ -50,11 +50,11 @@
 
   <div class="form-group">
     <label class="form-label" for="password">Password <span class="required">*</span></label>
-    <div class="password-wrapper">
+    <div style="position:relative; display:flex; align-items:center;">
       <input type="password" id="password" name="password"
         class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
-        placeholder="Minimal 8 karakter" required autocomplete="new-password">
-      <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password', 'eye-icon-pass')">
+        placeholder="Minimal 8 karakter" required autocomplete="new-password" style="padding-right: 40px; width: 100%;">
+      <button type="button" onclick="togglePasswordVisibility('password', 'eye-icon-pass')" style="position:absolute; right:12px; display:flex; align-items:center; justify-content:center; background:none; border:none; padding:0; cursor:pointer; color:var(--color-muted-soft);">
         <svg id="eye-icon-pass" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
         </svg>
@@ -65,11 +65,11 @@
 
   <div class="form-group">
     <label class="form-label" for="password_confirmation">Konfirmasi Password <span class="required">*</span></label>
-    <div class="password-wrapper">
+    <div style="position:relative; display:flex; align-items:center;">
       <input type="password" id="password_confirmation" name="password_confirmation"
         class="form-control" placeholder="Ulangi password"
-        required autocomplete="new-password">
-      <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password_confirmation', 'eye-icon-conf')">
+        required autocomplete="new-password" style="padding-right: 40px; width: 100%;">
+      <button type="button" onclick="togglePasswordVisibility('password_confirmation', 'eye-icon-conf')" style="position:absolute; right:12px; display:flex; align-items:center; justify-content:center; background:none; border:none; padding:0; cursor:pointer; color:var(--color-muted-soft);">
         <svg id="eye-icon-conf" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
         </svg>

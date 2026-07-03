@@ -84,11 +84,11 @@
 
           <div class="form-group">
             <label class="form-label" for="current_password">Password Saat Ini <span class="required">*</span></label>
-            <div class="password-wrapper">
+            <div style="position:relative; display:flex; align-items:center;">
               <input type="password" id="current_password" name="current_password"
                 class="form-control {{ $errors->has('current_password') ? 'is-invalid' : '' }}"
-                placeholder="••••••••" required autocomplete="current-password">
-              <button type="button" class="toggle-password" onclick="togglePasswordVisibility('current_password', 'eye-icon-curr')">
+                placeholder="••••••••" required autocomplete="current-password" style="padding-right: 40px; width: 100%;">
+              <button type="button" onclick="togglePasswordVisibility('current_password', 'eye-icon-curr')" style="position:absolute; right:12px; display:flex; align-items:center; justify-content:center; background:none; border:none; padding:0; cursor:pointer; color:var(--color-muted-soft);">
                 <svg id="eye-icon-curr" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                 </svg>
@@ -98,11 +98,11 @@
 
           <div class="form-group">
             <label class="form-label" for="new_password">Password Baru <span class="required">*</span></label>
-            <div class="password-wrapper">
+            <div style="position:relative; display:flex; align-items:center;">
               <input type="password" id="new_password" name="new_password"
                 class="form-control {{ $errors->has('new_password') ? 'is-invalid' : '' }}"
-                placeholder="Minimal 8 karakter" required autocomplete="new-password">
-              <button type="button" class="toggle-password" onclick="togglePasswordVisibility('new_password', 'eye-icon-new')">
+                placeholder="Minimal 8 karakter" required autocomplete="new-password" style="padding-right: 40px; width: 100%;">
+              <button type="button" onclick="togglePasswordVisibility('new_password', 'eye-icon-new')" style="position:absolute; right:12px; display:flex; align-items:center; justify-content:center; background:none; border:none; padding:0; cursor:pointer; color:var(--color-muted-soft);">
                 <svg id="eye-icon-new" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                 </svg>
@@ -112,11 +112,11 @@
 
           <div class="form-group">
             <label class="form-label" for="new_password_confirmation">Konfirmasi Password Baru <span class="required">*</span></label>
-            <div class="password-wrapper">
+            <div style="position:relative; display:flex; align-items:center;">
               <input type="password" id="new_password_confirmation" name="new_password_confirmation"
                 class="form-control"
-                placeholder="Ulangi password baru" required autocomplete="new-password">
-              <button type="button" class="toggle-password" onclick="togglePasswordVisibility('new_password_confirmation', 'eye-icon-conf')">
+                placeholder="Ulangi password baru" required autocomplete="new-password" style="padding-right: 40px; width: 100%;">
+              <button type="button" onclick="togglePasswordVisibility('new_password_confirmation', 'eye-icon-conf')" style="position:absolute; right:12px; display:flex; align-items:center; justify-content:center; background:none; border:none; padding:0; cursor:pointer; color:var(--color-muted-soft);">
                 <svg id="eye-icon-conf" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                 </svg>
