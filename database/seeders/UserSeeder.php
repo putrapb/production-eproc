@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Hash;
  * log in immediately without going through the OTP flow during demos.
  *
  * Credentials:
- *  - Email format: {firstname}@bni.co.id
+ *  - Email format: {firstname}@bna.co.id
  *  - Password: "password" (all users — for demo purposes only)
  *
  * Roles:
@@ -31,19 +31,19 @@ class UserSeeder extends Seeder
             // ── Requester ───────────────────────────────────────────────
             [
                 'nip'   => '2024001001',
-                'email' => 'raihan@bni.co.id',
+                'email' => 'raihan@bna.co.id',
                 'role'  => 'requester',
             ],
             // ── Team Leader (Document checker + Form generator) ─────────
             [
                 'nip'   => '2024001003',
-                'email' => 'haikal@bni.co.id',
+                'email' => 'haikal@bna.co.id',
                 'role'  => 'team_leader',
             ],
             // ── Department Head (Final decision maker) ───────────────────
             [
                 'nip'   => '2024001004',
-                'email' => 'putra@bni.co.id',
+                'email' => 'putra@bna.co.id',
                 'role'  => 'department_head',
             ],
         ];

@@ -18,10 +18,10 @@ use Illuminate\Database\Seeder;
  * ┌──────────────────────┬─────────────────────────┬──────────────────┐
  * │ Role                 │ Email                   │ Nama             │
  * ├──────────────────────┼─────────────────────────┼──────────────────┤
- * │ Requester (PM Staff) │ raihan@bni.co.id        │ Raihan Ardiansyah│
- * │ PFA (Procurement)    │ bintang@bni.co.id       │ Bintang Permana  │
- * │ Department Head      │ haikal@bni.co.id        │ Haikal Fadhilah  │
- * │ Division Head        │ putra@bni.co.id         │ Putra Bagas P.   │
+ * │ Requester (PM Staff) │ raihan@bna.co.id        │ Raihan Ardiansyah│
+ * │ PFA (Procurement)    │ bintang@bna.co.id       │ Bintang Permana  │
+ * │ Department Head      │ haikal@bna.co.id        │ Haikal Fadhilah  │
+ * │ Division Head        │ putra@bna.co.id         │ Putra Bagas P.   │
  * └──────────────────────┴─────────────────────────┴──────────────────┘
  */
 class DatabaseSeeder extends Seeder
