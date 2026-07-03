@@ -45,6 +45,74 @@ class TicketController extends Controller
     }
 
     /**
+     * Export tickets as CSV.
+     */
+    public function export(Request $request)
+    {
+        $tickets = Ticket::with(['user'])
+            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
+                $q->where('title', 'like', "%{$s}%")
+                  ->orWhere('item_name', 'like', "%{$s}%")
+                  ->orWhere('vendor_name', 'like', "%{$s}%");
+            }))
+            ->latest()
+            ->get();
+
+        $filename = 'export_tiket_pengadaan_' . date('Ymd_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+
+        $callback = function() use ($tickets) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for Excel UTF-8 compatibility
+            fputs($file, "\xEF\xBB\xBF");
+            
+            fputcsv($file, [
+                'ID Tiket', 
+                'Tanggal Dibuat', 
+                'Judul', 
+                'Nama Barang', 
+                'Vendor', 
+                'Kategori', 
+                'Jenis Pengeluaran', 
+                'Silang Dana', 
+                'Total Nominal (Rp)', 
+                'Pemohon', 
+                'Status', 
+                'Bola Di'
+            ]);
+
+            foreach ($tickets as $ticket) {
+                fputcsv($file, [
+                    $ticket->id,
+                    $ticket->created_at->format('Y-m-d H:i:s'),
+                    $ticket->title,
+                    $ticket->item_name,
+                    $ticket->vendor_name,
+                    config('eprocurement.categories.' . $ticket->category, $ticket->category),
+                    $ticket->expenditure_type ?? '-',
+                    $ticket->is_cross_fund ? 'Ya' : 'Tidak',
+                    $ticket->amount,
+                    $ticket->user?->name ?? 'Unknown',
+                    $ticket->status_label,
+                    $ticket->ball_holder ?? '-'
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
      * Display detailed ticket information with approval log.
      */
     public function show(Ticket $ticket, Request $request): View

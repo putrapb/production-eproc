@@ -12,12 +12,18 @@
     <h1>Tiket Pengadaan</h1>
     <p>Kelola semua pengajuan pengadaan</p>
   </div>
-  @if(auth()->user()->isRequester())
-    <a href="{{ route('tickets.create') }}" class="btn btn-primary">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
-      Pengajuan Baru
+  <div style="display:flex; gap:12px;">
+    <a href="{{ request()->fullUrlWithQuery(['export' => 1]) }}" class="btn btn-secondary" onclick="event.preventDefault(); window.location.href='{{ route('tickets.export', request()->query()) }}'">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+      Export CSV
     </a>
-  @endif
+    @if(auth()->user()->isRequester())
+      <a href="{{ route('tickets.create') }}" class="btn btn-primary">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+        Pengajuan Baru
+      </a>
+    @endif
+  </div>
 </div>
 
 {{-- Filter + Search + Per-page --}}
