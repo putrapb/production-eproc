@@ -27,92 +27,51 @@
     <div class="card">
       <div class="card-body">
 
-        {{-- SECTION: Informasi Item --}}
-        <div class="detail-section-title">Informasi Item</div>
+        {{-- SECTION: Informasi Pengadaan --}}
+        <div class="detail-section-title">Informasi Pengadaan</div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="title">Judul Pengajuan <span class="required">*</span></label>
-            <input type="text" id="title" name="title"
-              class="form-control {{ $errors->has('title') ? 'is-invalid' : '' }}"
-              value="{{ old('title') }}"
-              placeholder="Contoh: Pengadaan Server Rack Unit 2U"
-              required maxlength="255">
-            @error('title') <div class="form-error">{{ $message }}</div> @enderror
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="item_name">Nama Item <span class="required">*</span></label>
-            <input type="text" id="item_name" name="item_name"
-              class="form-control {{ $errors->has('item_name') ? 'is-invalid' : '' }}"
-              value="{{ old('item_name') }}"
-              placeholder="Contoh: Dell PowerEdge R740xd"
-              required maxlength="255">
-            @error('item_name') <div class="form-error">{{ $message }}</div> @enderror
-          </div>
+        <div class="form-group">
+          <label class="form-label" for="title">Judul Pengajuan <span class="required">*</span></label>
+          <input type="text" id="title" name="title"
+            class="form-control {{ $errors->has('title') ? 'is-invalid' : '' }}"
+            value="{{ old('title') }}"
+            placeholder="Contoh: Pengadaan Storage Array untuk DC Pejompongan"
+            required maxlength="255">
+          @error('title') <div class="form-error">{{ $message }}</div> @enderror
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="description">Deskripsi <span class="required">*</span></label>
-            <textarea id="description" name="description"
-              class="form-control {{ $errors->has('description') ? 'is-invalid' : '' }}"
-              placeholder="Jelaskan kebutuhan dan spesifikasi item yang diajukan..."
-              required>{{ old('description') }}</textarea>
-            @error('description') <div class="form-error">{{ $message }}</div> @enderror
+            <label class="form-label" for="expenditure_type">Jenis Pengeluaran <span class="required">*</span></label>
+            <select id="expenditure_type" name="expenditure_type"
+              class="form-control {{ $errors->has('expenditure_type') ? 'is-invalid' : '' }}"
+              onchange="filterCategories(this.value)" required>
+              <option value="" disabled {{ old('expenditure_type') ? '' : 'selected' }}>Pilih CAPEX / OPEX...</option>
+              <option value="CAPEX" {{ old('expenditure_type') === 'CAPEX' ? 'selected' : '' }}>CAPEX — Aset / Investasi Baru</option>
+              <option value="OPEX"  {{ old('expenditure_type') === 'OPEX'  ? 'selected' : '' }}>OPEX — Operasional / Pemeliharaan</option>
+            </select>
+            <div style="font-size:11px; color:var(--color-muted); margin-top:4px;">CAPEX: barang baru yang menjadi aset. OPEX: maintenance, spare part, managed service.</div>
+            @error('expenditure_type') <div class="form-error">{{ $message }}</div> @enderror
           </div>
 
-          <div class="form-group">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; height: 20px;">
-              <label class="form-label" style="margin-bottom: 0;">PIC (Person In Charge) <span class="required">*</span></label>
-              <button type="button" id="btn-add-pic" onclick="addPicRow()" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11px; {{ count(old('pic_name', [''])) >= 2 ? 'display: none;' : '' }}">
-                + Tambah PIC
-              </button>
-            </div>
-            
-            <div id="pic-container" style="display: flex; flex-direction: column; gap: var(--space-xs);">
-              @php
-                  $oldPics = old('pic_name', ['']);
-                  if (!is_array($oldPics)) $oldPics = [$oldPics];
-              @endphp
-              @foreach($oldPics as $index => $pic)
-              <div class="pic-row" style="display: flex; gap: var(--space-sm); align-items: center;">
-                <div style="flex: 1;">
-                  <input type="text" name="pic_name[]" class="form-control" value="{{ $pic }}" placeholder="Nama PIC" maxlength="255" required>
-                </div>
-                <button type="button" onclick="removePicRow(this)" class="btn btn-danger btn-icon btn-sm" style="display: {{ count($oldPics) > 1 ? 'inline-flex' : 'none' }};" title="Hapus PIC">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                </button>
-              </div>
-              @endforeach
-            </div>
-            @error('pic_name') <div class="form-error" style="margin-top: 4px;">{{ $message }}</div> @enderror
-            @error('pic_name.*') <div class="form-error" style="margin-top: 4px;">{{ $message }}</div> @enderror
-          </div>
-        </div>
-
-
-        <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="category">Kategori <span class="required">*</span></label>
             <select id="category" name="category"
               class="form-control {{ $errors->has('category') ? 'is-invalid' : '' }}"
               required>
-              <option value="" disabled selected>Pilih kategori...</option>
-              @foreach(config('eprocurement.categories') as $key => $label)
-                <option value="{{ $key }}" {{ old('category') === $key ? 'selected' : '' }}>{{ $label }}</option>
+              <option value="" disabled selected>Pilih jenis pengeluaran dulu...</option>
+              @php
+                $capexCats = ['infrastruktur_utama' => 'Infrastruktur Utama', 'lisensi_sistem' => 'Lisensi Sistem'];
+                $opexCats  = ['layanan_pemeliharaan' => 'Layanan Pemeliharaan', 'perlengkapan_operasional' => 'Perlengkapan Operasional'];
+              @endphp
+              @foreach($capexCats as $key => $label)
+                <option value="{{ $key }}" data-type="CAPEX" {{ old('category') === $key ? 'selected' : '' }} style="display:none;">{{ $label }}</option>
+              @endforeach
+              @foreach($opexCats as $key => $label)
+                <option value="{{ $key }}" data-type="OPEX" {{ old('category') === $key ? 'selected' : '' }} style="display:none;">{{ $label }}</option>
               @endforeach
             </select>
             @error('category') <div class="form-error">{{ $message }}</div> @enderror
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="quantity">Jumlah Unit <span class="required">*</span></label>
-            <input type="number" id="quantity" name="quantity"
-              class="form-control {{ $errors->has('quantity') ? 'is-invalid' : '' }}"
-              value="{{ old('quantity', 1) }}"
-              min="1" max="9999" required>
-            @error('quantity') <div class="form-error">{{ $message }}</div> @enderror
           </div>
         </div>
 
@@ -128,20 +87,104 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="amount">Nominal Harga <span class="required">*</span></label>
-            <div style="position:relative;">
-              <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--color-muted); font-weight:500;">Rp</span>
-              <input type="text" id="amount-display" name="amount_display"
-                class="form-control {{ $errors->has('amount') ? 'is-invalid' : '' }}"
-                value="{{ old('amount') ? number_format((float)old('amount'), 0, ',', '.') : '' }}"
-                placeholder="0"
-                style="padding-left:36px;"
-                oninput="formatAmount(this)">
-              <input type="hidden" id="amount" name="amount" value="{{ old('amount') }}">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; height:20px;">
+              <label class="form-label" style="margin-bottom:0;">PIC (Person In Charge) <span class="required">*</span></label>
+              <button type="button" id="btn-add-pic" onclick="addPicRow()" class="btn btn-outline btn-sm" style="padding:4px 10px; font-size:11px; {{ count(old('pic_name', [''])) >= 2 ? 'display:none;' : '' }}">+ Tambah PIC</button>
             </div>
-            @error('amount') <div class="form-error">{{ $message }}</div> @enderror
+            <div id="pic-container" style="display:flex; flex-direction:column; gap:var(--space-xs);">
+              @php $oldPics = old('pic_name', ['']); if (!is_array($oldPics)) $oldPics = [$oldPics]; @endphp
+              @foreach($oldPics as $index => $pic)
+              <div class="pic-row" style="display:flex; gap:var(--space-sm); align-items:center;">
+                <div style="flex:1;">
+                  <input type="text" name="pic_name[]" class="form-control" value="{{ $pic }}" placeholder="Nama PIC" maxlength="255" required>
+                </div>
+                <button type="button" onclick="removePicRow(this)" class="btn btn-danger btn-icon btn-sm" style="display:{{ count($oldPics) > 1 ? 'inline-flex' : 'none' }};" title="Hapus PIC">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+              @endforeach
+            </div>
+            @error('pic_name') <div class="form-error" style="margin-top:4px;">{{ $message }}</div> @enderror
           </div>
         </div>
+
+        <div class="form-group">
+          <label class="form-label" for="description">Deskripsi / Justifikasi Pengadaan</label>
+          <textarea id="description" name="description"
+            class="form-control {{ $errors->has('description') ? 'is-invalid' : '' }}"
+            placeholder="Jelaskan kebutuhan, spesifikasi, dan urgensi pengadaan ini...">{{ old('description') }}</textarea>
+          @error('description') <div class="form-error">{{ $message }}</div> @enderror
+        </div>
+
+        <hr class="divider">
+
+        {{-- SECTION: Daftar Item --}}
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
+          <div class="detail-section-title" style="margin-bottom:0;">Daftar Item Pengadaan <span class="required">*</span></div>
+          <button type="button" id="btn-add-item" onclick="addItemRow()" class="btn btn-outline btn-sm" style="padding:4px 12px; font-size:12px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+            Tambah Item
+          </button>
+        </div>
+
+        @error('items') <div class="form-error" style="margin-bottom:8px;">{{ $message }}</div> @enderror
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse;" id="items-table">
+            <thead>
+              <tr style="background:var(--color-surface-soft); font-size:12px; font-weight:600; color:var(--color-muted);">
+                <th style="padding:10px 12px; text-align:left; border-bottom:1px solid var(--color-border); width:40px;">No.</th>
+                <th style="padding:10px 12px; text-align:left; border-bottom:1px solid var(--color-border);">Nama Item <span class="required">*</span></th>
+                <th style="padding:10px 12px; text-align:center; border-bottom:1px solid var(--color-border); width:90px;">Qty <span class="required">*</span></th>
+                <th style="padding:10px 12px; text-align:right; border-bottom:1px solid var(--color-border); width:200px;">Harga Satuan (Rp) <span class="required">*</span></th>
+                <th style="padding:10px 12px; text-align:right; border-bottom:1px solid var(--color-border); width:170px;">Subtotal</th>
+                <th style="padding:10px 12px; border-bottom:1px solid var(--color-border); width:50px;"></th>
+              </tr>
+            </thead>
+            <tbody id="items-body">
+              @php $oldItems = old('items', [[]]); @endphp
+              @foreach($oldItems as $i => $oldItem)
+              <tr class="item-row">
+                <td style="padding:8px 12px; font-size:13px; color:var(--color-muted);" class="item-no">{{ $i + 1 }}</td>
+                <td style="padding:6px 8px;">
+                  <input type="text" name="items[{{ $i }}][item_name]"
+                    class="form-control {{ $errors->has("items.$i.item_name") ? 'is-invalid' : '' }}"
+                    value="{{ $oldItem['item_name'] ?? '' }}"
+                    placeholder="Nama barang / jasa" required maxlength="255">
+                </td>
+                <td style="padding:6px 8px;">
+                  <input type="number" name="items[{{ $i }}][quantity]"
+                    class="form-control item-qty {{ $errors->has("items.$i.quantity") ? 'is-invalid' : '' }}"
+                    value="{{ $oldItem['quantity'] ?? 1 }}"
+                    min="1" style="text-align:center;" onchange="recalcRow(this)" required>
+                </td>
+                <td style="padding:6px 8px;">
+                  <input type="text" class="form-control item-price-display {{ $errors->has("items.$i.unit_price") ? 'is-invalid' : '' }}"
+                    value="{{ isset($oldItem['unit_price']) ? number_format($oldItem['unit_price'], 0, ',', '.') : '' }}"
+                    placeholder="0" style="text-align:right;" oninput="formatItemPrice(this)">
+                  <input type="hidden" name="items[{{ $i }}][unit_price]" class="item-price-raw" value="{{ $oldItem['unit_price'] ?? '' }}">
+                </td>
+                <td style="padding:6px 12px; text-align:right; font-size:13px; font-weight:600;" class="item-subtotal">
+                  Rp {{ (isset($oldItem['unit_price']) && isset($oldItem['quantity'])) ? number_format($oldItem['unit_price'] * $oldItem['quantity'], 0, ',', '.') : '0' }}
+                </td>
+                <td style="padding:6px 8px; text-align:center;">
+                  <button type="button" onclick="removeItemRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus" style="display:{{ count($oldItems) > 1 ? 'inline-flex' : 'none' }};">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </td>
+              </tr>
+              @endforeach
+            </tbody>
+            <tfoot>
+              <tr style="background:var(--color-surface-soft);">
+                <td colspan="4" style="padding:12px; text-align:right; font-size:13px; font-weight:700; color:var(--color-muted);">TOTAL KESELURUHAN</td>
+                <td style="padding:12px; text-align:right; font-size:15px; font-weight:700; color:var(--color-primary);" id="grand-total">Rp 0</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div style="font-size:11px; color:var(--color-muted); margin-top:6px;">Maksimal 9 item. Total dihitung otomatis dari Qty × Harga Satuan.</div>
 
         <hr class="divider">
 
@@ -149,42 +192,25 @@
         <div class="detail-section-title">Dokumen Pendukung</div>
 
         <div class="form-group">
-          <label class="form-label" style="margin-bottom: var(--space-sm); display: block;">Unggah Dokumen Pendukung (Maks. 10 MB per file, Format: PDF) <span class="required">*</span></label>
-
-          <div id="documents-container" style="display: flex; flex-direction: column; gap: var(--space-md);">
-            {{-- Initial row --}}
-            <div class="document-row" style="display: flex; gap: var(--space-md); align-items: flex-start; background: var(--color-surface-soft); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border);">
-              <div style="flex: 1;">
-                <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Nama / Deskripsi Dokumen <span class="required">*</span></label>
-                <input type="text" name="document_descriptions[]" class="form-control" placeholder="Contoh: Izin Prinsip / RKS / HPS" required>
-              </div>
-              <div style="flex: 1;">
-                <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">File PDF <span class="required">*</span></label>
-                <input type="file" name="document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;" onchange="validatePdfFile(this)">
-              </div>
-              <div style="align-self: flex-end; padding-bottom: 2px;">
-                <button type="button" onclick="removeDocumentRow(this)" class="btn btn-danger btn-icon btn-sm" style="display: none;" title="Hapus Dokumen">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                </button>
-              </div>
+          <label class="form-label" style="margin-bottom:var(--space-sm); display:block;">Unggah Dokumen (Maks. 10 MB per file, Format: PDF) <span class="required">*</span></label>
+          <div id="documents-container" style="display:flex; flex-direction:column; gap:var(--space-md);">
+            <div class="document-row" style="display:flex; gap:var(--space-md); align-items:flex-start; background:var(--color-surface-soft); padding:var(--space-md); border-radius:var(--radius-md); border:1px solid var(--color-border);">
+              <div style="flex:1;"><label class="form-label" style="font-size:12px; margin-bottom:4px;">Nama / Deskripsi Dokumen <span class="required">*</span></label><input type="text" name="document_descriptions[]" class="form-control" placeholder="Contoh: Izin Prinsip / RKS / HPS" required></div>
+              <div style="flex:1;"><label class="form-label" style="font-size:12px; margin-bottom:4px;">File PDF <span class="required">*</span></label><input type="file" name="document_files[]" accept=".pdf" class="form-control" required style="padding:6px 12px;" onchange="validatePdfFile(this)"></div>
+              <div style="align-self:flex-end; padding-bottom:2px;"><button type="button" onclick="removeDocumentRow(this)" class="btn btn-danger btn-icon btn-sm" style="display:none;" title="Hapus"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div>
             </div>
           </div>
-
-          <button type="button" onclick="addDocumentRow()" class="btn btn-secondary btn-sm" style="margin-top: var(--space-md); display: inline-flex; align-items: center; gap: 6px;">
+          <button type="button" onclick="addDocumentRow()" class="btn btn-secondary btn-sm" style="margin-top:var(--space-md); display:inline-flex; align-items:center; gap:6px;">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
             Tambah Dokumen Lainnya
           </button>
-
           @if ($errors->has('document_files') || $errors->has('document_files.*') || $errors->has('document_descriptions') || $errors->has('document_descriptions.*'))
-            <div class="form-error" style="margin-top:12px; display: block;">
-              Harap periksa kembali dokumen yang diunggah. Semua deskripsi dan file harus diisi dan berformat PDF.
-            </div>
+            <div class="form-error" style="margin-top:12px; display:block;">Harap periksa kembali dokumen. Semua deskripsi dan file harus diisi dan berformat PDF.</div>
           @endif
         </div>
 
         <hr class="divider">
 
-        {{-- Actions --}}
         <div style="display:flex; justify-content:flex-end; gap:var(--space-sm);">
           <a href="{{ route('tickets.index') }}" class="btn btn-danger">Batalkan</a>
           <button type="submit" class="btn btn-primary">
@@ -200,104 +226,137 @@
 
 @push('scripts')
 <script>
-// Amount formatting
-function formatAmount(input) {
-  let raw = input.value.replace(/\D/g, '');
-  input.value = raw ? parseInt(raw).toLocaleString('id-ID') : '';
-  document.getElementById('amount').value = raw;
-}
-
-// Dynamic Document Rows
-function addDocumentRow() {
-  const container = document.getElementById('documents-container');
-  const newRow = document.createElement('div');
-  newRow.className = 'document-row';
-  newRow.style = 'display: flex; gap: var(--space-md); align-items: flex-start; background: var(--color-surface-soft); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--color-border); margin-top: var(--space-sm);';
-  newRow.innerHTML = `
-    <div style="flex: 1;">
-      <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">Nama / Deskripsi Dokumen <span class="required">*</span></label>
-      <input type="text" name="document_descriptions[]" class="form-control" placeholder="Contoh: Izin Prinsip / RKS / HPS" required>
-    </div>
-    <div style="flex: 1;">
-      <label class="form-label" style="font-size: 12px; margin-bottom: 4px;">File PDF <span class="required">*</span></label>
-      <input type="file" name="document_files[]" accept=".pdf" class="form-control" required style="padding: 6px 12px;" onchange="validatePdfFile(this)">
-    </div>
-    <div style="align-self: flex-end; padding-bottom: 2px;">
-      <button type="button" onclick="removeDocumentRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus Dokumen">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-      </button>
-    </div>
-  `;
-  container.appendChild(newRow);
-  updateDeleteButtons();
-}
-
-function removeDocumentRow(button) {
-  const row = button.closest('.document-row');
-  row.remove();
-  updateDeleteButtons();
-}
-
-function updateDeleteButtons() {
-  const rows = document.querySelectorAll('.document-row');
-  rows.forEach(row => {
-    const delBtn = row.querySelector('button[onclick="removeDocumentRow(this)"]');
-    if (delBtn) {
-      delBtn.style.display = rows.length > 1 ? 'inline-flex' : 'none';
-    }
+// ── CAPEX/OPEX → Filter Kategori ─────────────────
+function filterCategories(type) {
+  const sel = document.getElementById('category');
+  const opts = sel.querySelectorAll('option[data-type]');
+  let firstVisible = null;
+  opts.forEach(opt => {
+    const show = opt.dataset.type === type;
+    opt.style.display = show ? '' : 'none';
+    if (show && !firstVisible) firstVisible = opt;
   });
+  const placeholder = sel.querySelector('option:not([data-type])');
+  if (placeholder) placeholder.textContent = type ? 'Pilih kategori...' : 'Pilih jenis pengeluaran dulu...';
+  if (firstVisible && !sel.querySelector('option[selected]')) sel.value = firstVisible.value;
 }
 
-// Dynamic PIC Rows
-function addPicRow() {
-  const container = document.getElementById('pic-container');
-  if (container.children.length >= 2) return;
-  
-  const newRow = document.createElement('div');
-  newRow.className = 'pic-row';
-  newRow.style = 'display: flex; gap: var(--space-sm); align-items: center; margin-top: var(--space-xs);';
-  newRow.innerHTML = `
-    <div style="flex: 1;">
-      <input type="text" name="pic_name[]" class="form-control" placeholder="Nama PIC" maxlength="255" required>
-    </div>
-    <button type="button" onclick="removePicRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus PIC">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-    </button>
+window.addEventListener('DOMContentLoaded', () => {
+  const typeEl = document.getElementById('expenditure_type');
+  if (typeEl.value) filterCategories(typeEl.value);
+  recalcAll();
+});
+
+// ── Multi-Item Table ──────────────────────────────
+let itemCounter = {{ count(old('items', [[]])) }};
+
+function formatItemPrice(input) {
+  const raw = input.value.replace(/\D/g, '');
+  input.value = raw ? parseInt(raw).toLocaleString('id-ID') : '';
+  input.closest('td').querySelector('.item-price-raw').value = raw;
+  recalcRow(input);
+}
+
+function recalcRow(el) {
+  const row = el.closest('.item-row');
+  const qty = parseInt(row.querySelector('.item-qty').value) || 0;
+  const price = parseInt(row.querySelector('.item-price-raw').value) || 0;
+  row.querySelector('.item-subtotal').textContent = 'Rp ' + (qty * price).toLocaleString('id-ID');
+  recalcTotal();
+}
+
+function recalcAll() {
+  document.querySelectorAll('.item-row').forEach(row => {
+    const qty = parseInt(row.querySelector('.item-qty').value) || 0;
+    const price = parseInt(row.querySelector('.item-price-raw').value) || 0;
+    row.querySelector('.item-subtotal').textContent = 'Rp ' + (qty * price).toLocaleString('id-ID');
+  });
+  recalcTotal();
+}
+
+function recalcTotal() {
+  let total = 0;
+  document.querySelectorAll('.item-row').forEach(row => {
+    total += (parseInt(row.querySelector('.item-qty').value)||0) * (parseInt(row.querySelector('.item-price-raw').value)||0);
+  });
+  document.getElementById('grand-total').textContent = 'Rp ' + total.toLocaleString('id-ID');
+}
+
+function addItemRow() {
+  const tbody = document.getElementById('items-body');
+  if (tbody.querySelectorAll('.item-row').length >= 9) { showToast('error', 'Batas Maksimum', 'Maksimal 9 item per tiket.'); return; }
+  const idx = itemCounter++;
+  const tr = document.createElement('tr');
+  tr.className = 'item-row';
+  tr.innerHTML = `
+    <td style="padding:8px 12px; font-size:13px; color:var(--color-muted);" class="item-no"></td>
+    <td style="padding:6px 8px;"><input type="text" name="items[${idx}][item_name]" class="form-control" placeholder="Nama barang / jasa" required maxlength="255"></td>
+    <td style="padding:6px 8px;"><input type="number" name="items[${idx}][quantity]" class="form-control item-qty" value="1" min="1" style="text-align:center;" onchange="recalcRow(this)" required></td>
+    <td style="padding:6px 8px;"><input type="text" class="form-control item-price-display" placeholder="0" style="text-align:right;" oninput="formatItemPrice(this)"><input type="hidden" name="items[${idx}][unit_price]" class="item-price-raw" value=""></td>
+    <td style="padding:6px 12px; text-align:right; font-size:13px; font-weight:600;" class="item-subtotal">Rp 0</td>
+    <td style="padding:6px 8px; text-align:center;"><button type="button" onclick="removeItemRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></td>
   `;
-  container.appendChild(newRow);
-  updatePicDeleteButtons();
+  tbody.appendChild(tr);
+  updateItemNumbers();
+  updateItemDeleteButtons();
 }
 
-function removePicRow(button) {
-  const row = button.closest('.pic-row');
-  row.remove();
-  updatePicDeleteButtons();
+function removeItemRow(btn) {
+  btn.closest('.item-row').remove();
+  updateItemNumbers();
+  updateItemDeleteButtons();
+  recalcTotal();
 }
 
+function updateItemNumbers() {
+  document.querySelectorAll('#items-body .item-row').forEach((r, i) => { r.querySelector('.item-no').textContent = i + 1; });
+}
+
+function updateItemDeleteButtons() {
+  const rows = document.querySelectorAll('#items-body .item-row');
+  rows.forEach(r => { const b = r.querySelector('button[onclick="removeItemRow(this)"]'); if (b) b.style.display = rows.length > 1 ? 'inline-flex' : 'none'; });
+}
+
+// ── Document Rows ─────────────────────────────────
+function addDocumentRow() {
+  const c = document.getElementById('documents-container');
+  const d = document.createElement('div');
+  d.className = 'document-row';
+  d.style.cssText = 'display:flex; gap:var(--space-md); align-items:flex-start; background:var(--color-surface-soft); padding:var(--space-md); border-radius:var(--radius-md); border:1px solid var(--color-border); margin-top:var(--space-sm);';
+  d.innerHTML = `<div style="flex:1;"><label class="form-label" style="font-size:12px; margin-bottom:4px;">Nama / Deskripsi Dokumen <span class="required">*</span></label><input type="text" name="document_descriptions[]" class="form-control" placeholder="Contoh: RKS / HPS" required></div><div style="flex:1;"><label class="form-label" style="font-size:12px; margin-bottom:4px;">File PDF <span class="required">*</span></label><input type="file" name="document_files[]" accept=".pdf" class="form-control" required style="padding:6px 12px;" onchange="validatePdfFile(this)"></div><div style="align-self:flex-end; padding-bottom:2px;"><button type="button" onclick="removeDocumentRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></div>`;
+  c.appendChild(d);
+  updateDocDeleteButtons();
+}
+function removeDocumentRow(btn) { btn.closest('.document-row').remove(); updateDocDeleteButtons(); }
+function updateDocDeleteButtons() {
+  const rows = document.querySelectorAll('.document-row');
+  rows.forEach(r => { const b = r.querySelector('button[onclick="removeDocumentRow(this)"]'); if (b) b.style.display = rows.length > 1 ? 'inline-flex' : 'none'; });
+}
+
+// ── PIC Rows ──────────────────────────────────────
+function addPicRow() {
+  const c = document.getElementById('pic-container');
+  if (c.children.length >= 2) return;
+  const d = document.createElement('div');
+  d.className = 'pic-row';
+  d.style.cssText = 'display:flex; gap:var(--space-sm); align-items:center; margin-top:var(--space-xs);';
+  d.innerHTML = `<div style="flex:1;"><input type="text" name="pic_name[]" class="form-control" placeholder="Nama PIC" maxlength="255" required></div><button type="button" onclick="removePicRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus PIC"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>`;
+  c.appendChild(d);
+  updatePicDeleteButtons();
+}
+function removePicRow(btn) { btn.closest('.pic-row').remove(); updatePicDeleteButtons(); }
 function updatePicDeleteButtons() {
   const rows = document.querySelectorAll('.pic-row');
-  rows.forEach(row => {
-    const delBtn = row.querySelector('button[onclick="removePicRow(this)"]');
-    if (delBtn) {
-      delBtn.style.display = rows.length > 1 ? 'inline-flex' : 'none';
-    }
-  });
-  
-  const addBtn = document.getElementById('btn-add-pic');
-  if (addBtn) {
-    addBtn.style.display = rows.length >= 2 ? 'none' : 'inline-flex';
-  }
+  rows.forEach(r => { const b = r.querySelector('button[onclick="removePicRow(this)"]'); if (b) b.style.display = rows.length > 1 ? 'inline-flex' : 'none'; });
+  const ab = document.getElementById('btn-add-pic');
+  if (ab) ab.style.display = rows.length >= 2 ? 'none' : 'inline-flex';
 }
 
-// Client-side PDF Validator
 function validatePdfFile(input) {
   const file = input.files[0];
-  if (file) {
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    if (!isPdf) {
-      showToast('error', 'Format Tidak Valid', 'Hanya file PDF yang diperbolehkan.');
-      input.value = ''; // Reset input
-    }
+  if (file && !(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) {
+    showToast('error', 'Format Tidak Valid', 'Hanya file PDF yang diperbolehkan.');
+    input.value = '';
   }
 }
 </script>

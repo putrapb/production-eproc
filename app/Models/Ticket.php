@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\TicketItem;
 
 class Ticket extends Model
 {
@@ -43,11 +44,9 @@ class Ticket extends Model
     protected $fillable = [
         'user_id',
         'title',
-        'item_name',
         'category',
         'description',
         'pic_name',
-        'quantity',
         'vendor_name',
         'amount',
         'expenditure_type',
@@ -62,7 +61,6 @@ class Ticket extends Model
         return [
             'amount'        => 'decimal:2',
             'is_cross_fund' => 'boolean',
-            'quantity'      => 'integer',
             'pic_name'      => 'array',
         ];
     }
@@ -84,6 +82,11 @@ class Ticket extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(TicketDocument::class, 'ticket_id');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(TicketItem::class, 'ticket_id')->orderBy('id');
     }
 
     // ─────────────────────────────────────────────

@@ -142,21 +142,35 @@ class TicketController extends Controller
     {
         $user = $request->user();
 
-        // 1. Create the ticket first
+        // 1. Calculate total amount from all items (qty × unit_price)
+        $items = $request->input('items', []);
+        $totalAmount = collect($items)->sum(fn($item) => ($item['quantity'] ?? 1) * ($item['unit_price'] ?? 0));
+
+        // 2. Create the ticket
         $ticket = Ticket::create([
-            'user_id'     => $user->id,
-            'title'       => $request->title,
-            'item_name'   => $request->item_name,
-            'category'    => $request->category,
-            'description' => $request->description,
-            'pic_name'    => empty(array_filter((array) $request->pic_name, fn($name) => !empty(trim($name)))) ? null : array_values(array_filter((array) $request->pic_name, fn($name) => !empty(trim($name)))),
-            'quantity'    => $request->quantity,
-            'vendor_name' => $request->vendor_name,
-            'amount'      => $request->amount,
-            'status'      => Ticket::STATUS_PENDING_REVIEW,
+            'user_id'          => $user->id,
+            'title'            => $request->title,
+            'expenditure_type' => $request->expenditure_type,
+            'category'         => $request->category,
+            'description'      => $request->description,
+            'pic_name'         => empty(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n))))
+                                    ? null
+                                    : array_values(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n)))),
+            'vendor_name'      => $request->vendor_name,
+            'amount'           => $totalAmount,
+            'status'           => Ticket::STATUS_PENDING_REVIEW,
         ]);
 
-        // 2. Upload and save each document
+        // 3. Save each item to ticket_items
+        foreach ($items as $item) {
+            $ticket->items()->create([
+                'item_name'  => $item['item_name'],
+                'quantity'   => $item['quantity'],
+                'unit_price' => $item['unit_price'],
+            ]);
+        }
+
+        // 4. Upload and save each document
         $folder = config('eprocurement.storage.izin_prinsip_folder', 'izin_prinsip');
         $firstPath = null;
 
@@ -165,9 +179,7 @@ class TicketController extends Controller
                 $description = $request->document_descriptions[$index] ?? 'Dokumen Pendukung';
                 $path = $file->store($folder, 'public');
 
-                if ($index === 0) {
-                    $firstPath = $path;
-                }
+                if ($index === 0) $firstPath = $path;
 
                 TicketDocument::create([
                     'ticket_id'   => $ticket->id,
@@ -178,19 +190,18 @@ class TicketController extends Controller
             }
         }
 
-        // Save the first path to the legacy column as a fallback
         if ($firstPath) {
             $ticket->update(['document_path' => $firstPath]);
         }
 
-        // Log the submission
+        // 5. Log the submission
         ApprovalLog::create([
             'ticket_id' => $ticket->id,
             'user_id'   => $user->id,
             'action'    => ApprovalLog::ACTION_SUBMITTED,
         ]);
 
-        // Notify all Team Leaders about new submission (they are now responsible for doc review)
+        // 6. Notify Team Leaders
         Notification::notifyRole(
             'team_leader',
             'ticket_submitted',
