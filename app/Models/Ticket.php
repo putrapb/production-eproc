@@ -234,7 +234,7 @@ class Ticket extends Model
         return match ($this->status) {
             self::STATUS_PENDING_REVIEW    => 'Team Leader',
             self::STATUS_REVISION          => 'Requester',
-            self::STATUS_NEED_TO_VALIDATE  => 'Requester',
+            self::STATUS_NEED_TO_VALIDATE  => 'Team Leader',  // Auto SmartVal runs on TL review
             self::STATUS_PENDING_DEPT_HEAD => 'Dept Head',
             self::STATUS_APPROVED          => 'Team Leader',  // TL must generate form
             default                        => '',              // Final states (declined, form_generated)
@@ -250,11 +250,25 @@ class Ticket extends Model
     }
 
     /**
-     * Get total amount (amount * quantity).
+     * Get total amount — sum of all ticket_items subtotals.
+     * Falls back to legacy (amount * quantity) if items relation not loaded.
      */
     public function getTotalAmountAttribute(): float
     {
-        return (float) $this->amount * $this->quantity;
+        if ($this->relationLoaded('items') && $this->items->isNotEmpty()) {
+            return (float) $this->items->sum('subtotal');
+        }
+
+        // Fallback: load items and sum (avoids N+1 if called without eager-load)
+        if ($this->exists) {
+            $sum = $this->items()->sum('subtotal');
+            if ($sum > 0) {
+                return (float) $sum;
+            }
+        }
+
+        // Legacy fallback for old data without ticket_items
+        return (float) ($this->attributes['amount'] ?? 0) * ($this->attributes['quantity'] ?? 1);
     }
 
     /**

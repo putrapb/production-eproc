@@ -320,7 +320,7 @@ class SmartValidationService
             return [
                 'hard_fail'           => true,
                 'needs_confirmation'  => false,
-                'message'             => 'Nominal harga tidak wajar atau tidak valid. Nilai harus lebih dari 0.',
+                'message'             => 'Nominal pengajuan tidak valid. Total harga harus lebih dari Rp 0.',
             ];
         }
 
@@ -330,7 +330,7 @@ class SmartValidationService
             return [
                 'hard_fail'           => false,
                 'needs_confirmation'  => true,
-                'message'             => 'Nominal pengadaan tergolong sangat besar (> Rp 99 Miliar). Apakah nominal ini sudah benar dan Anda yakin ingin melanjutkan?',
+                'message'             => 'Total nominal pengajuan sangat besar (> Rp 99 Miliar). Pastikan nominal sudah benar sebelum melanjutkan ke validasi ketersediaan dana.',
             ];
         }
 

@@ -34,7 +34,6 @@ class TicketController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('title', 'like', "%{$s}%")
-                  ->orWhere('item_name', 'like', "%{$s}%")
                   ->orWhere('vendor_name', 'like', "%{$s}%");
             }))
             ->latest()
@@ -49,11 +48,10 @@ class TicketController extends Controller
      */
     public function export(Request $request)
     {
-        $tickets = Ticket::with(['user'])
+        $tickets = Ticket::with(['user', 'items'])
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('title', 'like', "%{$s}%")
-                  ->orWhere('item_name', 'like', "%{$s}%")
                   ->orWhere('vendor_name', 'like', "%{$s}%");
             }))
             ->latest()
@@ -95,12 +93,12 @@ class TicketController extends Controller
                     $ticket->id,
                     $ticket->created_at->format('Y-m-d H:i:s'),
                     $ticket->title,
-                    $ticket->item_name,
+                    $ticket->items->pluck('item_name')->implode(', '),
                     $ticket->vendor_name,
                     config('eprocurement.categories.' . $ticket->category, $ticket->category),
                     $ticket->expenditure_type ?? '-',
                     $ticket->is_cross_fund ? 'Ya' : 'Tidak',
-                    $ticket->amount,
+                    $ticket->total_amount,
                     $ticket->user?->name ?? 'Unknown',
                     $ticket->status_label,
                     $ticket->ball_holder ?? '-'
@@ -122,7 +120,7 @@ class TicketController extends Controller
         // Ensure the user has access to this ticket based on their role
         $this->authorizeView($ticket, $user);
 
-        $ticket->load(['user', 'approvalLogs.user']);
+        $ticket->load(['user', 'approvalLogs.user', 'items', 'documents']);
 
         return view('tickets.show', compact('ticket', 'user'));
     }
@@ -224,6 +222,8 @@ class TicketController extends Controller
         }
 
         $this->ensureStatus($ticket, Ticket::STATUS_REVISION);
+
+        $ticket->load(['approvalLogs', 'documents', 'items']);
 
         return view('tickets.edit', compact('ticket'));
     }
