@@ -36,9 +36,21 @@ return new class extends Migration
 
     public function down(): void
     {
+        // Add the columns back
         Schema::table('tickets', function (Blueprint $table) {
             $table->string('item_name')->nullable()->after('title');
             $table->unsignedInteger('quantity')->default(1)->after('item_name');
         });
+
+        // Restore data from ticket_items back to tickets
+        $ticketItems = DB::table('ticket_items')->get();
+        foreach ($ticketItems as $item) {
+            DB::table('tickets')
+                ->where('id', $item->ticket_id)
+                ->update([
+                    'item_name' => $item->item_name,
+                    'quantity'  => $item->quantity,
+                ]);
+        }
     }
 };
