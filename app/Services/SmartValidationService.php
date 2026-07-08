@@ -14,10 +14,19 @@ use Illuminate\Support\Facades\DB;
  * Executes the 4-Gate validation engine sequentially.
  * Each gate runs only if the previous gate passed.
  *
- * Gate 1 — Duplicate Check       (soft warning: user can override)
- * Gate 2 — Nominal Validation    (soft warning: user can override if > threshold)
- * Gate 3 — CAPEX/OPEX Auto-Classification
- * Gate 4 — Budget Availability Check (no lock here — lock happens at cross-fund/decision)
+ * Gate 1 — Duplicate Check              (soft warning: user can override)
+ * Gate 2 — Nominal Validation           (soft warning: user can override if > 99B)
+ * Gate 3 — CAPEX/OPEX Classification   (industry-based per PSAK 16 & 19, soft warning if mismatch)
+ * Gate 4 — Budget Availability Check   (hard: insufficient budget = block)
+ *
+ * Classification rules (Gate 3) — based on PSAK 16 (Aset Tetap) & PSAK 19 (Aset Takberwujud):
+ *
+ *  infrastruktur_utama      → CAPEX  (server, storage, network hardware = fixed asset per PSAK 16)
+ *  lisensi_sistem           → depends on item keywords:
+ *                               OPEX keywords (subscription/SaaS/cloud/langganan/sewa) → OPEX
+ *                               else → CAPEX (perpetual license = intangible asset per PSAK 19)
+ *  layanan_pemeliharaan     → OPEX   (recurring maintenance/managed service = operational cost)
+ *  perlengkapan_operasional → OPEX   (consumables, not capitalized)
  */
 class SmartValidationService
 {
@@ -35,8 +44,13 @@ class SmartValidationService
      *   available_balance: float|null,
      * }
      */
-    public function run(Ticket $ticket, User $requester, bool $duplicateConfirmed = false, bool $nominalConfirmed = false): array
-    {
+    public function run(
+        Ticket $ticket,
+        User   $requester,
+        bool   $duplicateConfirmed      = false,
+        bool   $nominalConfirmed        = false,
+        bool   $classificationConfirmed = false
+    ): array {
         // Guard: ticket must be in 'need_to_validate' status
         if (! $ticket->isNeedToValidate()) {
             return $this->fail(0, 'Tiket tidak dalam status yang dapat divalidasi.');
@@ -48,14 +62,15 @@ class SmartValidationService
             $gate1 = $this->gate1DuplicateCheck($ticket, $requester);
             if ($gate1['has_duplicate']) {
                 return [
-                    'success'                      => false,
-                    'gate'                         => 1,
-                    'message'                      => $gate1['message'],
-                    'needs_duplicate_confirmation' => true,
-                    'needs_nominal_confirmation'   => false,
-                    'over_budget'                  => false,
-                    'classified_type'              => null,
-                    'available_balance'            => null,
+                    'success'                           => false,
+                    'gate'                              => 1,
+                    'message'                           => $gate1['message'],
+                    'needs_duplicate_confirmation'      => true,
+                    'needs_nominal_confirmation'        => false,
+                    'needs_classification_confirmation' => false,
+                    'over_budget'                       => false,
+                    'classified_type'                   => null,
+                    'available_balance'                 => null,
                 ];
             }
         }
@@ -70,20 +85,45 @@ class SmartValidationService
             }
             if ($gate2['needs_confirmation']) {
                 return [
-                    'success'                      => false,
-                    'gate'                         => 2,
-                    'message'                      => $gate2['message'],
-                    'needs_duplicate_confirmation' => false,
-                    'needs_nominal_confirmation'   => true,
-                    'over_budget'                  => false,
-                    'classified_type'              => null,
-                    'available_balance'            => null,
+                    'success'                           => false,
+                    'gate'                              => 2,
+                    'message'                           => $gate2['message'],
+                    'needs_duplicate_confirmation'      => false,
+                    'needs_nominal_confirmation'        => true,
+                    'needs_classification_confirmation' => false,
+                    'over_budget'                       => false,
+                    'classified_type'                   => null,
+                    'available_balance'                 => null,
                 ];
             }
         }
 
-        // ─────────────── GATE 3: CAPEX/OPEX Classification ───────────────
-        $classifiedType = $this->gate3Classification($ticket);
+        // ─────────────── GATE 3: CAPEX/OPEX Industry Classification ───────────────
+        // System suggests CAPEX/OPEX based on PSAK 16 & 19 rules.
+        // If requester's upfront choice differs → soft warning (can be overridden).
+        $suggestedType  = $this->gate3Classification($ticket);
+        $requesterType  = $ticket->expenditure_type; // already set by requester at create-time
+        $typeMismatch   = $requesterType && ($suggestedType !== $requesterType);
+
+        if ($typeMismatch && ! $classificationConfirmed) {
+            return [
+                'success'                        => false,
+                'gate'                           => 3,
+                'message'                        => $this->gate3MismatchMessage($requesterType, $suggestedType, $ticket->category),
+                'needs_duplicate_confirmation'   => false,
+                'needs_nominal_confirmation'     => false,
+                'needs_classification_confirmation' => true,
+                'over_budget'                    => false,
+                'classified_type'                => $suggestedType,
+                'available_balance'              => null,
+            ];
+        }
+
+        // Use requester's choice if they confirmed mismatch, otherwise use system suggestion
+        $classifiedType = ($typeMismatch && $classificationConfirmed)
+            ? $requesterType
+            : $suggestedType;
+
         DB::transaction(function () use ($ticket, $classifiedType) {
             $ticket->update(['expenditure_type' => $classifiedType]);
         });
@@ -248,8 +288,9 @@ class SmartValidationService
      */
     private function gate1DuplicateCheck(Ticket $ticket, User $requester): array
     {
+        // Duplicate check by title (item_name column has been removed in favor of ticket_items table)
         $duplicate = Ticket::where('user_id', $requester->id)
-            ->where('item_name', $ticket->item_name)
+            ->where('title', $ticket->title)
             ->where('id', '!=', $ticket->id)
             ->whereNotIn('status', [Ticket::STATUS_DECLINED])
             ->first();
@@ -257,7 +298,7 @@ class SmartValidationService
         if ($duplicate) {
             return [
                 'has_duplicate' => true,
-                'message'       => "Terdapat pengajuan serupa yang sudah aktif di sistem (Tiket #{$duplicate->id}: \"{$duplicate->title}\"). Apakah Anda yakin ingin melanjutkan pengajuan ini?",
+                'message'       => "Terdapat pengajuan dengan judul yang sama sudah aktif di sistem (Tiket #{$duplicate->id}: \"{$duplicate->title}\"). Apakah Anda yakin ingin melanjutkan pengajuan baru ini?",
             ];
         }
 
@@ -297,38 +338,87 @@ class SmartValidationService
     }
 
     /**
-     * Gate 3 — CAPEX/OPEX Auto-Classification
+     * Gate 3 — CAPEX/OPEX Industry-Based Classification
      *
-     * Classification rules (no fail state — always resolves to CAPEX or OPEX):
+     * Based on PSAK 16 (Aset Tetap) & PSAK 19 (Aset Takberwujud) — standard for
+     * Indonesian banking / BUMN entities. No threshold involved.
      *
-     *  - hardware or software AND amount >= capitalization_threshold → CAPEX
-     *  - hardware or software AND amount < capitalization_threshold  → OPEX
-     *  - services                                                    → OPEX
-     *  - office_supplies                                             → OPEX
-     *  - others                                                      → OPEX
+     * Rules:
+     *   infrastruktur_utama      → always CAPEX
+     *   lisensi_sistem           → OPEX if item names contain SaaS/subscription signals
+     *                              else CAPEX (perpetual license = intangible asset)
+     *   layanan_pemeliharaan     → always OPEX
+     *   perlengkapan_operasional → always OPEX
      */
     private function gate3Classification(Ticket $ticket): string
     {
-        $threshold = (float) config('eprocurement.capitalization_threshold', 200_000_000);
-        $amount    = $ticket->total_amount;
-        $category  = $ticket->category;
+        $category = $ticket->category;
 
-        // CAPEX-eligible asset classes:
-        //   infrastruktur_utama  → CAPEX if >= threshold
-        //   lisensi_sistem       → CAPEX if >= threshold
-        //
-        // Always OPEX:
-        //   layanan_pemeliharaan, perlengkapan_operasional
-        $capexEligibleCategories = [
-            Ticket::CATEGORY_INFRASTRUKTUR_UTAMA,
-            Ticket::CATEGORY_LISENSI_SISTEM,
-        ];
-
-        if (in_array($category, $capexEligibleCategories) && $amount >= $threshold) {
+        // ── Always CAPEX ─────────────────────────────────────────────
+        // Infrastruktur Utama: server, storage, network hardware
+        // These are long-lived physical assets → PSAK 16 Aset Tetap
+        if ($category === Ticket::CATEGORY_INFRASTRUKTUR_UTAMA) {
             return Ticket::TYPE_CAPEX;
         }
 
-        return Ticket::TYPE_OPEX;
+        // ── Always OPEX ──────────────────────────────────────────────
+        // Layanan Pemeliharaan: maintenance contracts, managed services, ITSM
+        // Perlengkapan Operasional: consumables, ATK, spare parts
+        // These are recurring operational costs — never capitalized
+        if (in_array($category, [
+            Ticket::CATEGORY_LAYANAN_PEMELIHARAAN,
+            Ticket::CATEGORY_PERLENGKAPAN_OPERASIONAL,
+        ])) {
+            return Ticket::TYPE_OPEX;
+        }
+
+        // ── Lisensi Sistem — keyword disambiguation ───────────────────
+        // PSAK 19: Software licenses are intangible assets (CAPEX) IF perpetual.
+        // SaaS/cloud/subscription = no asset ownership → OPEX.
+        //
+        // Check item names from ticket_items for OPEX signals.
+        $opexSignals = [
+            'subscription', 'langganan', 'saas', 'cloud', 'tahunan', 'bulanan',
+            'monthly', 'annual', 'sewa', 'rental', 'as a service', 'managed service',
+            'support contract', 'maintenance fee', 'hosting', 'recurring',
+        ];
+
+        $itemNames = $ticket->items->pluck('item_name')->map(fn ($n) => strtolower($n))->implode(' ');
+
+        foreach ($opexSignals as $signal) {
+            if (str_contains($itemNames, $signal)) {
+                return Ticket::TYPE_OPEX;
+            }
+        }
+
+        // Default for lisensi_sistem with no OPEX signals: perpetual license → CAPEX
+        return Ticket::TYPE_CAPEX;
+    }
+
+    /**
+     * Build a human-readable mismatch warning message for Gate 3.
+     */
+    private function gate3MismatchMessage(string $requesterType, string $suggestedType, string $category): string
+    {
+        $categoryLabels = [
+            'infrastruktur_utama'       => 'Infrastruktur Utama',
+            'lisensi_sistem'            => 'Lisensi Sistem',
+            'layanan_pemeliharaan'      => 'Layanan Pemeliharaan',
+            'perlengkapan_operasional'  => 'Perlengkapan Operasional',
+        ];
+        $catLabel = $categoryLabels[$category] ?? $category;
+
+        $reasons = [
+            'infrastruktur_utama'       => 'Infrastruktur Utama umumnya merupakan aset tetap jangka panjang (PSAK 16).',
+            'lisensi_sistem'            => 'Berdasarkan nama item, lisensi ini teridentifikasi sebagai aset takberwujud permanen (PSAK 19).',
+            'layanan_pemeliharaan'      => 'Layanan Pemeliharaan merupakan biaya operasional berulang, bukan aset.',
+            'perlengkapan_operasional'  => 'Perlengkapan Operasional bersifat habis pakai dan tidak dikapitalisasi.',
+        ];
+        $reason = $reasons[$category] ?? '';
+
+        return "Sistem menyarankan klasifikasi \"{$suggestedType}\" untuk kategori {$catLabel}. "
+             . "Anda memilih \"{$requesterType}\". {$reason} "
+             . "Apakah Anda yakin ingin mempertahankan pilihan {$requesterType}?";
     }
 
     // ──────────────────────────────────────────────────────────
@@ -338,14 +428,15 @@ class SmartValidationService
     private function fail(int $gate, string $message): array
     {
         return [
-            'success'                      => false,
-            'gate'                         => $gate,
-            'message'                      => $message,
-            'needs_duplicate_confirmation' => false,
-            'needs_nominal_confirmation'   => false,
-            'over_budget'                  => false,
-            'classified_type'              => null,
-            'available_balance'            => null,
+            'success'                           => false,
+            'gate'                              => $gate,
+            'message'                           => $message,
+            'needs_duplicate_confirmation'      => false,
+            'needs_nominal_confirmation'        => false,
+            'needs_classification_confirmation' => false,
+            'over_budget'                       => false,
+            'classified_type'                   => null,
+            'available_balance'                 => null,
         ];
     }
 }
