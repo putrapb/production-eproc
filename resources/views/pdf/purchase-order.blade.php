@@ -465,14 +465,16 @@
                 </tr>
             </thead>
             <tbody>
+                @foreach($ticket->items as $index => $item)
                 <tr>
                     <td>
-                        <strong>{{ $ticket->item_name }}</strong>
-                        @if($ticket->description)
+                        <strong>{{ $item->item_name }}</strong>
+                        @if($index === 0 && $ticket->description)
                             <br><span style="font-size: 8px; color: #666; font-style: italic; white-space: pre-wrap; word-break: break-word; display: block; margin-top: 2px;">{{ $ticket->description }}</span>
                         @endif
                     </td>
-                    <td style="word-break: break-word; vertical-align: top; text-align: left;">
+                    @if($index === 0)
+                    <td rowspan="{{ $ticket->items->count() }}" style="word-break: break-word; vertical-align: top; text-align: left; border-left: 1px solid #dce6eb;">
                         @if(is_array($ticket->pic_name) && count($ticket->pic_name) > 0)
                             {!! implode('<br>', array_map(fn($p) => htmlspecialchars(is_array($p) ? json_encode($p) : $p), $ticket->pic_name)) !!}
                         @elseif(is_string($ticket->pic_name) && !empty($ticket->pic_name))
@@ -481,11 +483,13 @@
                             -
                         @endif
                     </td>
-                    <td>{{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</td>
-                    <td style="text-align: center;">{{ number_format($ticket->quantity) }} unit</td>
-                    <td style="text-align: right;">{{ $ticket->formatted_amount }}</td>
-                    <td style="text-align: right;">{{ $ticket->formatted_total_amount }}</td>
+                    <td rowspan="{{ $ticket->items->count() }}" style="vertical-align: top; border-left: 1px solid #dce6eb;">{{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</td>
+                    @endif
+                    <td style="text-align: center;">{{ number_format($item->quantity) }} unit</td>
+                    <td style="text-align: right;">{{ $item->formatted_unit_price }}</td>
+                    <td style="text-align: right;">{{ $item->formatted_subtotal }}</td>
                 </tr>
+                @endforeach
             </tbody>
         </table>
 
