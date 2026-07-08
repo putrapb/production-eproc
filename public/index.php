@@ -3,6 +3,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
+// INCREASE EXECUTION TIME FOR REMOTE SUPABASE DB TESTING
+set_time_limit(120);
+
 define('LARAVEL_START', microtime(true));
 
 // Determine if the application is in maintenance mode...

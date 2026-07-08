@@ -221,7 +221,7 @@ class TicketController extends Controller
             abort_if($ticket->user_id !== auth()->id(), 403);
         }
 
-        $this->ensureStatus($ticket, Ticket::STATUS_REVISION);
+        abort_unless(in_array($ticket->status, [Ticket::STATUS_REVISION, Ticket::STATUS_PENDING_REVIEW]), 403, 'Tiket tidak dapat diedit pada status ini.');
 
         $ticket->load(['approvalLogs', 'documents', 'items']);
 
@@ -229,17 +229,44 @@ class TicketController extends Controller
     }
 
     /**
-     * Handle document re-upload for revision. (Requester, status: revision)
+     * Handle full ticket revision. (Requester, status: revision or pending_review)
      */
-    public function update(UpdateTicketDocumentRequest $request, Ticket $ticket): RedirectResponse
+    public function update(\App\Http\Requests\UpdateTicketRequest $request, Ticket $ticket): RedirectResponse
     {
         if (auth()->user()->isRequester()) {
             abort_if($ticket->user_id !== auth()->id(), 403);
         }
 
+        // 1. Calculate new total amount
+        $items = $request->input('items', []);
+        $totalAmount = collect($items)->sum(fn($item) => ($item['quantity'] ?? 1) * ($item['unit_price'] ?? 0));
+
+        // 2. Update Ticket attributes
+        $ticket->update([
+            'title'            => $request->title,
+            'expenditure_type' => $request->expenditure_type,
+            'category'         => $request->category,
+            'description'      => $request->description,
+            'pic_name'         => empty(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n))))
+                                    ? null
+                                    : array_values(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n)))),
+            'vendor_name'      => $request->vendor_name,
+            'amount'           => $totalAmount,
+        ]);
+
+        // 3. Sync ticket_items (delete old, insert new)
+        $ticket->items()->delete();
+        foreach ($items as $item) {
+            $ticket->items()->create([
+                'item_name'  => $item['item_name'],
+                'quantity'   => $item['quantity'],
+                'unit_price' => $item['unit_price'],
+            ]);
+        }
+
         $folder = config('eprocurement.storage.izin_prinsip_folder', 'izin_prinsip');
 
-        // 1. Process replacements for existing rejected documents
+        // 4. Process replacements for existing rejected documents
         if ($request->hasFile('document_files')) {
             foreach ($request->file('document_files') as $docId => $file) {
                 $doc = TicketDocument::where('ticket_id', $ticket->id)->find($docId);
@@ -290,11 +317,11 @@ class TicketController extends Controller
             'ticket_id' => $ticket->id,
             'user_id'   => $request->user()->id,
             'action'    => ApprovalLog::ACTION_REVISED,
-            'notes'     => 'Dokumen pendukung diunggah ulang/ditambahkan oleh Requester.',
+            'notes'     => 'Tiket direvisi oleh Requester.',
         ]);
 
         return redirect()->route('tickets.show', $ticket)
-            ->with('success', 'Dokumen berhasil diperbarui. Tiket kembali ke status Pending Review.');
+            ->with('success', 'Tiket berhasil direvisi dan dikembalikan ke status Pending Review.');
     }
 
     /**

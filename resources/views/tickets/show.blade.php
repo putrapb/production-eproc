@@ -22,10 +22,18 @@
       @endif
     </div>
   </div>
-  <a href="{{ route('tickets.index') }}" class="btn btn-secondary">
-    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-    Kembali
-  </a>
+  <div style="display:flex; gap:var(--space-sm);">
+    @if(auth()->user()->isRequester() && in_array($ticket->status, [\App\Models\Ticket::STATUS_REVISION, \App\Models\Ticket::STATUS_PENDING_REVIEW]))
+      <a href="{{ route('tickets.edit', $ticket) }}" class="btn btn-primary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit Tiket
+      </a>
+    @endif
+    <a href="{{ route('tickets.index') }}" class="btn btn-secondary">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Kembali
+    </a>
+  </div>
 </div>
 
 {{-- Smart Validation Result Banner --}}
