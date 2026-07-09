@@ -220,7 +220,7 @@
         </div>
 
         <div style="display:flex; justify-content:flex-end; gap:var(--space-sm);">
-          <a href="{{ route('tickets.index') }}" class="btn btn-danger">Batalkan</a>
+          <a href="{{ route('tickets.index') }}" onclick="localStorage.removeItem('ticket_form_draft')" class="btn btn-danger">Batalkan</a>
           <button type="button" id="btn-preview-val" onclick="runPreviewValidation()" class="btn btn-secondary">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Cek Validasi Dulu
@@ -467,11 +467,118 @@ document.getElementById('ticket-form').addEventListener('input', function(e) {
   if (e.target.name === 'document_files[]' || e.target.name === 'document_descriptions[]') return; // documents don't affect budget
   document.getElementById('btn-submit-ticket').style.display = 'none';
   document.getElementById('smartval-panel').style.display = 'none';
+  saveFormDraft();
 });
 document.getElementById('ticket-form').addEventListener('change', function(e) {
   if (e.target.name === 'document_files[]' || e.target.name === 'document_descriptions[]') return;
   document.getElementById('btn-submit-ticket').style.display = 'none';
   document.getElementById('smartval-panel').style.display = 'none';
+  saveFormDraft();
+});
+document.getElementById('ticket-form').addEventListener('submit', function() {
+  localStorage.removeItem('ticket_form_draft');
+});
+
+// ── Auto-save Form Draft Functions (Transkrip 2) ──
+function saveFormDraft() {
+  const title = document.getElementById('title')?.value || '';
+  const expType = document.getElementById('expenditure_type')?.value || '';
+  const category = document.getElementById('category')?.value || '';
+  const vendor = document.getElementById('vendor_name')?.value || '';
+  const desc = document.getElementById('description')?.value || '';
+
+  const pics = [];
+  document.querySelectorAll('input[name="pic_name[]"]').forEach(input => {
+    if (input.value.trim()) pics.push(input.value.trim());
+  });
+
+  const items = [];
+  document.querySelectorAll('.item-row').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    if (inputs.length >= 3) {
+      items.push({
+        item_name: inputs[0].value,
+        quantity: inputs[1].value,
+        unit_price: row.querySelector('.item-price-raw')?.value || ''
+      });
+    }
+  });
+
+  const draft = { title, expenditure_type: expType, category, vendor_name: vendor, description: desc, pics, items };
+  localStorage.setItem('ticket_form_draft', JSON.stringify(draft));
+}
+
+function restoreFormDraft() {
+  const saved = localStorage.getItem('ticket_form_draft');
+  if (!saved) return;
+
+  try {
+    const draft = JSON.parse(saved);
+    if (!draft.title && !draft.expenditure_type && !draft.category && !draft.vendor_name && !draft.description && (!draft.items || draft.items.length === 0)) {
+      return;
+    }
+
+    if (draft.title) document.getElementById('title').value = draft.title;
+    if (draft.expenditure_type) {
+      document.getElementById('expenditure_type').value = draft.expenditure_type;
+      filterCategories(draft.expenditure_type);
+    }
+    if (draft.category) document.getElementById('category').value = draft.category;
+    if (draft.vendor_name) document.getElementById('vendor_name').value = draft.vendor_name;
+    if (draft.description) document.getElementById('description').value = draft.description;
+
+    // Restore PICs
+    if (draft.pics && draft.pics.length > 0) {
+      const container = document.getElementById('pic-container');
+      container.innerHTML = '';
+      draft.pics.forEach((pic, i) => {
+        const d = document.createElement('div');
+        d.className = 'pic-row';
+        d.style.cssText = 'display:flex; gap:var(--space-sm); align-items:center; margin-top:var(--space-xs);';
+        d.innerHTML = `<div style="flex:1;"><input type="text" name="pic_name[]" class="form-control" value="${pic}" placeholder="Nama PIC" maxlength="255" required></div>` +
+                      (i > 0 ? `<button type="button" onclick="removePicRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus PIC"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>` : '');
+        container.appendChild(d);
+      });
+      updatePicDeleteButtons();
+    }
+
+    // Restore Items
+    if (draft.items && draft.items.length > 0) {
+      const tbody = document.getElementById('items-body');
+      tbody.innerHTML = '';
+      draft.items.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'item-row';
+        const formattedPrice = item.unit_price ? parseInt(item.unit_price).toLocaleString('id-ID') : '';
+        tr.innerHTML = `
+          <td style="padding:8px 12px; font-size:13px; color:var(--color-muted);" class="item-no">${idx + 1}</td>
+          <td style="padding:6px 8px;"><input type="text" name="items[${idx}][item_name]" class="form-control" value="${item.item_name}" placeholder="Nama barang / jasa" required maxlength="255"></td>
+          <td style="padding:6px 8px;"><input type="number" name="items[${idx}][quantity]" class="form-control item-qty" value="${item.quantity}" min="1" style="text-align:center;" onchange="recalcRow(this)" required></td>
+          <td style="padding:6px 8px;"><input type="text" class="form-control item-price-display" value="${formattedPrice}" placeholder="0" style="text-align:right;" oninput="formatItemPrice(this)"><input type="hidden" name="items[${idx}][unit_price]" class="item-price-raw" value="${item.unit_price}"></td>
+          <td style="padding:6px 12px; text-align:right; font-size:13px; font-weight:600;" class="item-subtotal">Rp 0</td>
+          <td style="padding:6px 8px; text-align:center;"><button type="button" onclick="removeItemRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      itemCounter = draft.items.length;
+      updateItemNumbers();
+      updateItemDeleteButtons();
+      recalcAll();
+    }
+
+    if (typeof showToast === 'function') {
+      showToast('info', 'Draf Dipulihkan', 'Melanjutkan pengisian formulir sebelumnya...');
+    } else {
+      console.log('Form draft restored.');
+    }
+  } catch (e) {
+    console.error('Failed to restore form draft', e);
+  }
+}
+
+// Restore draft on load
+window.addEventListener('DOMContentLoaded', () => {
+  restoreFormDraft();
 });
 </script>
 @endpush
