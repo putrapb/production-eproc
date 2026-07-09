@@ -15,26 +15,26 @@ test('user can register with valid NIP from allowed division', function () {
 
     $response = $this->post('/register', [
         'nip'                   => '9900000001',
-        'email'                 => 'test@bni.co.id',
+        'email'                 => 'test@bna.co.id',
         'password'              => 'password123',
         'password_confirmation' => 'password123',
     ]);
 
     $response->assertRedirect(route('otp.show'));
-    expect(User::where('email', 'test@bni.co.id')->exists())->toBeTrue();
-    expect(User::where('email', 'test@bni.co.id')->first()->email_verified_at)->toBeNull();
+    expect(User::where('email', 'test@bna.co.id')->exists())->toBeTrue();
+    expect(User::where('email', 'test@bna.co.id')->first()->email_verified_at)->toBeNull();
 });
 
 test('registration is rejected when NIP is not found in HR database', function () {
     $response = $this->post('/register', [
         'nip'                   => '0000000000',
-        'email'                 => 'ghost@bni.co.id',
+        'email'                 => 'ghost@bna.co.id',
         'password'              => 'password123',
         'password_confirmation' => 'password123',
     ]);
 
     $response->assertSessionHasErrors('nip');
-    expect(User::where('email', 'ghost@bni.co.id')->exists())->toBeFalse();
+    expect(User::where('email', 'ghost@bna.co.id')->exists())->toBeFalse();
 });
 
 test('registration is rejected when NIP belongs to outside division', function () {
@@ -42,13 +42,13 @@ test('registration is rejected when NIP belongs to outside division', function (
 
     $response = $this->post('/register', [
         'nip'                   => '9900000002',
-        'email'                 => 'finance@bni.co.id',
+        'email'                 => 'finance@bna.co.id',
         'password'              => 'password123',
         'password_confirmation' => 'password123',
     ]);
 
     $response->assertSessionHasErrors('nip');
-    expect(User::where('email', 'finance@bni.co.id')->exists())->toBeFalse();
+    expect(User::where('email', 'finance@bna.co.id')->exists())->toBeFalse();
 });
 
 test('registration is rejected if NIP already has an account', function () {
@@ -57,7 +57,7 @@ test('registration is rejected if NIP already has an account', function () {
 
     $response = $this->post('/register', [
         'nip'                   => '9900000003',
-        'email'                 => 'newaccount@bni.co.id',
+        'email'                 => 'newaccount@bna.co.id',
         'password'              => 'password123',
         'password_confirmation' => 'password123',
     ]);
