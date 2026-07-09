@@ -239,13 +239,24 @@ class Ticket extends Model
      */
     public function getBallHolderAttribute(): string
     {
+        if ($this->pending_with_role) {
+            return match ($this->pending_with_role) {
+                'requester'       => 'Requester',
+                'team_leader'     => 'Team Leader',
+                'department_head' => 'Dept Head',
+                'division_head'   => 'Div Head',
+                'none'            => '',
+                default           => $this->pending_with_role,
+            };
+        }
+
         return match ($this->status) {
             self::STATUS_PENDING_REVIEW    => 'Team Leader',
             self::STATUS_REVISION          => 'Requester',
-            self::STATUS_NEED_TO_VALIDATE  => 'Team Leader',  // Auto SmartVal runs on TL review
+            self::STATUS_NEED_TO_VALIDATE  => 'Team Leader',
             self::STATUS_PENDING_DEPT_HEAD => 'Dept Head',
-            self::STATUS_APPROVED          => 'Team Leader',  // TL must generate form
-            default                        => '',              // Final states (declined, form_generated)
+            self::STATUS_APPROVED          => 'Team Leader',
+            default                        => '',
         };
     }
 

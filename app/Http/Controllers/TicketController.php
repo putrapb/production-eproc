@@ -32,6 +32,7 @@ class TicketController extends Controller
 
         $tickets = Ticket::with(['user', 'approvalLogs.user'])
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->pending_with, fn ($q, $p) => $q->where('pending_with_role', $p))
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('title', 'like', "%{$s}%")
                   ->orWhere('vendor_name', 'like', "%{$s}%");
@@ -50,6 +51,7 @@ class TicketController extends Controller
     {
         $tickets = Ticket::with(['user', 'items'])
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->pending_with, fn ($q, $p) => $q->where('pending_with_role', $p))
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('title', 'like', "%{$s}%")
                   ->orWhere('vendor_name', 'like', "%{$s}%");

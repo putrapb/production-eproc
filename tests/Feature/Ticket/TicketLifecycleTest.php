@@ -18,14 +18,19 @@ test('requester can create a ticket which starts at pending_review', function ()
     $requester = User::factory()->requester()->create();
 
     $response = $this->actingAs($requester)->post('/tickets', [
-        'title'       => 'Pengadaan Server Rack',
-        'item_name'   => 'Server Rack Dell PowerEdge',
-        'category'    => 'infrastruktur_utama',
-        'description' => 'Server rack untuk data center',
-        'pic_name'    => ['John Doe'],
-        'quantity'    => 2,
-        'vendor_name' => 'PT Dell Indonesia',
-        'amount'      => 350_000_000,
+        'title'            => 'Pengadaan Server Rack',
+        'expenditure_type' => 'CAPEX',
+        'category'         => 'infrastruktur_utama',
+        'description'      => 'Server rack untuk data center',
+        'pic_name'         => ['John Doe'],
+        'vendor_name'      => 'PT Dell Indonesia',
+        'items'            => [
+            [
+                'item_name'  => 'Server Rack Dell PowerEdge',
+                'quantity'   => 2,
+                'unit_price' => 175_000_000,
+            ]
+        ],
         'document_files' => [
             UploadedFile::fake()->create('izin_prinsip.pdf', 500, 'application/pdf')
         ],
@@ -104,6 +109,19 @@ test('requester can re-upload document and ticket returns to pending_review', fu
     ]);
 
     $this->actingAs($requester)->put("/tickets/{$ticket->id}", [
+        'title'            => 'Revised Pengadaan',
+        'expenditure_type' => 'OPEX',
+        'category'         => 'layanan_pemeliharaan',
+        'description'      => 'Updated desc',
+        'pic_name'         => ['John Doe'],
+        'vendor_name'      => 'PT Vendor Baru',
+        'items'            => [
+            [
+                'item_name'  => 'Layanan Cloud',
+                'quantity'   => 1,
+                'unit_price' => 50_000_000,
+            ]
+        ],
         'document_files' => [
             $doc->id => UploadedFile::fake()->create('izin_prinsip_v2.pdf', 200, 'application/pdf'),
         ]

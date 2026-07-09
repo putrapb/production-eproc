@@ -14,13 +14,13 @@ test('gate 1 halts when identical active ticket exists', function () {
     $requester = User::factory()->requester()->create();
     $existing  = Ticket::factory()->pendingReview()->create([
         'user_id'   => $requester->id,
-        'item_name' => 'Server Rack Dell PowerEdge',
+        'title'     => 'Server Rack Dell PowerEdge',
     ]);
 
-    // Ticket to validate — same item name, same requester
+    // Ticket to validate — same title, same requester
     $ticket = Ticket::factory()->needToValidate()->create([
         'user_id'   => $requester->id,
-        'item_name' => 'Server Rack Dell PowerEdge',
+        'title'     => 'Server Rack Dell PowerEdge',
     ]);
 
     $result = app(SmartValidationService::class)->run($ticket, $requester);
@@ -33,16 +33,16 @@ test('gate 1 halts when identical active ticket exists', function () {
 test('gate 1 passes when only declined duplicates exist', function () {
     $requester = User::factory()->requester()->create();
 
-    // Declined ticket with same item — should be ignored by Gate 1
+    // Declined ticket with same title — should be ignored by Gate 1
     Ticket::factory()->declined()->create([
         'user_id'   => $requester->id,
-        'item_name' => 'Server Rack Dell PowerEdge',
+        'title'     => 'Server Rack Dell PowerEdge',
         'expenditure_type' => 'OPEX',
     ]);
 
     $ticket = Ticket::factory()->needToValidate()->create([
         'user_id'   => $requester->id,
-        'item_name' => 'Server Rack Dell PowerEdge',
+        'title'     => 'Server Rack Dell PowerEdge',
         'category'  => 'layanan_pemeliharaan',
         'amount'    => 5_000_000,
     ]);
@@ -90,7 +90,7 @@ test('gate 3 classifies hardware above threshold as CAPEX', function () {
     $ticket    = Ticket::factory()->needToValidate()->create([
         'user_id'  => $requester->id,
         'category' => 'infrastruktur_utama',
-        'amount'   => 350_000_000, // Above 200M threshold
+        'amount'   => 350_000_000,
     ]);
 
     Budget::factory()->capex()->forCategory('infrastruktur_utama')->withLimit(2_000_000_000)->create();
@@ -100,19 +100,19 @@ test('gate 3 classifies hardware above threshold as CAPEX', function () {
     expect($ticket->fresh()->expenditure_type)->toBe('CAPEX');
 });
 
-test('gate 3 classifies hardware below threshold as OPEX', function () {
+test('gate 3 classifies hardware below threshold also as CAPEX (PSAK 16 always CAPEX)', function () {
     $requester = User::factory()->requester()->create();
     $ticket    = Ticket::factory()->needToValidate()->create([
         'user_id'  => $requester->id,
         'category' => 'infrastruktur_utama',
-        'amount'   => 50_000_000, // Below 200M threshold
+        'amount'   => 50_000_000,
     ]);
 
-    Budget::factory()->opex()->forCategory('infrastruktur_utama')->withLimit(2_000_000_000)->create();
+    Budget::factory()->capex()->forCategory('infrastruktur_utama')->withLimit(2_000_000_000)->create();
 
     $result = app(SmartValidationService::class)->run($ticket, $requester);
 
-    expect($ticket->fresh()->expenditure_type)->toBe('OPEX');
+    expect($ticket->fresh()->expenditure_type)->toBe('CAPEX');
 });
 
 test('gate 3 always classifies services as OPEX', function () {
@@ -135,9 +135,10 @@ test('gate 3 always classifies services as OPEX', function () {
 test('gate 4 locks budget and advances ticket when balance is sufficient', function () {
     $requester = User::factory()->requester()->create();
     $ticket    = Ticket::factory()->needToValidate()->create([
-        'user_id'  => $requester->id,
-        'category' => 'lisensi_sistem',
-        'amount'   => 50_000_000, // Below CAPEX threshold → OPEX
+        'user_id'   => $requester->id,
+        'category'  => 'lisensi_sistem',
+        'item_name' => 'SaaS Subscription License', // subscription keyword triggers OPEX
+        'amount'    => 50_000_000,
     ]);
 
     $budget = Budget::factory()->opex()->forCategory('lisensi_sistem')
@@ -153,9 +154,10 @@ test('gate 4 locks budget and advances ticket when balance is sufficient', funct
 test('gate 4 returns over_budget when balance is insufficient', function () {
     $requester = User::factory()->requester()->create();
     $ticket    = Ticket::factory()->needToValidate()->create([
-        'user_id'  => $requester->id,
-        'category' => 'lisensi_sistem',
-        'amount'   => 950_000_000,
+        'user_id'   => $requester->id,
+        'category'  => 'lisensi_sistem',
+        'item_name' => 'SaaS Subscription License', // subscription keyword triggers OPEX
+        'amount'    => 950_000_000,
     ]);
 
     Budget::factory()->opex()->forCategory('lisensi_sistem')->almostExhausted()->create();

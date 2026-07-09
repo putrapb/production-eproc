@@ -25,10 +25,8 @@ class TicketFactory extends Factory
         return [
             'user_id'         => User::factory()->requester(),
             'title'           => $this->faker->sentence(5),
-            'item_name'       => $this->faker->words(3, true),
             'category'        => $this->faker->randomElement($categories),
             'description'     => $this->faker->paragraph(),
-            'quantity'        => 1,
             'vendor_name'     => $this->faker->company(),
             'amount'          => $this->faker->randomFloat(2, 1_000_000, 500_000_000),
             'expenditure_type' => null,
@@ -38,6 +36,42 @@ class TicketFactory extends Factory
             'is_cross_fund'   => false,
         ];
     }
+
+    public function configure(): self
+    {
+        return $this->afterCreating(function (Ticket $ticket) {
+            // Only create default item if none exists
+            if ($ticket->items()->count() === 0) {
+                $ticket->items()->create([
+                    'item_name'  => 'Default Item for ' . $ticket->title,
+                    'quantity'   => 1,
+                    'unit_price' => $ticket->amount,
+                ]);
+            }
+        });
+    }
+
+    public function create($attributes = [], ?\Illuminate\Database\Eloquent\Model $parent = null)
+    {
+        $itemName = $attributes['item_name'] ?? null;
+        $quantity = $attributes['quantity'] ?? null;
+
+        unset($attributes['item_name'], $attributes['quantity']);
+
+        $ticket = parent::create($attributes, $parent);
+
+        if ($itemName !== null) {
+            $ticket->items()->delete(); // Clear defaults
+            $ticket->items()->create([
+                'item_name'  => $itemName,
+                'quantity'   => $quantity ?? 1,
+                'unit_price' => $ticket->amount,
+            ]);
+        }
+
+        return $ticket;
+    }
+
 
     // ─── Status State Methods ───
 

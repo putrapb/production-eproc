@@ -64,6 +64,17 @@
       @endforeach
     </div>
 
+    {{-- Filter Pending Dengan (Transkrip 2) --}}
+    <div style="display:inline-flex; align-items:center;">
+      <select id="pending-with-select" onchange="applyPendingWith(this.value)"
+              style="padding:6px 12px; font-size:13px; border:1px solid var(--color-border); border-radius:var(--radius-md); background:#fff; color:var(--color-text); font-weight:600; outline:none; height:38px; cursor:pointer;">
+        <option value="">Semua Penanggung Jawab</option>
+        <option value="team_leader" {{ request('pending_with') === 'team_leader' ? 'selected' : '' }}>Pending: Team Leader</option>
+        <option value="department_head" {{ request('pending_with') === 'department_head' ? 'selected' : '' }}>Pending: Dept Head</option>
+        <option value="requester" {{ request('pending_with') === 'requester' ? 'selected' : '' }}>Pending: Requester</option>
+      </select>
+    </div>
+
     {{-- Search --}}
     <div class="search-input-wrap">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -338,6 +349,15 @@ function applySearch() {
   url.searchParams.delete('page');
   window.location.href = url.toString();
 }
+
+function applyPendingWith(val) {
+  const url = new URL(window.location.href);
+  if (val) url.searchParams.set('pending_with', val);
+  else url.searchParams.delete('pending_with');
+  url.searchParams.delete('page');
+  window.location.href = url.toString();
+}
+
 
 // ── Bulk Selection ────────────────────────────────────────────
 const bulkBar     = document.getElementById('bulk-action-bar');
