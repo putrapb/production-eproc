@@ -41,6 +41,9 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    // C-1 Security: Secret token untuk webhook deploy. Set DEPLOY_SECRET di .env
+    'deploy_secret' => env('DEPLOY_SECRET'),
+
     /*
     |--------------------------------------------------------------------------
     | Application URL

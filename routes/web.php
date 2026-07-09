@@ -20,8 +20,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'));
 
-// Post-deployment webhook (called by GitHub Actions CI/CD)
-Route::get('/api/deploy/post-update', [DeployController::class, 'postUpdate'])->name('deploy.post-update');
+// Post-deployment webhook — protected by DEPLOY_SECRET header (C-1 Fix)
+Route::get('/api/deploy/post-update', [DeployController::class, 'postUpdate'])
+    ->name('deploy.post-update')
+    ->middleware(\App\Http\Middleware\VerifyDeploySecret::class);
 
 // Public verification for digital signature via barcode
 Route::get('/verify/{ticket}', [TicketController::class, 'verifyPublic'])->name('tickets.verify')->middleware('signed');
@@ -32,7 +34,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('/register', [RegisteredUserController::class, 'store']);
+    Route::post('/register', [RegisteredUserController::class, 'store'])->middleware('throttle:5,1'); // H-2: limit 5 req/menit
 
     // Forgot Password & Reset Password (OTP-based)
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');

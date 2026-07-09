@@ -102,8 +102,14 @@ class PurchaseOrderController extends Controller
                 ->with('error', 'File Form Pengadaan tidak dapat diakses. Hubungi administrator.');
         }
 
-        $path     = Storage::disk('public')->path($ticket->document_po_path);
-        $filename = 'FORM-' . str_pad($ticket->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+        $path       = Storage::disk('public')->path($ticket->document_po_path);
+        $storageRoot = Storage::disk('public')->path('');
+        $filename   = 'FORM-' . str_pad($ticket->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+
+        // H-3: Path traversal protection — pastikan file ada di dalam storage root
+        if (! str_starts_with(realpath($path) ?: '', realpath($storageRoot) ?: '')) {
+            abort(403, 'Akses file tidak diizinkan.');
+        }
 
         if ($request->query('download')) {
             return response()->download($path, $filename);

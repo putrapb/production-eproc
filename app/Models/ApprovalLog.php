@@ -33,6 +33,22 @@ class ApprovalLog extends Model
         'notes',
     ];
 
+    /**
+     * M-1 Security: ApprovalLog adalah immutable audit trail.
+     * Setelah dibuat (create), entri log TIDAK BOLEH dimodifikasi atau dihapus.
+     * Ini penting untuk kepatuhan compliance & integritas audit trail (PSAK).
+     */
+    protected static function booted(): void
+    {
+        static::updating(function () {
+            throw new \LogicException('ApprovalLog bersifat immutable. Entri audit trail tidak dapat dimodifikasi setelah dibuat.');
+        });
+
+        static::deleting(function () {
+            throw new \LogicException('ApprovalLog bersifat immutable. Entri audit trail tidak dapat dihapus.');
+        });
+    }
+
     // ─────────────────────────────────────────────
     // Relationships
     // ─────────────────────────────────────────────
@@ -46,6 +62,7 @@ class ApprovalLog extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
 
     // ─────────────────────────────────────────────
     // Display Helpers

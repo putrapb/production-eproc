@@ -40,21 +40,17 @@ class Ticket extends Model
     const TYPE_CAPEX = 'CAPEX';
     const TYPE_OPEX  = 'OPEX';
 
-    protected $fillable = [
-        'user_id',
-        'title',
-        'item_name',
-        'category',
-        'description',
-        'pic_name',
-        'quantity',
-        'vendor_name',
-        'amount',
-        'expenditure_type',
-        'document_path',
-        'document_po_path',
-        'status',
-        'is_cross_fund',
+    /**
+     * H-1 Security: Gunakan $guarded instead of $fillable.
+     * Field di bawah ini adalah field yang paling sensitif dan TIDAK BOLEH
+     * pernah di-assign dari input user secara langsung.
+     * Semua field lain bisa di-mass-assign, tapi controller wajib menggunakan
+     * Form Request yang sudah divalidasi — jangan pernah pakai $request->all().
+     */
+    protected $guarded = [
+        'id',
+        'is_cross_fund',   // diset hanya oleh logika cross-fund internal
+        'form_path',       // alias untuk document_po_path — diset oleh PO generator
     ];
 
     protected function casts(): array

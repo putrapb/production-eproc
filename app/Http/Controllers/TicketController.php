@@ -800,7 +800,12 @@ class TicketController extends Controller
 
     private function authorizeView(Ticket $ticket, $user): void
     {
-        // All roles can view all tickets (global visibility for tracking)
-        // Actions (approve, check, revise) are still role-gated separately
+        // M-2: INTENTIONAL — Semua role authenticated dapat melihat semua tiket.
+        // Desain ini disengaja untuk mendukung tracking & transparansi lintas role.
+        // Pembatasan aksi (edit, approve, cancel, dll) dilakukan di:
+        //   1. Route middleware: role:requester, role:team_leader, dll
+        //   2. Method-level: abort_if($ticket->user_id !== auth()->id(), 403)
+        //   3. ensureStatus(): memastikan aksi hanya valid pada status yang benar
+        // Jangan hapus method ini — dipakai oleh streamDocument() sebagai hook.
     }
 }

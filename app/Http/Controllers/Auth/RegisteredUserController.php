@@ -41,28 +41,29 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // Security: gunakan pesan error generik untuk mencegah NIP enumeration (H-2)
+        // Security: sleep konstan untuk mencegah timing attack (M-3)
+        $genericNipError = 'NIP atau data Anda tidak valid, tidak terdaftar, atau tidak memiliki akses ke sistem ini.';
+
         // Step 1: Validate NIP against HR database
         $hrEmployee = HrEmployee::where('nip', $request->nip)->first();
 
         if (! $hrEmployee) {
-            return back()->withErrors([
-                'nip' => 'NIP tidak ditemukan dalam database karyawan.',
-            ])->withInput();
+            usleep(random_int(100000, 300000)); // 100-300ms constant-time delay
+            return back()->withErrors(['nip' => $genericNipError])->withInput();
         }
 
         // Step 2: Validate division
         $allowedDivision = config('eprocurement.allowed_division_keyword', 'IT Infrastructure Management');
         if (! str_contains($hrEmployee->division, $allowedDivision)) {
-            return back()->withErrors([
-                'nip' => 'NIP Anda tidak termasuk dalam Departemen IT Infrastructure Management.',
-            ])->withInput();
+            usleep(random_int(100000, 300000));
+            return back()->withErrors(['nip' => $genericNipError])->withInput();
         }
 
         // Step 3: Check that this HR record doesn't already have an account
         if ($hrEmployee->user()->exists()) {
-            return back()->withErrors([
-                'nip' => 'NIP ini sudah terdaftar dalam sistem. Silakan login.',
-            ])->withInput();
+            usleep(random_int(100000, 300000));
+            return back()->withErrors(['nip' => $genericNipError])->withInput();
         }
 
         // Step 4: Derive role from position
