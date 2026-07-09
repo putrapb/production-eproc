@@ -32,7 +32,23 @@ class TicketController extends Controller
 
         $tickets = Ticket::with(['user', 'approvalLogs.user'])
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->pending_with, fn ($q, $p) => $q->where('pending_with_role', $p))
+            ->when($request->pending_with, function ($q, $p) {
+                $q->where(function ($q) use ($p) {
+                    $q->where('pending_with_role', $p)
+                      ->orWhere(function ($q) use ($p) {
+                          $q->whereNull('pending_with_role');
+                          if ($p === 'team_leader') {
+                              $q->whereIn('status', [Ticket::STATUS_PENDING_REVIEW, Ticket::STATUS_NEED_TO_VALIDATE, Ticket::STATUS_APPROVED]);
+                          } elseif ($p === 'department_head') {
+                              $q->where('status', Ticket::STATUS_PENDING_DEPT_HEAD);
+                          } elseif ($p === 'requester') {
+                              $q->where('status', Ticket::STATUS_REVISION);
+                          } else {
+                              $q->whereRaw('1 = 0');
+                          }
+                      });
+                });
+            })
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('title', 'like', "%{$s}%")
                   ->orWhere('vendor_name', 'like', "%{$s}%");
@@ -51,7 +67,23 @@ class TicketController extends Controller
     {
         $tickets = Ticket::with(['user', 'items'])
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
-            ->when($request->pending_with, fn ($q, $p) => $q->where('pending_with_role', $p))
+            ->when($request->pending_with, function ($q, $p) {
+                $q->where(function ($q) use ($p) {
+                    $q->where('pending_with_role', $p)
+                      ->orWhere(function ($q) use ($p) {
+                          $q->whereNull('pending_with_role');
+                          if ($p === 'team_leader') {
+                              $q->whereIn('status', [Ticket::STATUS_PENDING_REVIEW, Ticket::STATUS_NEED_TO_VALIDATE, Ticket::STATUS_APPROVED]);
+                          } elseif ($p === 'department_head') {
+                              $q->where('status', Ticket::STATUS_PENDING_DEPT_HEAD);
+                          } elseif ($p === 'requester') {
+                              $q->where('status', Ticket::STATUS_REVISION);
+                          } else {
+                              $q->whereRaw('1 = 0');
+                          }
+                      });
+                });
+            })
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('title', 'like', "%{$s}%")
                   ->orWhere('vendor_name', 'like', "%{$s}%");
