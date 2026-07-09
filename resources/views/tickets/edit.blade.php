@@ -257,10 +257,22 @@
           </button>
         </div>
 
+        {{-- SECTION: Upfront Smart Validation Panel (Transkrip 2) --}}
+        <div id="smartval-panel" style="display:none; background:var(--color-surface-soft); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-md); margin-top:var(--space-md);">
+          <div style="font-weight:600; font-size:13px; margin-bottom:var(--space-sm); color:var(--color-text);">
+            🔍 Hasil Pra-Validasi Anggaran
+          </div>
+          <div id="smartval-result" style="font-size:13px; color:var(--color-muted); line-height:1.6;"></div>
+        </div>
+
       </div>
-      <div class="card-footer" style="display:flex; justify-content:flex-end; gap:var(--space-sm);">
+      <div class="card-footer" style="display:flex; justify-content:flex-end; gap:var(--space-sm); flex-wrap:wrap;">
         <a href="{{ route('tickets.show', $ticket) }}" class="btn btn-secondary">Batal</a>
-        <button type="submit" class="btn btn-primary">
+        <button type="button" id="btn-preview-val" onclick="runPreviewValidation()" class="btn btn-secondary">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Cek Validasi Dulu
+        </button>
+        <button type="submit" id="btn-submit-ticket" class="btn btn-primary" style="display:none;">
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Simpan Revisi Tiket
         </button>
@@ -465,11 +477,116 @@
     }
   }
 
+  // ── Upfront Smart Validation Preview for Revisions ──
+  function runPreviewValidation() {
+    const btn = document.getElementById('btn-preview-val');
+    const panel = document.getElementById('smartval-panel');
+    const resultDiv = document.getElementById('smartval-result');
+
+    const title    = document.getElementById('title')?.value || '';
+    const category = document.getElementById('category')?.value || '';
+    const expType  = document.getElementById('expenditure_type')?.value || '';
+    const itemRows = document.querySelectorAll('#item-table tbody tr');
+    const items    = [];
+    itemRows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs.length >= 3) {
+        items.push({ item_name: inputs[0].value, quantity: inputs[1].value, unit_price: inputs[2].value });
+      }
+    });
+
+    if (!category || !expType) {
+      panel.style.display = 'block';
+      resultDiv.innerHTML = '<span style="color:var(--color-danger);">⚠️ Harap pilih Jenis Pengeluaran dan Kategori terlebih dahulu.</span>';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Mengecek...';
+    panel.style.display = 'block';
+    resultDiv.innerHTML = '<span style="color:var(--color-muted);">Sedang memvalidasi...</span>';
+
+    fetch('{{ route("tickets.preview-validation") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+      },
+      body: JSON.stringify({ title, category, expenditure_type: expType, items }),
+    })
+    .then(r => r.json())
+    .then(data => {
+      let html = '';
+      const type = data.classified_type;
+      let canSubmit = true;
+
+      if (type) {
+        const color = type === 'CAPEX' ? 'var(--color-primary)' : 'var(--color-warning, #f59e0b)';
+        html += `<div style="margin-bottom:8px;">Klasifikasi Sistem: <strong style="color:${color};">${type}</strong></div>`;
+        
+        if (expType && type !== expType) {
+          html += `<div style="color:var(--color-warning, #f59e0b); font-weight:600; margin-bottom:8px;">⚠️ Pilihan Anda (${expType}) berbeda dengan klasifikasi sistem (${type}). Anda tetap bisa mengajukan, atau silakan ubah pilihan Anda di form jika ingin mengikuti saran sistem.</div>`;
+        }
+      }
+
+      if (data.nominal_warning) {
+        html += `<div style="color:var(--color-danger); margin-bottom:4px;">⚠️ ${data.nominal_warning}</div>`;
+        if (data.total_amount <= 0) {
+          canSubmit = false;
+        }
+      }
+
+      if (data.suggestions && data.suggestions.length) {
+        html += data.suggestions.map(s => `<div style="margin-bottom:4px;">${s}</div>`).join('');
+      }
+
+      if (data.budget_status === 'no_budget') {
+        canSubmit = false;
+      }
+
+      if (!html) html = '<span style="color:var(--color-success, #10b981);">✅ Semua parameter valid.</span>';
+      resultDiv.innerHTML = html;
+
+      if (canSubmit) {
+        document.getElementById('btn-submit-ticket').style.display = 'inline-flex';
+      } else {
+        document.getElementById('btn-submit-ticket').style.display = 'none';
+      }
+    })
+    .catch(() => {
+      resultDiv.innerHTML = '<span style="color:var(--color-danger);">Gagal menghubungi server. Silakan coba beberapa saat lagi.</span>';
+      document.getElementById('btn-submit-ticket').style.display = 'none';
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Cek Validasi Dulu';
+    });
+  }
+
   // Initialize
   document.addEventListener('DOMContentLoaded', () => {
     const expType = document.getElementById('expenditure_type').value;
     if (expType) filterCategories(expType);
     recalcGrandTotal();
+
+    // Reset validation state on form changes
+    const form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('input', function(e) {
+        if (e.target.name && (e.target.name.startsWith('document_files') || e.target.name.startsWith('new_document_'))) return;
+        const sub = document.getElementById('btn-submit-ticket');
+        const pan = document.getElementById('smartval-panel');
+        if (sub) sub.style.display = 'none';
+        if (pan) pan.style.display = 'none';
+      });
+      form.addEventListener('change', function(e) {
+        if (e.target.name && (e.target.name.startsWith('document_files') || e.target.name.startsWith('new_document_'))) return;
+        const sub = document.getElementById('btn-submit-ticket');
+        const pan = document.getElementById('smartval-panel');
+        if (sub) sub.style.display = 'none';
+        if (pan) pan.style.display = 'none';
+      });
+    }
   });
 </script>
 @endpush

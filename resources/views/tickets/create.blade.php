@@ -216,7 +216,7 @@
           <div style="font-weight:600; font-size:13px; margin-bottom:var(--space-sm); color:var(--color-text);">
             🔍 Hasil Pra-Validasi Anggaran
           </div>
-          <div id="smartval-result" style="font-size:13px; color:var(--color-muted);"></div>
+          <div id="smartval-result" style="font-size:13px; color:var(--color-muted); line-height:1.6;"></div>
         </div>
 
         <div style="display:flex; justify-content:flex-end; gap:var(--space-sm);">
@@ -225,7 +225,7 @@
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Cek Validasi Dulu
           </button>
-          <button type="submit" class="btn btn-primary">
+          <button type="submit" id="btn-submit-ticket" class="btn btn-primary" style="display:none;">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
             Ajukan Pengadaan
           </button>
@@ -235,6 +235,7 @@
     </div>
   </form>
 </div>
+
 
 
 @push('scripts')
@@ -415,27 +416,63 @@ function runPreviewValidation() {
   .then(data => {
     let html = '';
     const type = data.classified_type;
+    let canSubmit = true;
+
     if (type) {
       const color = type === 'CAPEX' ? 'var(--color-primary)' : 'var(--color-warning, #f59e0b)';
       html += `<div style="margin-bottom:8px;">Klasifikasi Sistem: <strong style="color:${color};">${type}</strong></div>`;
+      
+      // If user selected differently than system's classification
+      if (expType && type !== expType) {
+        html += `<div style="color:var(--color-warning, #f59e0b); font-weight:600; margin-bottom:8px;">⚠️ Pilihan Anda (${expType}) berbeda dengan klasifikasi sistem (${type}). Anda tetap bisa mengajukan, atau silakan ubah pilihan Anda di form jika ingin mengikuti saran sistem.</div>`;
+      }
     }
+
     if (data.nominal_warning) {
       html += `<div style="color:var(--color-danger); margin-bottom:4px;">⚠️ ${data.nominal_warning}</div>`;
+      if (data.total_amount <= 0) {
+        canSubmit = false;
+      }
     }
+
     if (data.suggestions && data.suggestions.length) {
       html += data.suggestions.map(s => `<div style="margin-bottom:4px;">${s}</div>`).join('');
     }
+
+    if (data.budget_status === 'no_budget') {
+      canSubmit = false;
+    }
+
     if (!html) html = '<span style="color:var(--color-success, #10b981);">✅ Semua parameter valid.</span>';
     resultDiv.innerHTML = html;
+
+    if (canSubmit) {
+      document.getElementById('btn-submit-ticket').style.display = 'inline-flex';
+    } else {
+      document.getElementById('btn-submit-ticket').style.display = 'none';
+    }
   })
   .catch(() => {
-    resultDiv.innerHTML = '<span style="color:var(--color-danger);">Gagal menghubungi server. Anda tetap bisa mengajukan.</span>';
+    resultDiv.innerHTML = '<span style="color:var(--color-danger);">Gagal menghubungi server. Silakan coba beberapa saat lagi.</span>';
+    document.getElementById('btn-submit-ticket').style.display = 'none';
   })
   .finally(() => {
     btn.disabled = false;
     btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Cek Validasi Dulu';
   });
 }
+
+// Reset validation state on form changes to enforce re-checking
+document.getElementById('ticket-form').addEventListener('input', function(e) {
+  if (e.target.name === 'document_files[]' || e.target.name === 'document_descriptions[]') return; // documents don't affect budget
+  document.getElementById('btn-submit-ticket').style.display = 'none';
+  document.getElementById('smartval-panel').style.display = 'none';
+});
+document.getElementById('ticket-form').addEventListener('change', function(e) {
+  if (e.target.name === 'document_files[]' || e.target.name === 'document_descriptions[]') return;
+  document.getElementById('btn-submit-ticket').style.display = 'none';
+  document.getElementById('smartval-panel').style.display = 'none';
+});
 </script>
 @endpush
 @endsection
