@@ -481,8 +481,21 @@ class SmartValidationService
             $nominalWarning = 'Total nominal melebihi Rp 99 miliar. Pastikan sudah benar.';
         }
 
-        // Gate 3 preview: Klasifikasi CAPEX/OPEX (read-only)
-        $classifiedType = $this->gate3Classification((object) ['category' => $category, 'items' => collect($data['items'] ?? [])]);
+        // Gate 3 preview: Klasifikasi CAPEX/OPEX berdasarkan PSAK 16 & 19 (inline, read-only)
+        // Tidak memanggil gate3Classification() karena butuh Ticket model — kita duplikasi logikanya
+        $classifiedType = null;
+        if ($category === Ticket::CATEGORY_INFRASTRUKTUR_UTAMA) {
+            $classifiedType = Ticket::TYPE_CAPEX;
+        } elseif (in_array($category, [Ticket::CATEGORY_LAYANAN_PEMELIHARAAN, Ticket::CATEGORY_PERLENGKAPAN_OPERASIONAL])) {
+            $classifiedType = Ticket::TYPE_OPEX;
+        } elseif ($category === Ticket::CATEGORY_LISENSI_SISTEM) {
+            // PSAK 19: SaaS/langganan → OPEX; perpetual → CAPEX
+            $opexSignals = ['subscription', 'langganan', 'saas', 'cloud', 'tahunan', 'bulanan', 'monthly', 'annual', 'sewa', 'rental', 'as a service', 'managed service', 'hosting', 'recurring'];
+            $itemText    = strtolower(collect($data['items'] ?? [])->pluck('item_name')->implode(' '));
+            $classifiedType = collect($opexSignals)->first(fn($s) => str_contains($itemText, $s))
+                ? Ticket::TYPE_OPEX
+                : Ticket::TYPE_CAPEX;
+        }
 
         // Budget availability preview (read-only, no lock)
         $budgetStatus  = null;

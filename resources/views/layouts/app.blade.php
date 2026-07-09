@@ -187,7 +187,11 @@
             style="display:none; position:absolute; top:calc(100% + 8px); right:0; width:320px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.12); z-index:9999; flex-direction:column; overflow:hidden;">
             <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid #f3f4f6;">
               <span style="font-weight:600; font-size:14px; color:#111827;">Notifikasi</span>
-              <button onclick="markAllRead()" style="font-size:12px; color:var(--color-primary); background:none; border:none; cursor:pointer; font-weight:500;">Tandai semua dibaca</button>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button onclick="markAllRead()" style="font-size:12px; color:var(--color-primary); background:none; border:none; cursor:pointer; font-weight:500;">Tandai dibaca</button>
+                <span style="color:#d1d5db; font-size:12px;">|</span>
+                <button onclick="clearAllNotif()" style="font-size:12px; color:#ef4444; background:none; border:none; cursor:pointer; font-weight:500;">Hapus Semua</button>
+              </div>
             </div>
             <div id="notif-list" style="max-height:340px; overflow-y:auto;">
               {{-- Diisi JS saat diklik --}}
@@ -363,18 +367,22 @@ function renderNotifications(data) {
   }
 
   notifList.innerHTML = data.notifications.map(n => `
-    <a href="${n.ticket_url || '#'}" class="notif-item ${n.read ? '' : 'unread'}"
-       onclick="markRead(${n.id}, this)" style="text-decoration:none; display:block;">
-      <div style="display:flex; gap:10px; align-items:flex-start;">
-        <span style="font-size:18px; flex-shrink:0;">${typeIcon[n.type] || '🔔'}</span>
-        <div style="flex:1; min-width:0;">
-          <div style="font-weight:600; font-size:13px; color:var(--color-text);">${n.title}</div>
-          <div style="font-size:12px; color:var(--color-muted); margin-top:2px; line-height:1.4; word-break:break-word;">${n.message}</div>
-          <div style="font-size:11px; color:var(--color-muted); margin-top:4px;">${n.time}</div>
-        </div>
-        ${!n.read ? '<span style="width:8px; height:8px; background:var(--color-primary); border-radius:50%; flex-shrink:0; margin-top:4px;"></span>' : ''}
+    <div class="notif-item ${n.read ? '' : 'unread'}" data-id="${n.id}"
+       style="position:relative; display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-bottom:1px solid #f9fafb; cursor:pointer;"
+       onclick="handleNotifClick(${n.id}, '${n.ticket_url || '#'}', this)">
+      <span style="font-size:18px; flex-shrink:0;">${typeIcon[n.type] || '🔔'}</span>
+      <div style="flex:1; min-width:0;">
+        <div style="font-weight:600; font-size:13px; color:#111827;">${n.title}</div>
+        <div style="font-size:12px; color:#6b7280; margin-top:2px; line-height:1.4; word-break:break-word;">${n.message}</div>
+        <div style="font-size:11px; color:#9ca3af; margin-top:4px;">${n.time}</div>
       </div>
-    </a>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0;">
+        ${!n.read ? '<span style="width:8px; height:8px; background:var(--color-primary); border-radius:50%;"></span>' : '<span style="width:8px;"></span>'}
+        <button onclick="event.stopPropagation(); deleteNotif(${n.id}, this)" title="Hapus notifikasi"
+          style="background:none; border:none; cursor:pointer; color:#d1d5db; padding:2px; border-radius:4px; line-height:1; font-size:14px; transition:color 0.15s;"
+          onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#d1d5db'">&times;</button>
+      </div>
+    </div>
   `).join('');
 }
 
@@ -402,32 +410,64 @@ function fetchNotifications() {
   .catch(() => {});
 }
 
+function handleNotifClick(id, url, el) {
+  markRead(id, el);
+  if (url && url !== '#') window.location.href = url;
+}
+
 function markRead(id, el) {
   fetch(`/notifications/${id}/read`, {
     method: 'POST',
     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
   });
-  if (el) el.classList.remove('unread');
-  el.querySelector('span[style*="border-radius:50%"]')?.remove();
+  if (el) {
+    el.classList.remove('unread');
+    el.querySelector('span[style*="border-radius:50%"]')?.remove();
+  }
 }
 
 function markAllRead() {
-  // Optimistic UI update: hapus badge & tanda unread secara instan!
+  // Optimistic UI update
   if (notifBadge) notifBadge.style.display = 'none';
   if (notifList) {
     notifList.querySelectorAll('.notif-item.unread').forEach(el => {
       el.classList.remove('unread');
-      const dot = el.querySelector('span[style*="border-radius:50%"]');
-      if (dot) dot.remove();
+      el.querySelector('span[style*="border-radius:50%"]')?.remove();
     });
   }
-
-  // Request ke server di background
   fetch('/notifications/read-all', {
     method: 'POST',
     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
   });
 }
+
+function deleteNotif(id, btn) {
+  const item = btn.closest('.notif-item') || btn.closest('[data-id]');
+  if (item) item.style.transition = 'opacity 0.2s'; item?.style && (item.style.opacity = '0');
+  setTimeout(() => { item?.remove(); checkEmptyNotif(); }, 200);
+  fetch(`/notifications/${id}`, {
+    method: 'DELETE',
+    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+  }).then(() => fetchBadge());
+}
+
+function clearAllNotif() {
+  if (!confirm('Hapus semua notifikasi?')) return;
+  if (notifList) notifList.innerHTML = '<div style="padding:32px 16px; text-align:center; color:#9ca3af; font-size:13px;"><div style="font-size:28px; margin-bottom:8px;">🔔</div>Belum ada notifikasi di sini.</div>';
+  if (notifBadge) notifBadge.style.display = 'none';
+  fetch('/notifications', {
+    method: 'DELETE',
+    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+  });
+}
+
+function checkEmptyNotif() {
+  if (notifList && notifList.querySelectorAll('.notif-item').length === 0) {
+    notifList.innerHTML = '<div style="padding:32px 16px; text-align:center; color:#9ca3af; font-size:13px;"><div style="font-size:28px; margin-bottom:8px;">🔔</div>Belum ada notifikasi di sini.</div>';
+    if (notifBadge) notifBadge.style.display = 'none';
+  }
+}
+
 
 // Polling badge setiap 5 detik (background), hanya jalan kalau tab aktif
 setInterval(() => {
