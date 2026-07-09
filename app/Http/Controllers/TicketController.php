@@ -134,6 +134,21 @@ class TicketController extends Controller
     }
 
     /**
+     * Transkrip 2 — Upfront SmartVal Preview (AJAX).
+     * Requester menjalankan ini dari form create/edit SEBELUM submit.
+     * Tidak menyimpan apapun ke DB — hanya memberikan saran klasifikasi & budget.
+     */
+    public function previewValidation(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $result = $this->smartValidation->preview(
+            $request->only(['title', 'category', 'expenditure_type', 'items']),
+            $request->user()
+        );
+
+        return response()->json($result);
+    }
+
+    /**
      * Store a new ticket. (Requester only)
      */
     public function store(StoreTicketRequest $request): RedirectResponse
@@ -146,17 +161,18 @@ class TicketController extends Controller
 
         // 2. Create the ticket
         $ticket = Ticket::create([
-            'user_id'          => $user->id,
-            'title'            => $request->title,
-            'expenditure_type' => $request->expenditure_type,
-            'category'         => $request->category,
-            'description'      => $request->description,
-            'pic_name'         => empty(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n))))
+            'user_id'            => $user->id,
+            'title'              => $request->title,
+            'expenditure_type'   => $request->expenditure_type,
+            'category'           => $request->category,
+            'description'        => $request->description,
+            'pic_name'           => empty(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n))))
                                     ? null
                                     : array_values(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n)))),
-            'vendor_name'      => $request->vendor_name,
-            'amount'           => $totalAmount,
-            'status'           => Ticket::STATUS_PENDING_REVIEW,
+            'vendor_name'        => $request->vendor_name,
+            'amount'             => $totalAmount,
+            'status'             => Ticket::STATUS_PENDING_REVIEW,
+            'pending_with_role'  => 'team_leader', // Transkrip 2: track pending holder
         ]);
 
         // 3. Save each item to ticket_items
@@ -199,14 +215,15 @@ class TicketController extends Controller
             'action'    => ApprovalLog::ACTION_SUBMITTED,
         ]);
 
-        // 6. Notify Team Leaders
+        // 6. Notify Team Leaders (targeted: notifyRole karena TL belum di-assign spesifik)
         Notification::notifyRole(
             'team_leader',
             'ticket_submitted',
             'Pengajuan Baru Masuk',
-            "{$user->name} mengajukan tiket: {$ticket->title}",
+            "{$user->name} mengajukan tiket: \"{$ticket->title}\". Silakan cek dokumen.",
             $ticket->id
         );
+        // Requester tidak dapat notif saat ini — bola di tangan TL
 
         return redirect()->route('tickets.index')
             ->with('success', 'Tiket pengadaan berhasil diajukan.');
@@ -388,7 +405,10 @@ class TicketController extends Controller
         }
 
         // ── All docs accepted → Run Smart Validation immediately ──
-        // This removes the need_to_validate step entirely (per revision spec).
+        // Set pending_with=none temporarily, SmartVal will set to department_head on success
+        $ticket->update([
+            'pending_with_role' => 'none',
+        ]);
         ApprovalLog::create([
             'ticket_id' => $ticket->id,
             'user_id'   => $request->user()->id,
@@ -403,6 +423,8 @@ class TicketController extends Controller
         $result = $this->smartValidation->run($ticket, $user);
 
         if ($result['success']) {
+            // Bola pindah ke Department Head
+            $ticket->update(['pending_with_role' => 'department_head']);
             Notification::notify(
                 $ticket->user_id,
                 'ticket_reviewed',
@@ -428,8 +450,9 @@ class TicketController extends Controller
                 ->with('classification_warning', $result['message']);
         }
 
-        // Gate 4: over budget — notify TL/requester
+        // Gate 4: over budget — bola kembali ke requester untuk ajukan cross-fund
         if ($result['over_budget']) {
+            $ticket->update(['pending_with_role' => 'requester']);
             Notification::notify(
                 $ticket->user_id,
                 'ticket_over_budget',
@@ -699,7 +722,7 @@ class TicketController extends Controller
                     'notes'     => $request->notes,
                 ]);
 
-                // Notify Requester and Team Leaders (TL generates the form)
+                // Notify Requester dan TL yang membuat form (bola ke TL)
                 Notification::notify(
                     $ticket->user_id,
                     'ticket_approved',
@@ -707,6 +730,7 @@ class TicketController extends Controller
                     "Tiket \"{$ticket->title}\" telah disetujui oleh Department Head.",
                     $ticket->id
                 );
+                // Targeted ke TL: notifyRole masih dipakai karena TL belum di-assign spesifik
                 Notification::notifyRole(
                     'team_leader',
                     'ticket_approved',
@@ -714,6 +738,8 @@ class TicketController extends Controller
                     "Tiket \"{$ticket->title}\" disetujui. Silakan terbitkan Form Pengadaan.",
                     $ticket->id
                 );
+                // Bola ke TL untuk generate form
+                $ticket->update(['pending_with_role' => 'team_leader']);
 
                 return 'Pengadaan disetujui. Team Leader dapat menerbitkan Form Pengadaan.';
             } else {

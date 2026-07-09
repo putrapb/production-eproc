@@ -84,6 +84,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Smart Validation — Requester triggers this after Team Leader accepts the document
         Route::post('/tickets/{ticket}/validate', [TicketController::class, 'runSmartValidation'])->name('tickets.validate');
 
+        // Transkrip 2: Upfront SmartVal Preview — AJAX endpoint, tidak perlu tiket ID (form create)
+        Route::post('/tickets/preview-validation', [TicketController::class, 'previewValidation'])->name('tickets.preview-validation');
+
         // Cross-fund confirmation — Requester confirms silang dana when over-budget
         Route::post('/tickets/{ticket}/cross-fund', [TicketController::class, 'applyCrossFund'])->name('tickets.cross-fund');
 

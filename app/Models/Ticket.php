@@ -71,6 +71,11 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function pendingWithUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pending_with_user_id');
+    }
+
     public function approvalLogs(): HasMany
     {
         return $this->hasMany(ApprovalLog::class, 'ticket_id')->latest();
@@ -94,6 +99,12 @@ class Ticket extends Model
     public function scopeForRequester($query, int $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    /** Filter tiket yang pending di role tertentu */
+    public function scopePendingWith($query, string $role)
+    {
+        return $query->where('pending_with_role', $role);
     }
 
     /** Tiket yang antri di Team Leader untuk cek dokumen (pending_review) */

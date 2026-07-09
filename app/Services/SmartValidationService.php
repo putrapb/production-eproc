@@ -439,4 +439,80 @@ class SmartValidationService
             'available_balance'                 => null,
         ];
     }
+
+    /**
+     * Transkrip 2 — Upfront Validation (Preview Mode).
+     *
+     * Menjalankan Gate 1 (duplicate) + Gate 2 (nominal) + Gate 3 (klasifikasi CAPEX/OPEX)
+     * secara READ-ONLY tanpa menyimpan apapun ke database.
+     *
+     * Digunakan oleh form create/edit via AJAX sebelum requester menekan "Submit".
+     * Budget check (Gate 4) TIDAK dijalankan di sini — bola belum di-lock.
+     *
+     * @param array $data Form data dari requester (belum tersimpan ke DB)
+     * @param User  $requester
+     * @return array{ classified_type: string, suggestions: string[], has_duplicate: bool, nominal_warning: string|null }
+     */
+    public function preview(array $data, User $requester): array
+    {
+        $totalAmount = collect($data['items'] ?? [])->sum(fn($i) => ($i['quantity'] ?? 1) * ($i['unit_price'] ?? 0));
+        $category    = $data['category'] ?? '';
+        $title       = $data['title'] ?? '';
+        $suggestions = [];
+
+        // Gate 1 preview: Cek duplikasi berdasarkan title mirip
+        $hasDuplicate = false;
+        if ($title) {
+            $existing = Ticket::where('user_id', $requester->id)
+                ->where('title', 'like', '%' . substr($title, 0, 20) . '%')
+                ->whereNotIn('status', [Ticket::STATUS_DECLINED])
+                ->exists();
+            if ($existing) {
+                $hasDuplicate = true;
+                $suggestions[] = '⚠️ Ditemukan tiket dengan judul serupa yang masih aktif.';
+            }
+        }
+
+        // Gate 2 preview: Cek nominal
+        $nominalWarning = null;
+        if ($totalAmount <= 0) {
+            $nominalWarning = 'Total nominal harus lebih dari Rp 0.';
+        } elseif ($totalAmount > 99_000_000_000) {
+            $nominalWarning = 'Total nominal melebihi Rp 99 miliar. Pastikan sudah benar.';
+        }
+
+        // Gate 3 preview: Klasifikasi CAPEX/OPEX (read-only)
+        $classifiedType = $this->gate3Classification((object) ['category' => $category, 'items' => collect($data['items'] ?? [])]);
+
+        // Budget availability preview (read-only, no lock)
+        $budgetStatus  = null;
+        $availableBalance = null;
+        if ($classifiedType && $category) {
+            $budget = Budget::findForTicket($classifiedType, $category, now()->year);
+            if ($budget) {
+                $availableBalance = (float) $budget->available_balance;
+                if ($totalAmount > $availableBalance) {
+                    $budgetStatus = 'over_budget';
+                    $suggestions[] = "⚠️ Anggaran {$classifiedType} saat ini Rp " . number_format($availableBalance, 0, ',', '.') . '. Total pengadaan Anda melebihi saldo tersedia.';
+                } else {
+                    $budgetStatus = 'ok';
+                    $suggestions[] = "✅ Anggaran {$classifiedType} tersedia: Rp " . number_format($availableBalance, 0, ',', '.') . '.';
+                }
+            } else {
+                $budgetStatus = 'no_budget';
+                $suggestions[] = "❌ Tidak ditemukan anggaran {$classifiedType} untuk kategori ini.";
+            }
+        }
+
+        return [
+            'classified_type'   => $classifiedType,
+            'total_amount'      => $totalAmount,
+            'has_duplicate'     => $hasDuplicate,
+            'nominal_warning'   => $nominalWarning,
+            'budget_status'     => $budgetStatus,
+            'available_balance' => $availableBalance,
+            'suggestions'       => $suggestions,
+        ];
+    }
 }
+
