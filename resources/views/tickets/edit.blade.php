@@ -56,7 +56,7 @@
             class="form-control {{ $errors->has('title') ? 'is-invalid' : '' }}"
             value="{{ old('title', $ticket->title) }}"
             placeholder="Contoh: Pengadaan Storage Array untuk DC Pejompongan"
-            required maxlength="255">
+            required maxlength="255" readonly style="background:var(--color-surface-soft); cursor:not-allowed;">
           @error('title') <div class="form-error">{{ $message }}</div> @enderror
         </div>
 
@@ -103,7 +103,7 @@
               class="form-control {{ $errors->has('vendor_name') ? 'is-invalid' : '' }}"
               value="{{ old('vendor_name', $ticket->vendor_name) }}"
               placeholder="Contoh: PT Astra Graphia Tbk"
-              required maxlength="255">
+              required maxlength="255" readonly style="background:var(--color-surface-soft); cursor:not-allowed;">
             @error('vendor_name') <div class="form-error">{{ $message }}</div> @enderror
           </div>
 
@@ -111,15 +111,15 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; height:20px;">
               <label class="form-label" style="margin-bottom:0;">PIC (Person In Charge) <span class="required">*</span></label>
               @php $oldPics = old('pic_name', is_array($ticket->pic_name) ? $ticket->pic_name : [$ticket->pic_name]); if (!is_array($oldPics)) $oldPics = [$oldPics]; @endphp
-              <button type="button" id="btn-add-pic" onclick="addPicRow()" class="btn btn-outline btn-sm" style="padding:4px 10px; font-size:11px; {{ count($oldPics) >= 2 ? 'display:none;' : '' }}">+ Tambah PIC</button>
+              <button type="button" id="btn-add-pic" class="btn btn-outline btn-sm" style="padding:4px 10px; font-size:11px; display:none;">+ Tambah PIC</button>
             </div>
             <div id="pic-container" style="display:flex; flex-direction:column; gap:var(--space-xs);">
               @foreach($oldPics as $index => $pic)
               <div class="pic-row" style="display:flex; gap:var(--space-sm); align-items:center;">
                 <div style="flex:1;">
-                  <input type="text" name="pic_name[]" class="form-control" value="{{ $pic }}" placeholder="Nama PIC" maxlength="255" required>
+                  <input type="text" name="pic_name[]" class="form-control" value="{{ $pic }}" placeholder="Nama PIC" maxlength="255" required readonly style="background:var(--color-surface-soft); cursor:not-allowed;">
                 </div>
-                <button type="button" onclick="removePicRow(this)" class="btn btn-danger btn-icon btn-sm" style="display:{{ count($oldPics) > 1 ? 'inline-flex' : 'none' }};" title="Hapus PIC">
+                <button type="button" class="btn btn-danger btn-icon btn-sm" style="display:none;" title="Hapus PIC">
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
               </div>
@@ -133,7 +133,7 @@
           <label class="form-label" for="description">Deskripsi / Justifikasi Pengadaan</label>
           <textarea id="description" name="description"
             class="form-control {{ $errors->has('description') ? 'is-invalid' : '' }}"
-            placeholder="Jelaskan kebutuhan, spesifikasi, dan urgensi pengadaan ini...">{{ old('description', $ticket->description) }}</textarea>
+            placeholder="Jelaskan kebutuhan, spesifikasi, dan urgensi pengadaan ini..." readonly style="background:var(--color-surface-soft); cursor:not-allowed;">{{ old('description', $ticket->description) }}</textarea>
           @error('description') <div class="form-error">{{ $message }}</div> @enderror
         </div>
 
@@ -142,7 +142,7 @@
         {{-- SECTION: Daftar Item --}}
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
           <div class="detail-section-title" style="margin-bottom:0;">Daftar Item Pengadaan <span class="required">*</span></div>
-          <button type="button" id="btn-add-item" onclick="addItemRow()" class="btn btn-outline btn-sm" style="padding:4px 12px; font-size:12px;">
+          <button type="button" id="btn-add-item" class="btn btn-outline btn-sm" style="display:none;">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
             Tambah Item
           </button>
@@ -171,25 +171,25 @@
                   <input type="text" name="items[{{ $i }}][item_name]"
                     class="form-control {{ $errors->has("items.$i.item_name") ? 'is-invalid' : '' }}"
                     value="{{ $oldItem['item_name'] ?? '' }}"
-                    placeholder="Nama barang / jasa" required maxlength="255">
+                    placeholder="Nama barang / jasa" required maxlength="255" readonly style="background:var(--color-surface-soft); cursor:not-allowed;">
                 </td>
                 <td style="padding:6px 8px;">
                   <input type="number" name="items[{{ $i }}][quantity]"
                     class="form-control item-qty {{ $errors->has("items.$i.quantity") ? 'is-invalid' : '' }}"
                     value="{{ $oldItem['quantity'] ?? 1 }}"
-                    min="1" style="text-align:center;" onchange="recalcRow(this)" required>
+                    min="1" style="text-align:center; background:var(--color-surface-soft); cursor:not-allowed;" required readonly>
                 </td>
                 <td style="padding:6px 8px;">
                   <input type="text" class="form-control item-price-display {{ $errors->has("items.$i.unit_price") ? 'is-invalid' : '' }}"
                     value="{{ isset($oldItem['unit_price']) ? number_format($oldItem['unit_price'], 0, ',', '.') : '' }}"
-                    placeholder="0" style="text-align:right;" oninput="formatItemPrice(this)">
+                    placeholder="0" style="text-align:right; background:var(--color-surface-soft); cursor:not-allowed;" readonly>
                   <input type="hidden" name="items[{{ $i }}][unit_price]" class="item-price-raw" value="{{ $oldItem['unit_price'] ?? '' }}">
                 </td>
                 <td style="padding:6px 12px; text-align:right; font-size:13px; font-weight:600;" class="item-subtotal">
                   Rp {{ (isset($oldItem['unit_price']) && isset($oldItem['quantity'])) ? number_format($oldItem['unit_price'] * $oldItem['quantity'], 0, ',', '.') : '0' }}
                 </td>
                 <td style="padding:6px 8px; text-align:center;">
-                  <button type="button" onclick="removeItemRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus" style="display:{{ count($oldItems) > 1 ? 'inline-flex' : 'none' }};">
+                  <button type="button" class="btn btn-danger btn-icon btn-sm" title="Hapus" style="display:none;">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                   </button>
                 </td>
