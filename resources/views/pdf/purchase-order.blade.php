@@ -442,6 +442,12 @@
                 <div class="info-key">Judul Pengadaan</div>
                 <div class="info-val"><strong>{{ $ticket->title }}</strong></div>
             </div>
+            @if($ticket->description)
+            <div class="info-row">
+                <div class="info-key">Deskripsi</div>
+                <div class="info-val" style="white-space: pre-wrap; word-break: break-word;">{{ $ticket->description }}</div>
+            </div>
+            @endif
             <div class="info-row">
                 <div class="info-key">Nama Vendor</div>
                 <div class="info-val"><strong>{{ $ticket->vendor_name }}</strong></div>
@@ -456,7 +462,7 @@
         <table class="items-table">
             <thead>
                 <tr>
-                    <th style="width: 35%;">Deskripsi</th>
+                    <th style="width: 35%;">Nama Item</th>
                     <th style="width: 15%;">PIC</th>
                     <th style="width: 20%;">Kategori</th>
                     <th style="width: 10%; text-align: center;">Jumlah</th>
@@ -469,9 +475,6 @@
                 <tr>
                     <td>
                         <strong>{{ $item->item_name }}</strong>
-                        @if($index === 0 && $ticket->description)
-                            <br><span style="font-size: 8px; color: #666; font-style: italic; white-space: pre-wrap; word-break: break-word; display: block; margin-top: 2px;">{{ $ticket->description }}</span>
-                        @endif
                     </td>
                     @if($index === 0)
                     <td rowspan="{{ $ticket->items->count() }}" style="word-break: break-word; vertical-align: top; text-align: left; border-left: 1px solid #dce6eb;">
