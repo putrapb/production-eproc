@@ -166,16 +166,20 @@
 
       {{-- Klasifikasi Anggaran --}}
       @if($ticket->expenditure_type)
+      @php
+        $capexTotal = $ticket->items->filter(fn($i) => $i->effective_expenditure_type === 'CAPEX')->sum('subtotal');
+        $opexTotal = $ticket->items->filter(fn($i) => $i->effective_expenditure_type === 'OPEX')->sum('subtotal');
+      @endphp
       <div class="card mb-lg">
         <div class="card-header">
           <div class="heading-sm">Klasifikasi Anggaran</div>
         </div>
         <div class="card-body">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md);">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md); margin-bottom:var(--space-md);">
             <div class="detail-field">
-              <div class="detail-field-label">Jenis Pengeluaran</div>
+              <div class="detail-field-label">Kategori Induk (Tiket)</div>
               <div class="detail-field-value">
-                <span class="badge badge-{{ strtolower($ticket->expenditure_type) }}">{{ $ticket->expenditure_type }}</span>
+                <span class="badge badge-category" style="background:var(--color-surface-soft); color:var(--color-text); border:1px solid var(--color-border);">{{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</span>
               </div>
             </div>
             <div class="detail-field">
@@ -188,6 +192,30 @@
                 @endif
               </div>
             </div>
+          </div>
+
+          <div style="padding:16px; background:var(--color-surface-soft); border-radius:var(--radius-md); border:1px solid var(--color-hairline);">
+            <div style="font-size:12px; font-weight:600; color:var(--color-muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;">Estimasi Pemotongan Anggaran</div>
+            
+            @if($capexTotal > 0)
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:{{ $opexTotal > 0 ? '8px' : '0' }};">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="badge badge-capex">CAPEX</span>
+                <span style="font-size:13px; color:var(--color-text);">Pos Anggaran: {{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</span>
+              </div>
+              <div style="font-size:14px; font-weight:600; color:var(--color-text);">Rp {{ number_format($capexTotal, 0, ',', '.') }}</div>
+            </div>
+            @endif
+
+            @if($opexTotal > 0)
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="badge badge-opex">OPEX</span>
+                <span style="font-size:13px; color:var(--color-text);">Pos Anggaran: {{ strtoupper(str_replace('_', ' ', $ticket->category)) }}</span>
+              </div>
+              <div style="font-size:14px; font-weight:600; color:var(--color-text);">Rp {{ number_format($opexTotal, 0, ',', '.') }}</div>
+            </div>
+            @endif
           </div>
         </div>
       </div>
