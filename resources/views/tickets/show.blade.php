@@ -443,9 +443,17 @@
         <label class="form-label">Catatan Tinjauan Global (opsional)</label>
         <textarea name="notes" class="form-control" rows="2" placeholder="Tambahkan catatan untuk seluruh proses pemeriksaan..."></textarea>
       </div>
-      <div class="modal-footer" style="flex-shrink:0; margin-top:auto;">
-        <button type="button" onclick="closeModal('modal-review-documents')" class="btn btn-secondary">Batal</button>
-        <button type="submit" class="btn btn-primary">Simpan Tinjauan</button>
+      <div class="modal-footer" style="flex-shrink:0; margin-top:16px; padding:16px 24px; border-top:1px solid var(--color-border); flex-direction:column; gap:12px;">
+        <div style="text-align:left; width:100%;">
+          <label style="display:inline-flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:13px; color:var(--color-text);">
+            <input type="checkbox" name="digital_signature_consent" id="ds-consent-review" required style="margin-top:3px;" onchange="document.getElementById('btn-review-submit').disabled = !this.checked">
+            <span>Saya menyetujui syarat &amp; ketentuan dan menandatangani dokumen ini secara digital.</span>
+          </label>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:12px; width:100%;">
+          <button type="button" onclick="closeModal('modal-review-documents')" class="btn btn-secondary">Batal</button>
+          <button type="submit" class="btn btn-primary" id="btn-review-submit" disabled>Simpan Tinjauan</button>
+        </div>
       </div>
     </form>
   </div>

@@ -17,7 +17,8 @@ class ApprovalLog extends Model
     const ACTION_SUBMITTED            = 'submitted';
     const ACTION_FOLLOWED_UP          = 'followed_up';       // PFA accept doc
     const ACTION_REJECTED_DOCUMENT    = 'rejected_document'; // PFA reject doc
-    const ACTION_REVISED              = 'revised';           // Requester re-upload
+    const ACTION_EDITED               = 'edited';            // Requester edits before review
+    const ACTION_REVISED              = 'revised';           // Requester re-upload after rejection
     const ACTION_VALIDATED            = 'validated';         // Smart Validation pass
     const ACTION_CROSS_FUND_REQUESTED = 'cross_fund_requested';
     const ACTION_FORWARDED            = 'forwarded';         // Team Leader → DeptHead
@@ -77,6 +78,7 @@ class ApprovalLog extends Model
             self::ACTION_SUBMITTED            => 'Tiket diajukan',
             self::ACTION_FOLLOWED_UP          => 'Dokumen diterima oleh Team Leader',
             self::ACTION_REJECTED_DOCUMENT    => 'Dokumen ditolak oleh Team Leader',
+            self::ACTION_EDITED               => 'Tiket diedit oleh Requester',
             self::ACTION_REVISED              => 'Dokumen direvisi oleh Requester',
             self::ACTION_VALIDATED            => 'Smart Validation berhasil',
             self::ACTION_CROSS_FUND_REQUESTED => 'Silang dana diajukan',

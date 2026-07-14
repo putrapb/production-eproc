@@ -297,6 +297,8 @@ class TicketController extends Controller
     {
         abort_if($ticket->user_id !== auth()->id(), 403, 'Akses Ditolak: Anda tidak berhak memodifikasi tiket ini.');
 
+        $isRevision = $ticket->status === Ticket::STATUS_REVISION;
+
         // 1. Calculate new total amount
         $items = $request->input('items', []);
         $totalAmount = collect($items)->sum(fn($item) => ($item['quantity'] ?? 1) * ($item['unit_price'] ?? 0));
@@ -377,8 +379,8 @@ class TicketController extends Controller
         ApprovalLog::create([
             'ticket_id' => $ticket->id,
             'user_id'   => $request->user()->id,
-            'action'    => ApprovalLog::ACTION_REVISED,
-            'notes'     => 'Tiket direvisi oleh Requester.',
+            'action'    => $isRevision ? ApprovalLog::ACTION_REVISED : ApprovalLog::ACTION_EDITED,
+            'notes'     => $isRevision ? 'Tiket direvisi oleh Requester.' : 'Tiket diedit oleh Requester.',
         ]);
 
         return redirect()->route('tickets.show', $ticket)
@@ -391,11 +393,15 @@ class TicketController extends Controller
     public function review(Request $request, Ticket $ticket): RedirectResponse
     {
         $request->validate([
-            'document_status'     => ['required', 'array'],
-            'document_status.*'   => ['required', 'in:accepted,rejected'],
-            'document_feedback'   => ['nullable', 'array'],
-            'document_feedback.*' => ['nullable', 'string', 'max:1000'],
-            'notes'               => ['nullable', 'string', 'max:1000'],
+            'document_status'             => ['required', 'array'],
+            'document_status.*'           => ['required', 'in:accepted,rejected'],
+            'document_feedback'           => ['nullable', 'array'],
+            'document_feedback.*'         => ['nullable', 'string', 'max:1000'],
+            'notes'                       => ['nullable', 'string', 'max:1000'],
+            'digital_signature_consent'   => ['required', 'accepted'],
+        ], [
+            'digital_signature_consent.required' => 'Anda harus menyetujui syarat & ketentuan digital signature.',
+            'digital_signature_consent.accepted' => 'Anda harus menyetujui syarat & ketentuan digital signature.',
         ]);
 
         $this->ensureStatus($ticket, Ticket::STATUS_PENDING_REVIEW);
