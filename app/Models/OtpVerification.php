@@ -14,6 +14,7 @@ class OtpVerification extends Model
         'email',
         'otp_code',
         'expires_at',
+        'failed_attempts',
     ];
 
     protected function casts(): array
@@ -68,12 +69,21 @@ class OtpVerification extends Model
      */
     public static function verify(string $email, string $code): bool
     {
-        $record = static::forEmail($email)->valid()->where('otp_code', $code)->first();
+        $record = static::forEmail($email)->valid()->first();
 
-        if ($record) {
+        if (!$record) {
+            return false;
+        }
+
+        if ($record->otp_code === $code) {
             $record->delete();
-
             return true;
+        }
+
+        $record->increment('failed_attempts');
+
+        if ($record->failed_attempts >= 5) {
+            $record->delete();
         }
 
         return false;

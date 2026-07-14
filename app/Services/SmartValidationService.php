@@ -138,71 +138,93 @@ class SmartValidationService
         //  - Tier 1: amount <= monthly_limit (annual/12) → pass normally
         //  - Tier 2: monthly_limit < amount <= monthly_limit * 1.30 → pass with tolerance (10–30% over)
         //  - Tier 3: amount > monthly_limit * 1.30 → mandatory cross-fund (> 30% over monthly limit)
-        $gate4Result = DB::transaction(function () use ($ticket, $classifiedType, $requester) {
-            $budget = Budget::findForTicket(
-                $classifiedType,
-                $ticket->category,
-                now()->year
-            );
+        //
+        // We calculate CAPEX and OPEX totals per-item and validate them against their respective budgets.
+        $gate4Result = DB::transaction(function () use ($ticket, $requester) {
+            $capexTotal = 0.0;
+            $opexTotal  = 0.0;
 
-            if (! $budget) {
-                return ['status' => 'over_budget', 'available_balance' => 0.0];
+            foreach ($ticket->items as $item) {
+                $type = $item->effective_expenditure_type;
+                if ($type === Ticket::TYPE_CAPEX) {
+                    $capexTotal += (float) $item->subtotal;
+                } elseif ($type === Ticket::TYPE_OPEX) {
+                    $opexTotal += (float) $item->subtotal;
+                }
             }
 
-            $available    = $budget->available_balance;
-            $amount       = $ticket->total_amount;
-            $totalLimit   = (float) $budget->total_limit;
+            $capexBudget = null;
+            $opexBudget  = null;
 
-            // Monthly limit = annual budget / 12
-            $monthlyLimit = $totalLimit > 0 ? $totalLimit / 12 : 0.0;
+            if ($capexTotal > 0) {
+                $capexBudget = Budget::findForTicket(Ticket::TYPE_CAPEX, $ticket->category, now()->year);
+                if (! $capexBudget) {
+                    return ['status' => 'over_budget', 'type' => 'CAPEX', 'available_balance' => 0.0];
+                }
+                $available = (float) $capexBudget->available_balance;
+                $totalLimit = (float) $capexBudget->total_limit;
+                $monthlyLimit = $totalLimit > 0 ? $totalLimit / 12 : 0.0;
 
-            // Tier 3: amount exceeds monthly_limit by more than 30% → mandatory cross-fund
-            if ($monthlyLimit > 0 && $amount > $monthlyLimit * 1.30) {
-                return [
-                    'status'           => 'over_budget',
-                    'available_balance' => $available,
-                    'monthly_limit'    => $monthlyLimit,
-                ];
+                if ($monthlyLimit > 0 && $capexTotal > $monthlyLimit * 1.30) {
+                    return ['status' => 'over_budget', 'type' => 'CAPEX', 'available_balance' => $available];
+                }
+                if ($capexTotal > $available) {
+                    return ['status' => 'over_budget', 'type' => 'CAPEX', 'available_balance' => $available];
+                }
             }
 
-            // Tier 1 & 2: amount within monthly_limit or within 10–30% tolerance
-            if ($amount > $available) {
-                return [
-                    'status'           => 'over_budget',
-                    'available_balance' => $available,
-                    'monthly_limit'    => $monthlyLimit,
-                ];
+            if ($opexTotal > 0) {
+                $opexBudget = Budget::findForTicket(Ticket::TYPE_OPEX, $ticket->category, now()->year);
+                if (! $opexBudget) {
+                    return ['status' => 'over_budget', 'type' => 'OPEX', 'available_balance' => 0.0];
+                }
+                $available = (float) $opexBudget->available_balance;
+                $totalLimit = (float) $opexBudget->total_limit;
+                $monthlyLimit = $totalLimit > 0 ? $totalLimit / 12 : 0.0;
+
+                if ($monthlyLimit > 0 && $opexTotal > $monthlyLimit * 1.30) {
+                    return ['status' => 'over_budget', 'type' => 'OPEX', 'available_balance' => $available];
+                }
+                if ($opexTotal > $available) {
+                    return ['status' => 'over_budget', 'type' => 'OPEX', 'available_balance' => $available];
+                }
             }
 
             // Budget tersedia — lock budget dan advance tiket langsung ke Department Head
-            // (Team Leader tidak lagi meneruskan; TL hanya cek dokumen)
-            $budget->lock($amount);
+            if ($capexTotal > 0 && $capexBudget) {
+                $capexBudget->lock($capexTotal);
+            }
+            if ($opexTotal > 0 && $opexBudget) {
+                $opexBudget->lock($opexTotal);
+            }
+
             $ticket->update(['status' => Ticket::STATUS_PENDING_DEPT_HEAD]);
 
-            $toleranceNote = ($monthlyLimit > 0 && $amount > $monthlyLimit)
-                ? ' (Kelebihan pagu bulanan dalam batas toleransi 10–30%.)'
-                : '';
+            $desc = [];
+            if ($capexTotal > 0) $desc[] = "CAPEX: Rp " . number_format($capexTotal, 0, ',', '.');
+            if ($opexTotal > 0)  $desc[] = "OPEX: Rp " . number_format($opexTotal, 0, ',', '.');
+            $notes = "Validasi lolos. Alokasi anggaran: " . implode(', ', $desc);
 
             ApprovalLog::create([
                 'ticket_id' => $ticket->id,
                 'user_id'   => $requester->id,
                 'action'    => ApprovalLog::ACTION_VALIDATED,
-                'notes'     => "Klasifikasi: {$classifiedType}. Validasi lolos.{$toleranceNote}",
+                'notes'     => $notes,
             ]);
 
-            return ['status' => 'ok', 'available_balance' => $available];
+            return ['status' => 'ok', 'available_balance' => null];
         });
 
         if ($gate4Result['status'] === 'over_budget') {
-            // Return over-budget info — caller will display cross-fund popup
+            $overType = $gate4Result['type'] ?? $classifiedType;
             return [
                 'success'                      => false,
                 'gate'                         => 4,
-                'message'                      => 'Pengajuan melebihi batas anggaran bulanan (> 30% dari pagu bulan ini). Silang dana diperlukan.',
+                'message'                      => "Pengajuan melebihi batas anggaran bulanan atau saldo tidak mencukupi untuk jenis pengeluaran {$overType}.",
                 'needs_duplicate_confirmation' => false,
                 'needs_nominal_confirmation'   => false,
                 'over_budget'                  => true,
-                'classified_type'              => $classifiedType,
+                'classified_type'              => $overType,
                 'available_balance'            => $gate4Result['available_balance'],
             ];
         }
@@ -449,18 +471,104 @@ class SmartValidationService
      * Digunakan oleh form create/edit via AJAX sebelum requester menekan "Submit".
      * Budget check (Gate 4) TIDAK dijalankan di sini — bola belum di-lock.
      *
+     * Gate 3 sekarang mengklasifikasi PER-ITEM berdasarkan category tiket + item_name.
+     * Hasilnya: per_item_classification = [{ item_name, suggested_type, subtotal }, ...]
+     *
      * @param array $data Form data dari requester (belum tersimpan ke DB)
      * @param User  $requester
-     * @return array{ classified_type: string, suggestions: string[], has_duplicate: bool, nominal_warning: string|null }
+     * @return array{
+     *   classified_type: string|null,
+     *   total_amount: float,
+     *   capex_total: float,
+     *   opex_total: float,
+     *   per_item_classification: array,
+     *   has_duplicate: bool,
+     *   nominal_warning: string|null,
+     *   budget_status: string|null,
+     *   capex_budget_status: string|null,
+     *   opex_budget_status: string|null,
+     *   available_balance: float|null,
+     *   suggestions: string[],
+     *   gates: array,
+     * }
      */
     public function preview(array $data, User $requester): array
     {
-        $totalAmount = collect($data['items'] ?? [])->sum(fn($i) => ($i['quantity'] ?? 1) * ($i['unit_price'] ?? 0));
         $category    = $data['category'] ?? '';
-        $title       = $data['title'] ?? '';
+        $title       = $data['title'] ?? '';;
+        $items       = $data['items'] ?? [];
         $suggestions = [];
 
-        // Gate 1 preview: Cek duplikasi berdasarkan title mirip
+        // ─── Gate 3 Preview: Klasifikasi per-item ───────────────────────
+        // Aturan: category di level tiket menentukan basis CAPEX/OPEX,
+        // tapi item_name dari lisensi_sistem bisa override ke OPEX via keyword.
+        $opexSignals = [
+            'subscription', 'langganan', 'saas', 'cloud', 'tahunan', 'bulanan',
+            'monthly', 'annual', 'sewa', 'rental', 'as a service', 'managed service',
+            'hosting', 'recurring', 'support contract', 'maintenance fee',
+        ];
+
+        $perItemClassification = [];
+        $capexTotal = 0.0;
+        $opexTotal  = 0.0;
+
+        foreach ($items as $item) {
+            $itemName  = $item['item_name'] ?? '';
+            $qty       = (int) ($item['quantity']   ?? 1);
+            $price     = (float) ($item['unit_price'] ?? 0);
+            $subtotal  = $qty * $price;
+            $itemLower = strtolower($itemName);
+
+            // Determine per-item type using same PSAK 16/19 rules as gate3Classification
+            if (!empty($item['expenditure_type'])) {
+                $suggestedType = $item['expenditure_type'];
+            } else {
+                if ($category === Ticket::CATEGORY_INFRASTRUKTUR_UTAMA) {
+                    $suggestedType = Ticket::TYPE_CAPEX;
+                } elseif (in_array($category, [
+                    Ticket::CATEGORY_LAYANAN_PEMELIHARAAN,
+                    Ticket::CATEGORY_PERLENGKAPAN_OPERASIONAL,
+                ])) {
+                    $suggestedType = Ticket::TYPE_OPEX;
+                } elseif ($category === Ticket::CATEGORY_LISENSI_SISTEM) {
+                    // Keyword-based: if item name has OPEX signals → OPEX, else CAPEX
+                    $suggestedType = Ticket::TYPE_CAPEX;
+                    foreach ($opexSignals as $signal) {
+                        if (str_contains($itemLower, $signal)) {
+                            $suggestedType = Ticket::TYPE_OPEX;
+                            break;
+                        }
+                    }
+                } else {
+                    $suggestedType = null; // unknown category
+                }
+            }
+
+            $perItemClassification[] = [
+                'item_name'      => $itemName,
+                'suggested_type' => $suggestedType,
+                'subtotal'       => $subtotal,
+                'qty'            => $qty,
+                'unit_price'     => $price,
+            ];
+
+            if ($suggestedType === Ticket::TYPE_CAPEX) {
+                $capexTotal += $subtotal;
+            } elseif ($suggestedType === Ticket::TYPE_OPEX) {
+                $opexTotal += $subtotal;
+            }
+        }
+
+        $totalAmount = $capexTotal + $opexTotal;
+
+        // Dominant type for ticket-level classification (higher value wins)
+        $classifiedType = null;
+        if ($capexTotal > 0 || $opexTotal > 0) {
+            $classifiedType = $capexTotal >= $opexTotal ? Ticket::TYPE_CAPEX : Ticket::TYPE_OPEX;
+        }
+
+        // ─── Gate 1 Preview: Cek duplikasi berdasarkan title ─────────────
+        $gate1 = ['status' => 'pass', 'message' => 'Tidak ditemukan tiket dengan judul serupa.'];
         $hasDuplicate = false;
         if ($title) {
             $existing = Ticket::where('user_id', $requester->id)
@@ -469,63 +577,140 @@ class SmartValidationService
                 ->exists();
             if ($existing) {
                 $hasDuplicate = true;
-                $suggestions[] = '⚠️ Ditemukan tiket dengan judul serupa yang masih aktif.';
+                $gate1 = [
+                    'status'  => 'warning',
+                    'message' => 'Ditemukan tiket dengan judul serupa yang masih aktif di sistem. Pastikan ini bukan pengajuan duplikat.',
+                ];
             }
         }
 
-        // Gate 2 preview: Cek nominal
+        // ─── Gate 2 Preview: Cek nominal ────────────────────────────────
         $nominalWarning = null;
+        $gate2 = ['status' => 'pass', 'message' => 'Nominal pengajuan valid.'];
         if ($totalAmount <= 0) {
             $nominalWarning = 'Total nominal harus lebih dari Rp 0.';
+            $gate2 = ['status' => 'fail', 'message' => $nominalWarning];
         } elseif ($totalAmount > 99_000_000_000) {
             $nominalWarning = 'Total nominal melebihi Rp 99 miliar. Pastikan sudah benar.';
+            $gate2 = ['status' => 'warning', 'message' => $nominalWarning];
         }
 
-        // Gate 3 preview: Klasifikasi CAPEX/OPEX berdasarkan PSAK 16 & 19 (inline, read-only)
-        // Tidak memanggil gate3Classification() karena butuh Ticket model — kita duplikasi logikanya
-        $classifiedType = null;
-        if ($category === Ticket::CATEGORY_INFRASTRUKTUR_UTAMA) {
-            $classifiedType = Ticket::TYPE_CAPEX;
-        } elseif (in_array($category, [Ticket::CATEGORY_LAYANAN_PEMELIHARAAN, Ticket::CATEGORY_PERLENGKAPAN_OPERASIONAL])) {
-            $classifiedType = Ticket::TYPE_OPEX;
-        } elseif ($category === Ticket::CATEGORY_LISENSI_SISTEM) {
-            // PSAK 19: SaaS/langganan → OPEX; perpetual → CAPEX
-            $opexSignals = ['subscription', 'langganan', 'saas', 'cloud', 'tahunan', 'bulanan', 'monthly', 'annual', 'sewa', 'rental', 'as a service', 'managed service', 'hosting', 'recurring'];
-            $itemText    = strtolower(collect($data['items'] ?? [])->pluck('item_name')->implode(' '));
-            $classifiedType = collect($opexSignals)->first(fn($s) => str_contains($itemText, $s))
-                ? Ticket::TYPE_OPEX
-                : Ticket::TYPE_CAPEX;
-        }
-
-        // Budget availability preview (read-only, no lock)
-        $budgetStatus  = null;
-        $availableBalance = null;
-        if ($classifiedType && $category) {
-            $budget = Budget::findForTicket($classifiedType, $category, now()->year);
-            if ($budget) {
-                $availableBalance = (float) $budget->available_balance;
-                if ($totalAmount > $availableBalance) {
-                    $budgetStatus = 'over_budget';
-                    $suggestions[] = "⚠️ Anggaran {$classifiedType} saat ini Rp " . number_format($availableBalance, 0, ',', '.') . '. Total pengadaan Anda melebihi saldo tersedia.';
-                } else {
-                    $budgetStatus = 'ok';
-                    $suggestions[] = "✅ Anggaran {$classifiedType} tersedia: Rp " . number_format($availableBalance, 0, ',', '.') . '.';
-                }
+        // ─── Gate 3 Preview: Ringkasan Klasifikasi ───────────────────────
+        $gate3 = ['status' => 'skipped', 'message' => 'Pilih kategori terlebih dahulu.'];
+        if ($category && $classifiedType) {
+            $userSelectedType = $data['expenditure_type'] ?? null;
+            if ($userSelectedType && $userSelectedType !== $classifiedType) {
+                $gate3 = [
+                    'status'  => 'warning',
+                    'message' => "Sistem menyarankan <strong>" . e($classifiedType) . "</strong> berdasarkan PSAK 16/19. "
+                               . "Anda memilih <strong>" . e($userSelectedType) . "</strong>. "
+                               . "Anda tetap bisa melanjutkan dengan pilihan Anda.",
+                ];
             } else {
-                $budgetStatus = 'no_budget';
-                $suggestions[] = "❌ Tidak ditemukan anggaran {$classifiedType} untuk kategori ini.";
+                $mixedTypes = collect($perItemClassification)
+                    ->pluck('suggested_type')
+                    ->unique()
+                    ->filter()
+                    ->count() > 1;
+
+                if ($mixedTypes) {
+                    $gate3 = [
+                        'status'  => 'info',
+                        'message' => "Tiket ini mengandung item campuran CAPEX + OPEX. "
+                                   . "CAPEX: <strong>Rp " . number_format($capexTotal, 0, ',', '.') . "</strong>, "
+                                   . "OPEX: <strong>Rp " . number_format($opexTotal, 0, ',', '.') . "</strong>. "
+                                   . "Masing-masing akan dibebankan ke pos anggaran yang sesuai.",
+                    ];
+                } else {
+                    $gate3 = [
+                        'status'  => 'pass',
+                        'message' => "Semua item diklasifikasikan sebagai <strong>{$classifiedType}</strong> sesuai PSAK 16/19.",
+                    ];
+                }
             }
+        }
+
+        // ─── Gate 4 Preview: Cek ketersediaan anggaran per-type ─────────
+        $gate4 = ['status' => 'skipped', 'message' => 'Klasifikasi belum selesai — pilih kategori dulu.'];
+        $budgetStatus     = null;
+        $capexBudgetStatus = null;
+        $opexBudgetStatus  = null;
+        $availableBalance = null;
+
+        if ($category && $classifiedType) {
+            $gate4Messages = [];
+            $gate4Status   = 'pass';
+
+            // Check CAPEX budget if there are CAPEX items
+            if ($capexTotal > 0) {
+                $capexBudget = Budget::findForTicket(Ticket::TYPE_CAPEX, $category, now()->year, false);
+                if (! $capexBudget) {
+                    $capexBudgetStatus = 'no_budget';
+                    $gate4Status = 'fail';
+                    $gate4Messages[] = "❌ Tidak ditemukan anggaran <strong>CAPEX</strong> untuk kategori ini.";
+                } elseif ($capexTotal > $capexBudget->available_balance) {
+                    $capexBudgetStatus = 'over_budget';
+                    $gate4Status = 'fail';
+                    $gate4Messages[] = "❌ Anggaran <strong>CAPEX</strong> tidak mencukupi. "
+                        . "Dibutuhkan: Rp " . number_format($capexTotal, 0, ',', '.');
+                } else {
+                    $capexBudgetStatus = 'ok';
+                    $gate4Messages[] = "✅ Anggaran <strong>CAPEX</strong> memadai.";
+                }
+            }
+
+            // Check OPEX budget if there are OPEX items
+            if ($opexTotal > 0) {
+                $opexBudget = Budget::findForTicket(Ticket::TYPE_OPEX, $category, now()->year, false);
+                if (! $opexBudget) {
+                    $opexBudgetStatus = 'no_budget';
+                    $gate4Status = 'fail';
+                    $gate4Messages[] = "❌ Tidak ditemukan anggaran <strong>OPEX</strong> untuk kategori ini.";
+                } elseif ($opexTotal > $opexBudget->available_balance) {
+                    $opexBudgetStatus = 'over_budget';
+                    if ($gate4Status !== 'fail') $gate4Status = 'fail';
+                    $gate4Messages[] = "❌ Anggaran <strong>OPEX</strong> tidak mencukupi. "
+                        . "Dibutuhkan: Rp " . number_format($opexTotal, 0, ',', '.');
+                } else {
+                    $opexBudgetStatus = 'ok';
+                    $gate4Messages[] = "✅ Anggaran <strong>OPEX</strong> memadai.";
+                }
+            }
+
+            // Determine overall budget_status
+            if ($capexBudgetStatus === 'no_budget' || $opexBudgetStatus === 'no_budget') {
+                $budgetStatus = 'no_budget';
+            } elseif ($capexBudgetStatus === 'over_budget' || $opexBudgetStatus === 'over_budget') {
+                $budgetStatus = 'over_budget';
+            } else {
+                $budgetStatus = 'ok';
+            }
+
+            $gate4 = [
+                'status'  => $gate4Status,
+                'message' => implode('<br>', $gate4Messages) ?: 'Ketersediaan anggaran OK.',
+            ];
         }
 
         return [
-            'classified_type'   => $classifiedType,
-            'total_amount'      => $totalAmount,
-            'has_duplicate'     => $hasDuplicate,
-            'nominal_warning'   => $nominalWarning,
-            'budget_status'     => $budgetStatus,
-            'available_balance' => $availableBalance,
-            'suggestions'       => $suggestions,
+            'classified_type'        => $classifiedType,
+            'total_amount'           => $totalAmount,
+            'capex_total'            => $capexTotal,
+            'opex_total'             => $opexTotal,
+            'per_item_classification' => $perItemClassification,
+            'has_duplicate'          => $hasDuplicate,
+            'nominal_warning'        => $nominalWarning,
+            'budget_status'          => $budgetStatus,
+            'capex_budget_status'    => $capexBudgetStatus,
+            'opex_budget_status'     => $opexBudgetStatus,
+            'available_balance'      => $availableBalance,
+            'suggestions'            => $suggestions,
+            'gates'                  => [
+                1 => $gate1,
+                2 => $gate2,
+                3 => $gate3,
+                4 => $gate4,
+            ],
         ];
     }
 }
-

@@ -15,6 +15,7 @@ class TicketItem extends Model
         'item_name',
         'quantity',
         'unit_price',
+        'expenditure_type',
     ];
 
     protected function casts(): array
@@ -53,5 +54,21 @@ class TicketItem extends Model
     public function getFormattedUnitPriceAttribute(): string
     {
         return 'Rp ' . number_format($this->unit_price, 0, ',', '.');
+    }
+
+    /**
+     * Get the effective expenditure_type for this item.
+     *
+     * If the item has its own per-item classification, use it.
+     * Otherwise fall back to the parent ticket's type (for legacy items / null).
+     */
+    public function getEffectiveExpenditureTypeAttribute(): ?string
+    {
+        if ($this->expenditure_type) {
+            return $this->expenditure_type;
+        }
+
+        // Avoid extra query if ticket is already loaded via eager-load
+        return $this->ticket?->expenditure_type;
     }
 }

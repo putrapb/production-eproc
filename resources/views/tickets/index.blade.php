@@ -176,10 +176,16 @@
     <div class="modal-title">Terima Dokumen Pendukung?</div>
     <div class="modal-body">
       Anda yakin ingin menyetujui (terima dokumen) untuk <strong id="bulk-accept-count">0</strong> tiket ini? Tiket akan dilanjutkan ke tahap berikutnya.
+      <div class="form-group" style="text-align:left; margin-top:var(--space-md);">
+        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:13px;">
+          <input type="checkbox" id="ds-consent-bulk-accept" onchange="document.getElementById('btn-bulk-accept').disabled = !this.checked;" style="margin-top:2px;">
+          <span>Saya menyetujui syarat &amp; ketentuan dan menandatangani secara digital.</span>
+        </label>
+      </div>
     </div>
     <div class="modal-footer">
       <button type="button" onclick="closeBulkAcceptModal()" class="btn btn-secondary">Batal</button>
-      <button type="button" onclick="executeBulkAccept()" class="btn btn-success">Terima Dokumen</button>
+      <button type="button" id="btn-bulk-accept" onclick="executeBulkAccept()" class="btn btn-success" disabled>Terima Dokumen</button>
     </div>
   </div>
 </div>
@@ -193,10 +199,16 @@
     <div class="modal-title">Setujui Pengadaan?</div>
     <div class="modal-body">
       Anda yakin ingin menyetujui <strong id="bulk-approve-count">0</strong> pengajuan pengadaan yang dipilih secara massal?
+      <div class="form-group" style="text-align:left; margin-top:var(--space-md);">
+        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:13px;">
+          <input type="checkbox" id="ds-consent-bulk-approve" onchange="document.getElementById('btn-bulk-approve').disabled = !this.checked;" style="margin-top:2px;">
+          <span>Saya menyetujui syarat &amp; ketentuan dan menandatangani persetujuan secara digital.</span>
+        </label>
+      </div>
     </div>
     <div class="modal-footer">
       <button type="button" onclick="closeBulkApproveModal()" class="btn btn-secondary">Batal</button>
-      <button type="button" onclick="executeBulkApprove()" class="btn btn-success">Setujui Pengadaan</button>
+      <button type="button" id="btn-bulk-approve" onclick="executeBulkApprove()" class="btn btn-success" disabled>Setujui Pengadaan</button>
     </div>
   </div>
 </div>
@@ -515,6 +527,8 @@ function openBulkAcceptModal() {
   const checked = getCheckedBoxes();
   if (checked.length === 0) return;
   document.getElementById('bulk-accept-count').textContent = checked.length;
+  document.getElementById('ds-consent-bulk-accept').checked = false;
+  document.getElementById('btn-bulk-accept').disabled = true;
   const modal = document.getElementById('modal-bulk-accept-confirm');
   if (modal) modal.classList.add('open');
 }
@@ -553,6 +567,8 @@ function openBulkApproveModal() {
   const checked = getCheckedBoxes();
   if (checked.length === 0) return;
   document.getElementById('bulk-approve-count').textContent = checked.length;
+  document.getElementById('ds-consent-bulk-approve').checked = false;
+  document.getElementById('btn-bulk-approve').disabled = true;
   const modal = document.getElementById('modal-bulk-approve-confirm');
   if (modal) modal.classList.add('open');
 }

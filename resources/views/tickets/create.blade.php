@@ -211,23 +211,12 @@
 
         <hr class="divider">
 
-        {{-- SECTION: Upfront Smart Validation Panel (Transkrip 2) --}}
-        <div id="smartval-panel" style="display:none; background:var(--color-surface-soft); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-md); margin-bottom:var(--space-md);">
-          <div style="font-weight:600; font-size:13px; margin-bottom:var(--space-sm); color:var(--color-text);">
-            🔍 Hasil Pra-Validasi Anggaran
-          </div>
-          <div id="smartval-result" style="font-size:13px; color:var(--color-muted); line-height:1.6;"></div>
-        </div>
 
         <div style="display:flex; justify-content:flex-end; gap:var(--space-sm);">
           <a href="{{ route('tickets.index') }}" onclick="localStorage.removeItem('ticket_form_draft')" class="btn btn-danger">Batalkan</a>
           <button type="button" id="btn-preview-val" onclick="runPreviewValidation()" class="btn btn-secondary">
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Cek Validasi Dulu
-          </button>
-          <button type="submit" id="btn-submit-ticket" class="btn btn-primary" style="display:none;">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-            Ajukan Pengadaan
           </button>
         </div>
 
@@ -236,7 +225,56 @@
   </form>
 </div>
 
+{{-- ═══ Modal: Gate Card Pre-Validation Result (Transkrip 2) ═══ --}}
+<div class="modal-overlay" id="modal-prevalidation-result">
+  <div class="modal-card" style="max-width:640px; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; padding:0;">
+    <div style="padding:24px 24px 0; flex-shrink:0;">
+      <div class="modal-icon" id="pv-modal-icon" style="background:var(--color-primary-soft);">
+        <svg width="24" height="24" fill="none" stroke="var(--color-primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div class="modal-title" style="margin-bottom:4px;">Hasil Pra-Validasi Anggaran</div>
+      <div style="font-size:13px; color:var(--color-muted); margin-bottom:16px;">Sistem memeriksa 4 gate validasi sebelum Anda mengajukan pengadaan.</div>
+    </div>
 
+    {{-- Gate Cards Container --}}
+    <div id="pv-gates-container" style="flex:1; overflow-y:auto; padding:0 24px; display:flex; flex-direction:column; gap:10px;">
+      {{-- Diisi secara dinamis oleh JS --}}
+    </div>
+
+    {{-- Per-Item Classification Table --}}
+    <div id="pv-items-container" style="padding:0 24px; margin-top:10px; display:none;">
+      <div style="font-size:12px; font-weight:600; color:var(--color-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Klasifikasi Per-Item</div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:13px;" id="pv-items-table">
+          <thead>
+            <tr style="background:var(--color-surface-soft);">
+              <th style="padding:8px 10px; text-align:left; border-bottom:1px solid var(--color-border); font-weight:600; color:var(--color-muted);">Item</th>
+              <th style="padding:8px 10px; text-align:center; border-bottom:1px solid var(--color-border); font-weight:600; color:var(--color-muted); width:80px;">Klasifikasi</th>
+              <th style="padding:8px 10px; text-align:right; border-bottom:1px solid var(--color-border); font-weight:600; color:var(--color-muted); width:150px;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="pv-items-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="flex-shrink:0; margin-top:16px; padding:16px 24px; border-top:1px solid var(--color-border); flex-direction:column; gap:12px;">
+      <div style="text-align:left; width:100%; display:none;" id="ds-consent-container">
+        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:13px;">
+          <input type="checkbox" id="ds-consent-create" onchange="toggleSubmitTicketBtn()" style="margin-top:2px;">
+          <span>Saya menyetujui syarat &amp; ketentuan dan menandatangani pengajuan ini secara digital.</span>
+        </label>
+      </div>
+      <div style="display:flex; justify-content:flex-end; width:100%; gap:8px;">
+        <button type="button" onclick="closeModal('modal-prevalidation-result')" class="btn btn-secondary">Tutup</button>
+        <button type="button" id="btn-submit-ticket" onclick="submitTicketForm()" class="btn btn-primary" style="display:none;" disabled>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          Ajukan Pengadaan
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 @push('scripts')
 <script>
@@ -374,35 +412,39 @@ function validatePdfFile(input) {
   }
 }
 
-// ── Upfront Smart Validation Preview (Transkrip 2) ──
+// ── Upfront Smart Validation Preview — Gate Card Modal (Transkrip 2) ──
 function runPreviewValidation() {
   const btn = document.getElementById('btn-preview-val');
-  const panel = document.getElementById('smartval-panel');
-  const resultDiv = document.getElementById('smartval-result');
 
   // Kumpulkan data form
   const title    = document.getElementById('title')?.value || '';
   const category = document.getElementById('category')?.value || '';
   const expType  = document.getElementById('expenditure_type')?.value || '';
-  const itemRows = document.querySelectorAll('#item-table tbody tr');
-  const items    = [];
-  itemRows.forEach(row => {
-    const inputs = row.querySelectorAll('input');
-    if (inputs.length >= 3) {
-      items.push({ item_name: inputs[0].value, quantity: inputs[1].value, unit_price: inputs[2].value });
+
+  // Collect items from table
+  const items = [];
+  document.querySelectorAll('#items-body .item-row').forEach(row => {
+    const nameInput  = row.querySelector('input[name*="[item_name]"]');
+    const qtyInput   = row.querySelector('input[name*="[quantity]"]');
+    const priceInput = row.querySelector('.item-price-raw');
+    if (nameInput) {
+      items.push({
+        item_name:  nameInput.value,
+        quantity:   qtyInput?.value || 1,
+        unit_price: priceInput?.value || 0,
+      });
     }
   });
 
   if (!category || !expType) {
-    panel.style.display = 'block';
-    resultDiv.innerHTML = '<span style="color:var(--color-danger);">⚠️ Harap pilih Jenis Pengeluaran dan Kategori terlebih dahulu.</span>';
+    if (typeof showToast === 'function') {
+      showToast('warning', 'Data Belum Lengkap', 'Harap pilih Jenis Pengeluaran dan Kategori terlebih dahulu.');
+    }
     return;
   }
 
   btn.disabled = true;
-  btn.textContent = '⏳ Mengecek...';
-  panel.style.display = 'block';
-  resultDiv.innerHTML = '<span style="color:var(--color-muted);">Sedang memvalidasi...</span>';
+  btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;">⏳ Mengecek...</span>';
 
   fetch('{{ route("tickets.preview-validation") }}', {
     method: 'POST',
@@ -414,46 +456,13 @@ function runPreviewValidation() {
   })
   .then(r => r.json())
   .then(data => {
-    let html = '';
-    const type = data.classified_type;
-    let canSubmit = true;
-
-    if (type) {
-      const color = type === 'CAPEX' ? 'var(--color-primary)' : 'var(--color-warning, #f59e0b)';
-      html += `<div style="margin-bottom:8px;">Klasifikasi Sistem: <strong style="color:${color};">${type}</strong></div>`;
-      
-      // If user selected differently than system's classification
-      if (expType && type !== expType) {
-        html += `<div style="color:var(--color-warning, #f59e0b); font-weight:600; margin-bottom:8px;">⚠️ Pilihan Anda (${expType}) berbeda dengan klasifikasi sistem (${type}). Anda tetap bisa mengajukan, atau silakan ubah pilihan Anda di form jika ingin mengikuti saran sistem.</div>`;
-      }
-    }
-
-    if (data.nominal_warning) {
-      html += `<div style="color:var(--color-danger); margin-bottom:4px;">⚠️ ${data.nominal_warning}</div>`;
-      if (data.total_amount <= 0) {
-        canSubmit = false;
-      }
-    }
-
-    if (data.suggestions && data.suggestions.length) {
-      html += data.suggestions.map(s => `<div style="margin-bottom:4px;">${s}</div>`).join('');
-    }
-
-    if (data.budget_status === 'no_budget') {
-      canSubmit = false;
-    }
-
-    if (!html) html = '<span style="color:var(--color-success, #10b981);">✅ Semua parameter valid.</span>';
-    resultDiv.innerHTML = html;
-
-    if (canSubmit) {
-      document.getElementById('btn-submit-ticket').style.display = 'inline-flex';
-    } else {
-      document.getElementById('btn-submit-ticket').style.display = 'none';
-    }
+    renderGateCardModal(data);
+    openModal('modal-prevalidation-result');
   })
   .catch(() => {
-    resultDiv.innerHTML = '<span style="color:var(--color-danger);">Gagal menghubungi server. Silakan coba beberapa saat lagi.</span>';
+    if (typeof showToast === 'function') {
+      showToast('error', 'Koneksi Gagal', 'Tidak dapat menghubungi server. Coba beberapa saat lagi.');
+    }
     document.getElementById('btn-submit-ticket').style.display = 'none';
   })
   .finally(() => {
@@ -462,17 +471,103 @@ function runPreviewValidation() {
   });
 }
 
+function renderGateCardModal(data) {
+  const container = document.getElementById('pv-gates-container');
+  const itemsContainer = document.getElementById('pv-items-container');
+  const itemsBody = document.getElementById('pv-items-body');
+  const submitBtn = document.getElementById('btn-submit-ticket');
+  const gates = data.gates || {};
+
+  // Gate labels and icons
+  const gateMeta = {
+    1: { label: 'Gate 1 — Duplikasi Pengajuan', icon: '🔁' },
+    2: { label: 'Gate 2 — Validasi Nominal',    icon: '💰' },
+    3: { label: 'Gate 3 — Klasifikasi CAPEX/OPEX', icon: '🏷️' },
+    4: { label: 'Gate 4 — Ketersediaan Anggaran',  icon: '🏦' },
+  };
+
+  const statusConfig = {
+    pass:    { bg: 'var(--color-success-soft, #d1fae5)', border: 'var(--color-success, #10b981)', badge: '#10b981', label: '✅ Lolos' },
+    warning: { bg: 'var(--color-warning-soft, #fef3c7)', border: 'var(--color-warning, #f59e0b)', badge: '#f59e0b', label: '⚠️ Peringatan' },
+    info:    { bg: 'var(--color-primary-soft, #eff6ff)',  border: 'var(--color-primary, #3b82f6)', badge: '#3b82f6', label: 'ℹ️ Info' },
+    fail:    { bg: 'var(--color-danger-soft, #fee2e2)',  border: 'var(--color-danger, #ef4444)', badge: '#ef4444', label: '❌ Gagal' },
+    skipped: { bg: 'var(--color-surface-soft)',           border: 'var(--color-border)',           badge: '#9ca3af', label: '⏭️ Dilewati' },
+  };
+
+  let hasFailure = false;
+  let html = '';
+
+  [1, 2, 3, 4].forEach(n => {
+    const gate = gates[n] || { status: 'skipped', message: '-' };
+    const meta = gateMeta[n];
+    const cfg  = statusConfig[gate.status] || statusConfig.skipped;
+    if (gate.status === 'fail') hasFailure = true;
+
+    html += `
+      <div style="background:${cfg.bg}; border:1px solid ${cfg.border}; border-radius:var(--radius-md); padding:12px 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-weight:700; font-size:13px;">${meta.icon} ${meta.label}</span>
+          <span style="font-size:11px; font-weight:600; color:${cfg.badge}; background:rgba(0,0,0,0.05); padding:2px 8px; border-radius:99px;">${cfg.label}</span>
+        </div>
+        <div style="font-size:13px; color:var(--color-text); line-height:1.5;">${gate.message}</div>
+      </div>`;
+  });
+
+  container.innerHTML = html;
+
+  // Render per-item classification table
+  const perItems = data.per_item_classification || [];
+  if (perItems.length > 0) {
+    let rowHtml = '';
+    perItems.forEach(item => {
+      const typeColor = item.suggested_type === 'CAPEX' ? 'var(--color-primary, #3b82f6)' : 'var(--color-warning, #f59e0b)';
+      rowHtml += `
+        <tr>
+          <td style="padding:7px 10px; border-bottom:1px solid var(--color-border);">${item.item_name || '-'}</td>
+          <td style="padding:7px 10px; text-align:center; border-bottom:1px solid var(--color-border);">
+            <span style="font-size:11px; font-weight:700; color:${typeColor}; background:rgba(0,0,0,0.05); padding:2px 8px; border-radius:99px;">${item.suggested_type || '?'}</span>
+          </td>
+          <td style="padding:7px 10px; text-align:right; border-bottom:1px solid var(--color-border); font-weight:600;">Rp ${parseInt(item.subtotal).toLocaleString('id-ID')}</td>
+        </tr>`;
+    });
+    itemsBody.innerHTML = rowHtml;
+    itemsContainer.style.display = 'block';
+  } else {
+    itemsContainer.style.display = 'none';
+  }
+
+  // Show/hide submit button based on failures
+  if (!hasFailure) {
+    submitBtn.style.display = 'inline-flex';
+    document.getElementById('ds-consent-container').style.display = 'block';
+    document.getElementById('ds-consent-create').checked = false;
+    submitBtn.disabled = true;
+  } else {
+    submitBtn.style.display = 'none';
+    document.getElementById('ds-consent-container').style.display = 'none';
+  }
+}
+
+function toggleSubmitTicketBtn() {
+  document.getElementById('btn-submit-ticket').disabled = !document.getElementById('ds-consent-create').checked;
+}
+
+// btn-submit-ticket is now inside the modal — submit the form programmatically
+function submitTicketForm() {
+  localStorage.removeItem('ticket_form_draft');
+  document.getElementById('ticket-form').submit();
+}
+
 // Reset validation state on form changes to enforce re-checking
 document.getElementById('ticket-form').addEventListener('input', function(e) {
   if (e.target.name === 'document_files[]' || e.target.name === 'document_descriptions[]') return; // documents don't affect budget
   document.getElementById('btn-submit-ticket').style.display = 'none';
-  document.getElementById('smartval-panel').style.display = 'none';
   saveFormDraft();
 });
+
 document.getElementById('ticket-form').addEventListener('change', function(e) {
   if (e.target.name === 'document_files[]' || e.target.name === 'document_descriptions[]') return;
   document.getElementById('btn-submit-ticket').style.display = 'none';
-  document.getElementById('smartval-panel').style.display = 'none';
   saveFormDraft();
 });
 document.getElementById('ticket-form').addEventListener('submit', function() {

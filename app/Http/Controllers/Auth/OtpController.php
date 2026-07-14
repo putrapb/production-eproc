@@ -58,13 +58,23 @@ class OtpController extends Controller
                 ->with('error', 'Sesi verifikasi tidak valid. Silakan daftar ulang.');
         }
 
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts("otp:{$email}", 5)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn("otp:{$email}");
+            return back()->withErrors([
+                'otp_code' => "Terlalu banyak percobaan. Silakan coba lagi dalam {$seconds} detik.",
+            ]);
+        }
+
         $valid = OtpVerification::verify($email, $request->otp_code);
 
         if (! $valid) {
+            \Illuminate\Support\Facades\RateLimiter::hit("otp:{$email}", 60);
             return back()->withErrors([
                 'otp_code' => 'Kode OTP tidak valid atau sudah kadaluarsa.',
             ]);
         }
+
+        \Illuminate\Support\Facades\RateLimiter::clear("otp:{$email}");
 
         // Stamp email_verified_at to activate account
         $user = User::where('email', $email)->first();

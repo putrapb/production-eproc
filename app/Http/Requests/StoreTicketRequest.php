@@ -18,7 +18,7 @@ class StoreTicketRequest extends FormRequest
             'title'                    => ['required', 'string', 'max:255'],
             'expenditure_type'         => ['required', 'in:CAPEX,OPEX'],
             'category'                 => ['required', 'in:infrastruktur_utama,lisensi_sistem,layanan_pemeliharaan,perlengkapan_operasional'],
-            'description'              => ['nullable', 'string'],
+            'description'              => ['nullable', 'string', 'max:5000'],
             'vendor_name'              => ['required', 'string', 'max:255'],
             'pic_name'                 => ['required', 'array', 'max:2'],
             'pic_name.*'               => ['required', 'string', 'max:255'],

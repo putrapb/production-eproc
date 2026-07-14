@@ -124,6 +124,7 @@
                 <tr style="background:var(--color-surface-soft); font-size:12px; font-weight:600; color:var(--color-muted);">
                   <th style="padding:10px 16px; text-align:left; border-bottom:1px solid var(--color-border); width:40px;">No.</th>
                   <th style="padding:10px 16px; text-align:left; border-bottom:1px solid var(--color-border);">Nama Item</th>
+                  <th style="padding:10px 16px; text-align:center; border-bottom:1px solid var(--color-border); width:110px;">Klasifikasi</th>
                   <th style="padding:10px 16px; text-align:center; border-bottom:1px solid var(--color-border); width:80px;">Qty</th>
                   <th style="padding:10px 16px; text-align:right; border-bottom:1px solid var(--color-border); width:180px;">Harga Satuan</th>
                   <th style="padding:10px 16px; text-align:right; border-bottom:1px solid var(--color-border); width:180px;">Subtotal</th>
@@ -134,6 +135,13 @@
                 <tr style="border-bottom:1px solid var(--color-hairline);">
                   <td style="padding:10px 16px; font-size:13px; color:var(--color-muted);">{{ $i + 1 }}</td>
                   <td style="padding:10px 16px; font-size:14px; font-weight:500;">{{ $item->item_name }}</td>
+                  <td style="padding:10px 16px; text-align:center; font-size:13px;">
+                    @if($item->effective_expenditure_type)
+                      <span class="badge badge-{{ strtolower($item->effective_expenditure_type) }}">{{ $item->effective_expenditure_type }}</span>
+                    @else
+                      <span class="text-muted">-</span>
+                    @endif
+                  </td>
                   <td style="padding:10px 16px; text-align:center; font-size:13px;">{{ number_format($item->quantity) }}</td>
                   <td style="padding:10px 16px; text-align:right; font-size:13px;">{{ $item->formatted_unit_price }}</td>
                   <td style="padding:10px 16px; text-align:right; font-size:13px; font-weight:600; color:var(--color-text);">{{ $item->formatted_subtotal }}</td>
@@ -142,7 +150,7 @@
               </tbody>
               <tfoot>
                 <tr style="background:var(--color-surface-soft);">
-                  <td colspan="4" style="padding:12px 16px; text-align:right; font-size:13px; font-weight:700; color:var(--color-muted);">TOTAL</td>
+                  <td colspan="5" style="padding:12px 16px; text-align:right; font-size:13px; font-weight:700; color:var(--color-muted);">TOTAL</td>
                   <td style="padding:12px 16px; text-align:right; font-size:15px; font-weight:700; color:var(--color-primary);">{{ $ticket->formatted_total_amount }}</td>
                 </tr>
               </tfoot>

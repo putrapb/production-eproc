@@ -31,6 +31,7 @@ class TicketController extends Controller
             : 15;
 
         $tickets = Ticket::with(['user', 'approvalLogs.user'])
+            ->when($request->user()->isRequester(), fn ($q) => $q->where('user_id', $request->user()->id))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->pending_with, function ($q, $p) {
                 $q->where(function ($q) use ($p) {
@@ -66,6 +67,7 @@ class TicketController extends Controller
     public function export(Request $request)
     {
         $tickets = Ticket::with(['user', 'items'])
+            ->when($request->user()->isRequester(), fn ($q) => $q->where('user_id', $request->user()->id))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->pending_with, function ($q, $p) {
                 $q->where(function ($q) use ($p) {
@@ -174,6 +176,16 @@ class TicketController extends Controller
      */
     public function previewValidation(Request $request): \Illuminate\Http\JsonResponse
     {
+        $request->validate([
+            'title'              => ['nullable', 'string', 'max:255'],
+            'category'           => ['nullable', 'in:infrastruktur_utama,lisensi_sistem,layanan_pemeliharaan,perlengkapan_operasional'],
+            'expenditure_type'   => ['nullable', 'in:CAPEX,OPEX'],
+            'items'              => ['nullable', 'array', 'max:9'],
+            'items.*.item_name'  => ['nullable', 'string', 'max:255'],
+            'items.*.quantity'   => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'items.*.unit_price' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
+        ]);
+
         $result = $this->smartValidation->preview(
             $request->only(['title', 'category', 'expenditure_type', 'items']),
             $request->user()
@@ -209,12 +221,13 @@ class TicketController extends Controller
             'pending_with_role'  => 'team_leader', // Transkrip 2: track pending holder
         ]);
 
-        // 3. Save each item to ticket_items
+        // 3. Save each item to ticket_items (with per-item CAPEX/OPEX classification)
         foreach ($items as $item) {
             $ticket->items()->create([
-                'item_name'  => $item['item_name'],
-                'quantity'   => $item['quantity'],
-                'unit_price' => $item['unit_price'],
+                'item_name'        => $item['item_name'],
+                'quantity'         => $item['quantity'],
+                'unit_price'       => $item['unit_price'],
+                'expenditure_type' => $item['expenditure_type'] ?? $request->expenditure_type ?? null,
             ]);
         }
 
@@ -268,9 +281,7 @@ class TicketController extends Controller
      */
     public function edit(Ticket $ticket, Request $request): View|RedirectResponse
     {
-        if (auth()->user()->isRequester()) {
-            abort_if($ticket->user_id !== auth()->id(), 403);
-        }
+        abort_if($ticket->user_id !== auth()->id(), 403, 'Akses Ditolak: Anda tidak berhak memodifikasi tiket ini.');
 
         abort_unless(in_array($ticket->status, [Ticket::STATUS_REVISION, Ticket::STATUS_PENDING_REVIEW]), 403, 'Tiket tidak dapat diedit pada status ini.');
 
@@ -284,9 +295,7 @@ class TicketController extends Controller
      */
     public function update(\App\Http\Requests\UpdateTicketRequest $request, Ticket $ticket): RedirectResponse
     {
-        if (auth()->user()->isRequester()) {
-            abort_if($ticket->user_id !== auth()->id(), 403);
-        }
+        abort_if($ticket->user_id !== auth()->id(), 403, 'Akses Ditolak: Anda tidak berhak memodifikasi tiket ini.');
 
         // 1. Calculate new total amount
         $items = $request->input('items', []);
@@ -305,13 +314,14 @@ class TicketController extends Controller
             'amount'           => $totalAmount,
         ]);
 
-        // 3. Sync ticket_items (delete old, insert new)
+        // 3. Sync ticket_items (delete old, insert new) — preserve per-item expenditure_type
         $ticket->items()->delete();
         foreach ($items as $item) {
             $ticket->items()->create([
-                'item_name'  => $item['item_name'],
-                'quantity'   => $item['quantity'],
-                'unit_price' => $item['unit_price'],
+                'item_name'        => $item['item_name'],
+                'quantity'         => $item['quantity'],
+                'unit_price'       => $item['unit_price'],
+                'expenditure_type' => $item['expenditure_type'] ?? $request->expenditure_type ?? null,
             ]);
         }
 
@@ -392,8 +402,9 @@ class TicketController extends Controller
 
         $hasRejected = false;
         $rejectedNames = [];
+        $result = [];
 
-        DB::transaction(function () use ($request, $ticket, &$hasRejected, &$rejectedNames) {
+        DB::transaction(function () use ($request, $ticket, &$hasRejected, &$rejectedNames, &$result) {
             foreach ($ticket->documents as $doc) {
                 $status   = $request->document_status[$doc->id] ?? 'accepted';
                 $feedback = $request->document_feedback[$doc->id] ?? null;
@@ -409,13 +420,24 @@ class TicketController extends Controller
                 ]);
             }
 
-            // If any doc rejected → revision; else leave ticket in pending_review
-            // Smart Validation will run right after (outside the transaction) to
-            // set the final status (need_to_validate removed from the flow).
             if ($hasRejected) {
                 $ticket->update(['status' => Ticket::STATUS_REVISION]);
+                return;
             }
-            // NOTE: do NOT set need_to_validate — SmartValidation runs immediately below.
+
+            $ticket->update([
+                'pending_with_role' => 'none',
+                'status' => Ticket::STATUS_NEED_TO_VALIDATE
+            ]);
+            
+            ApprovalLog::create([
+                'ticket_id' => $ticket->id,
+                'user_id'   => $request->user()->id,
+                'action'    => ApprovalLog::ACTION_FOLLOWED_UP,
+                'notes'     => $request->notes ?? 'Semua dokumen disetujui. Smart Validation dijalankan otomatis.',
+            ]);
+
+            $result = $this->smartValidation->run($ticket, $request->user());
         });
 
         if ($hasRejected) {
@@ -437,24 +459,6 @@ class TicketController extends Controller
             return redirect()->route('tickets.show', $ticket)
                 ->with('success', 'Beberapa dokumen memerlukan revisi. Tiket dikembalikan ke Requester.');
         }
-
-        // ── All docs accepted → Run Smart Validation immediately ──
-        // Set pending_with=none temporarily, SmartVal will set to department_head on success
-        $ticket->update([
-            'pending_with_role' => 'none',
-        ]);
-        ApprovalLog::create([
-            'ticket_id' => $ticket->id,
-            'user_id'   => $request->user()->id,
-            'action'    => ApprovalLog::ACTION_FOLLOWED_UP,
-            'notes'     => $request->notes ?? 'Semua dokumen disetujui. Smart Validation dijalankan otomatis.',
-        ]);
-
-        // Set status to need_to_validate temporarily so SmartValidation guard passes
-        $ticket->update(['status' => Ticket::STATUS_NEED_TO_VALIDATE]);
-
-        $user   = $request->user();
-        $result = $this->smartValidation->run($ticket, $user);
 
         if ($result['success']) {
             // Bola pindah ke Department Head
@@ -606,20 +610,32 @@ class TicketController extends Controller
      */
     public function cancel(Request $request, Ticket $ticket): RedirectResponse
     {
-        if (auth()->user()->isRequester()) {
-            abort_if($ticket->user_id !== auth()->id(), 403);
-        }
+        abort_if($ticket->user_id !== auth()->id(), 403, 'Akses Ditolak: Anda tidak berhak membatalkan tiket ini.');
 
         $this->ensureStatus($ticket, Ticket::STATUS_NEED_TO_VALIDATE);
 
-        $ticket->update(['status' => Ticket::STATUS_DECLINED]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($ticket, $request) {
+            $capexTotal = $ticket->items()->where('expenditure_type', Ticket::TYPE_CAPEX)->sum(\Illuminate\Support\Facades\DB::raw('quantity * unit_price'));
+            $opexTotal  = $ticket->items()->where('expenditure_type', Ticket::TYPE_OPEX)->sum(\Illuminate\Support\Facades\DB::raw('quantity * unit_price'));
 
-        ApprovalLog::create([
-            'ticket_id' => $ticket->id,
-            'user_id'   => $request->user()->id,
-            'action'    => 'declined',
-            'notes'     => $request->notes ?? 'Dibatalkan oleh Requester karena tidak mengajukan silang dana / hasil peninjauan internal.',
-        ]);
+            if ($capexTotal > 0) {
+                $budget = Budget::findForTicket(Ticket::TYPE_CAPEX, $ticket->category, now()->year);
+                if ($budget) $budget->unlock($capexTotal);
+            }
+            if ($opexTotal > 0) {
+                $budget = Budget::findForTicket(Ticket::TYPE_OPEX, $ticket->category, now()->year);
+                if ($budget) $budget->unlock($opexTotal);
+            }
+
+            $ticket->update(['status' => Ticket::STATUS_DECLINED]);
+
+            ApprovalLog::create([
+                'ticket_id' => $ticket->id,
+                'user_id'   => $request->user()->id,
+                'action'    => 'declined',
+                'notes'     => $request->notes ?? 'Dibatalkan oleh Requester karena tidak mengajukan silang dana / hasil peninjauan internal.',
+            ]);
+        });
 
         return redirect()->route('tickets.show', $ticket)
             ->with('success', 'Tiket pengadaan berhasil dibatalkan (Declined).');
@@ -733,18 +749,24 @@ class TicketController extends Controller
         $user = $request->user();
 
         $message = DB::transaction(function () use ($request, $ticket, $user) {
-            if ($request->action === 'approve') {
-                // Permanently deduct budget on approval
-                // For cross-fund: budget was locked in applyCrossFund → permanentDeduct converts lock to permanent
-                // For normal flow: budget was NOT locked (Revisi 3), so permanentDeduct without prior lock
-                $budget = Budget::findForTicket(
-                    $ticket->expenditure_type,
-                    $ticket->category,
-                    now()->year
-                );
+            $capexTotal = 0;
+            $opexTotal = 0;
+            foreach ($ticket->items as $item) {
+                if ($item->effective_expenditure_type === Ticket::TYPE_CAPEX) {
+                    $capexTotal += $item->subtotal;
+                } else {
+                    $opexTotal += $item->subtotal;
+                }
+            }
 
-                if ($budget) {
-                    $budget->permanentDeduct($ticket->total_amount);
+            if ($request->action === 'approve') {
+                if ($capexTotal > 0) {
+                    $budget = Budget::findForTicket(Ticket::TYPE_CAPEX, $ticket->category, now()->year);
+                    if ($budget) $budget->permanentDeduct($capexTotal);
+                }
+                if ($opexTotal > 0) {
+                    $budget = Budget::findForTicket(Ticket::TYPE_OPEX, $ticket->category, now()->year);
+                    if ($budget) $budget->permanentDeduct($opexTotal);
                 }
 
                 $ticket->update(['status' => Ticket::STATUS_APPROVED]);
@@ -777,14 +799,13 @@ class TicketController extends Controller
 
                 return 'Pengadaan disetujui. Team Leader dapat menerbitkan Form Pengadaan.';
             } else {
-                // Decline: release locked budget
-                $budget = Budget::findForTicket(
-                    $ticket->expenditure_type,
-                    $ticket->category,
-                    now()->year
-                );
-                if ($budget) {
-                    $budget->unlock($ticket->total_amount);
+                if ($capexTotal > 0) {
+                    $budget = Budget::findForTicket(Ticket::TYPE_CAPEX, $ticket->category, now()->year);
+                    if ($budget) $budget->unlock($capexTotal);
+                }
+                if ($opexTotal > 0) {
+                    $budget = Budget::findForTicket(Ticket::TYPE_OPEX, $ticket->category, now()->year);
+                    if ($budget) $budget->unlock($opexTotal);
                 }
 
                 $ticket->update(['status' => Ticket::STATUS_DECLINED]);
@@ -838,14 +859,24 @@ class TicketController extends Controller
 
         DB::transaction(function () use ($tickets, $user, $request) {
             foreach ($tickets as $ticket) {
+                $capexTotal = 0;
+                $opexTotal = 0;
+                foreach ($ticket->items as $item) {
+                    if ($item->effective_expenditure_type === Ticket::TYPE_CAPEX) {
+                        $capexTotal += $item->subtotal;
+                    } else {
+                        $opexTotal += $item->subtotal;
+                    }
+                }
+
                 if ($request->action === 'approve') {
-                    $budget = Budget::findForTicket(
-                        $ticket->expenditure_type,
-                        $ticket->category,
-                        now()->year
-                    );
-                    if ($budget) {
-                        $budget->permanentDeduct($ticket->total_amount);
+                    if ($capexTotal > 0) {
+                        $budget = Budget::findForTicket(Ticket::TYPE_CAPEX, $ticket->category, now()->year);
+                        if ($budget) $budget->permanentDeduct($capexTotal);
+                    }
+                    if ($opexTotal > 0) {
+                        $budget = Budget::findForTicket(Ticket::TYPE_OPEX, $ticket->category, now()->year);
+                        if ($budget) $budget->permanentDeduct($opexTotal);
                     }
                     $ticket->update(['status' => Ticket::STATUS_APPROVED]);
                     ApprovalLog::create([
@@ -855,15 +886,13 @@ class TicketController extends Controller
                         'notes'     => $request->notes,
                     ]);
                 } else {
-                    if ($ticket->is_cross_fund) {
-                        $budget = Budget::findForTicket(
-                            $ticket->expenditure_type,
-                            $ticket->category,
-                            now()->year
-                        );
-                        if ($budget) {
-                            $budget->unlock($ticket->total_amount);
-                        }
+                    if ($capexTotal > 0) {
+                        $budget = Budget::findForTicket(Ticket::TYPE_CAPEX, $ticket->category, now()->year);
+                        if ($budget) $budget->unlock($capexTotal);
+                    }
+                    if ($opexTotal > 0) {
+                        $budget = Budget::findForTicket(Ticket::TYPE_OPEX, $ticket->category, now()->year);
+                        if ($budget) $budget->unlock($opexTotal);
                     }
                     $ticket->update(['status' => Ticket::STATUS_DECLINED]);
                     ApprovalLog::create([

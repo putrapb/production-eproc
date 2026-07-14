@@ -69,7 +69,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Ticket list & detail — all roles
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
-    Route::get('/tickets/export', [TicketController::class, 'export'])->name('tickets.export');
+    Route::get('/tickets/export', [TicketController::class, 'export'])
+        ->middleware('throttle:1,1')
+        ->name('tickets.export');
 
     // IMPORTANT: /tickets/create must be registered BEFORE /tickets/{ticket}
     // to prevent Laravel from matching 'create' as a {ticket} parameter.

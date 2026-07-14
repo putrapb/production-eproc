@@ -83,13 +83,17 @@ class Budget extends Model
     /**
      * Find the budget record for a given expenditure type and category in current fiscal year.
      */
-    public static function findForTicket(string $expenditureType, string $category, int $fiscalYear): ?self
+    public static function findForTicket(string $expenditureType, string $category, int $fiscalYear, bool $lock = true): ?self
     {
-        return static::where('expenditure_type', $expenditureType)
+        $query = static::where('expenditure_type', $expenditureType)
             ->where('category', $category)
-            ->where('fiscal_year', $fiscalYear)
-            ->lockForUpdate()
-            ->first();
+            ->where('fiscal_year', $fiscalYear);
+
+        if ($lock) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
     }
 
     /**
