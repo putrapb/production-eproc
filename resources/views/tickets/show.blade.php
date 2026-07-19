@@ -39,7 +39,6 @@
   </div>
 </div>
 
-{{-- Smart Validation Result Banner --}}
 @if(session('validation_result'))
   @php $vr = session('validation_result'); @endphp
   <div class="alert alert-{{ $vr['status'] === 'halted' ? 'warning' : 'success' }}" style="margin:0 var(--space-xl) var(--space-lg);">
@@ -61,10 +60,8 @@
 <div class="page-content">
   <div class="detail-grid">
 
-    {{-- ─── LEFT: TICKET DETAIL ─── --}}
     <div>
 
-      {{-- Informasi Pengadaan --}}
       <div class="card mb-lg">
         <div class="card-header">
           <div class="heading-sm">Informasi Pengadaan</div>
@@ -113,7 +110,6 @@
         </div>
       </div>
 
-      {{-- Daftar Item --}}
       <div class="card mb-lg">
         <div class="card-header">
           <div class="heading-sm">Daftar Item Pengadaan</div>
@@ -167,7 +163,6 @@
         </div>
       </div>
 
-      {{-- Klasifikasi Anggaran --}}
       @if($ticket->expenditure_type)
       @php
         $capexTotal = $ticket->items->filter(fn($i) => $i->effective_expenditure_type === 'CAPEX')->sum('subtotal');
@@ -202,7 +197,7 @@
 
           <div style="padding:16px; background:var(--color-surface-soft); border-radius:var(--radius-md); border:1px solid var(--color-hairline);">
             <div style="font-size:12px; font-weight:600; color:var(--color-muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;">Estimasi Pemotongan Anggaran</div>
-            
+
             @if($capexTotal > 0)
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:{{ $opexTotal > 0 ? '8px' : '0' }};">
               <div style="display:flex; align-items:center; gap:8px;">
@@ -227,7 +222,6 @@
       </div>
       @endif
 
-      {{-- Dokumen --}}
       <div class="card mb-lg">
         <div class="card-header">
           <div class="heading-sm">Dokumen Pendukung</div>
@@ -271,7 +265,6 @@
         </div>
       </div>
 
-      {{-- PO Document --}}
       @if($ticket->po_path)
       <div class="card mb-lg">
         <div class="card-body">
@@ -297,7 +290,6 @@
       </div>
       @endif
 
-      {{-- Metadata --}}
       <div class="card">
         <div class="card-body">
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-sm);">
@@ -319,7 +311,6 @@
 
     </div>
 
-    {{-- ─── RIGHT: APPROVAL LOG ─── --}}
     <div>
       <div class="card" style="position:sticky; top:calc(var(--topbar-height) + var(--space-lg));">
         <div class="card-header">
@@ -364,7 +355,6 @@
   </div>
 </div>
 
-{{-- ─── ACTION PANEL ─── --}}
 @php $user = auth()->user(); $status = $ticket->status; @endphp
 
 @if(
@@ -390,7 +380,7 @@
   </div>
 
   <div class="action-panel-buttons">
-    {{-- REQUESTER: Revision re-upload --}}
+
     @if($user->isRequester() && $status === 'revision')
       <a href="{{ route('tickets.edit', $ticket) }}" class="btn btn-primary">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -398,7 +388,6 @@
       </a>
     @endif
 
-    {{-- TEAM LEADER: Document review --}}
     @if($user->isTeamLeader() && $status === 'pending_review')
       <button onclick="openModal('modal-review-documents')" class="btn btn-primary">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>
@@ -406,7 +395,6 @@
       </button>
     @endif
 
-    {{-- TEAM LEADER: Generate Form --}}
     @if($user->isTeamLeader() && $status === 'approved')
       <button onclick="openModal('modal-generate-form')" class="btn btn-primary">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 12l2 2 4-4"/></svg>
@@ -414,7 +402,6 @@
       </button>
     @endif
 
-    {{-- REQUESTER & TEAM LEADER: Unduh Form --}}
     @if(($user->isRequester() || $user->isTeamLeader()) && $status === 'form_generated' && $ticket->po_path)
       <a href="{{ route('tickets.download-po', ['ticket' => $ticket->id, 'download' => 1]) }}" class="btn btn-orient">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -422,7 +409,6 @@
       </a>
     @endif
 
-    {{-- DEPT HEAD: Decline / Approve --}}
     @if($user->isDepartmentHead() && $status === 'pending_dept_head')
       <button onclick="openModal('modal-decline')" class="btn btn-danger">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
@@ -437,9 +423,6 @@
 </div>
 @endif
 
-{{-- ═══ MODALS ═══ --}}
-
-{{-- Modal: Review Documents (Team Leader) --}}
 @if($user->isTeamLeader() && $status === 'pending_review')
 <div class="modal-overlay" id="modal-review-documents">
   <div class="modal-card" style="max-width:650px; max-height:95vh; display:flex; flex-direction:column; overflow:hidden; padding:24px;">
@@ -505,7 +488,6 @@ function toggleDocFeedback(docId, show) {
 @endpush
 @endif
 
-{{-- Modal: Generate Form (Team Leader) --}}
 @if($user->isTeamLeader() && $status === 'approved')
 <div class="modal-overlay" id="modal-generate-form">
   <div class="modal-card">
@@ -531,7 +513,6 @@ function toggleDocFeedback(docId, show) {
 </div>
 @endif
 
-{{-- Modal: Approve (Dept Head) --}}
 @if($user->isDepartmentHead() && $status === 'pending_dept_head')
 <div class="modal-overlay" id="modal-approve">
   <div class="modal-card">
@@ -563,7 +544,6 @@ function toggleDocFeedback(docId, show) {
   </div>
 </div>
 
-{{-- Modal: Decline (Dept Head) --}}
 <div class="modal-overlay" id="modal-decline">
   <div class="modal-card">
     <div class="modal-icon danger">
@@ -587,7 +567,6 @@ function toggleDocFeedback(docId, show) {
 </div>
 @endif
 
-{{-- Modal: Gate 1 — Duplicate Warning --}}
 @if(session('needs_duplicate_confirmation') && $user->isRequester())
 <div class="modal-overlay open" id="modal-duplicate-warning">
   <div class="modal-card">
@@ -611,7 +590,6 @@ function toggleDocFeedback(docId, show) {
 </div>
 @endif
 
-{{-- Modal: Gate 2 — Nominal Warning --}}
 @if(session('needs_nominal_confirmation') && $user->isRequester())
 <div class="modal-overlay open" id="modal-nominal-warning">
   <div class="modal-card">
@@ -635,7 +613,6 @@ function toggleDocFeedback(docId, show) {
 </div>
 @endif
 
-{{-- Modal: Gate 3 — Classification Mismatch --}}
 @if(session('needs_classification_confirmation') && $user->isRequester())
 <div class="modal-overlay open" id="modal-classification-warning">
   <div class="modal-card">
@@ -663,7 +640,6 @@ function toggleDocFeedback(docId, show) {
 </div>
 @endif
 
-{{-- Modal: Gate 4 — Over Budget --}}
 @if(session('over_budget'))
 <div class="modal-overlay open" id="modal-over-budget">
   <div class="modal-card">
@@ -696,3 +672,4 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 </script>
 @endpush
 @endsection
+

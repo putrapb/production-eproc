@@ -37,16 +37,14 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    // ─────────────────────────────────────────────
-    // Relationships
-    // ─────────────────────────────────────────────
+    // Relasi
 
     public function hrEmployee(): BelongsTo
     {
         return $this->belongsTo(HrEmployee::class, 'hr_employee_id');
     }
 
-    /** Alias for hrEmployee — shorter template syntax. */
+    /** Alias untuk relasi HR */
     public function employee(): BelongsTo
     {
         return $this->hrEmployee();
@@ -62,9 +60,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(ApprovalLog::class, 'user_id');
     }
 
-    // ─────────────────────────────────────────────
-    // Role Helpers
-    // ─────────────────────────────────────────────
+    // Helper role
 
     public function hasRole(string $role): bool
     {
@@ -78,16 +74,16 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isDepartmentHead(): bool
     {
-        return $this->role === 'department_head'; // Decision maker — final approve/decline
+        return $this->role === 'department_head'; // pembuat keputusan
     }
 
     public function isTeamLeader(): bool
     {
-        return $this->role === 'team_leader'; // Document checker + Form generator
+        return $this->role === 'team_leader'; // pengecek dokumen & form
     }
 
     /**
-     * Get human-readable role label (Bahasa Indonesia).
+     * Label role untuk UI
      */
     public function getRoleLabelAttribute(): string
     {
@@ -100,7 +96,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get initials from name for avatar display.
+     * Ambil inisial nama untuk avatar
      */
     public function getInitialsAttribute(): string
     {

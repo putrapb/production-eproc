@@ -11,7 +11,6 @@
 <div class="auth-form-title">Masuk ke Sistem</div>
 <div class="auth-form-subtitle">Masuk dengan akun Anda untuk melanjutkan.</div>
 
-{{-- Validation Errors --}}
 @if($errors->any())
 <div class="alert alert-error mb-md">
   <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
@@ -67,8 +66,6 @@
     @enderror
   </div>
 
-
-
   <button type="submit" class="btn btn-primary w-full" style="justify-content:center;">
     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
       <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
@@ -98,3 +95,4 @@ function togglePassword() {
 </script>
 @endpush
 @endsection
+

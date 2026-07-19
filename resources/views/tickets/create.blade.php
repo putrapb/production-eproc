@@ -27,7 +27,6 @@
     <div class="card">
       <div class="card-body">
 
-        {{-- SECTION: Informasi Pengadaan --}}
         <div class="detail-section-title">Informasi Pengadaan</div>
 
         <div class="form-group">
@@ -118,7 +117,6 @@
 
         <hr class="divider">
 
-        {{-- SECTION: Daftar Item --}}
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
           <div class="detail-section-title" style="margin-bottom:0;">Daftar Item Pengadaan <span class="required">*</span></div>
           <button type="button" id="btn-add-item" onclick="addItemRow()" class="btn btn-outline btn-sm" style="padding:4px 12px; font-size:12px;">
@@ -188,7 +186,6 @@
 
         <hr class="divider">
 
-        {{-- SECTION: Dokumen --}}
         <div class="detail-section-title">Dokumen Pendukung</div>
 
         <div class="form-group">
@@ -211,7 +208,6 @@
 
         <hr class="divider">
 
-
         <div style="display:flex; justify-content:flex-end; gap:var(--space-sm);">
           <a href="{{ route('tickets.index') }}" onclick="localStorage.removeItem('ticket_form_draft')" class="btn btn-danger">Batalkan</a>
           <button type="button" id="btn-preview-val" onclick="runPreviewValidation()" class="btn btn-secondary">
@@ -225,7 +221,6 @@
   </form>
 </div>
 
-{{-- ═══ Modal: Gate Card Pre-Validation Result (Transkrip 2) ═══ --}}
 <div class="modal-overlay" id="modal-prevalidation-result">
   <div class="modal-card" style="max-width:640px; max-height:92vh; display:flex; flex-direction:column; overflow:hidden; padding:0;">
     <div style="padding:24px 24px 0; flex-shrink:0;">
@@ -236,12 +231,10 @@
       <div style="font-size:13px; color:var(--color-muted); margin-bottom:16px;">Sistem memeriksa 4 gate validasi sebelum Anda mengajukan pengadaan.</div>
     </div>
 
-    {{-- Gate Cards Container --}}
     <div id="pv-gates-container" style="flex:1; overflow-y:auto; padding:0 24px; display:flex; flex-direction:column; gap:10px;">
-      {{-- Diisi secara dinamis oleh JS --}}
+
     </div>
 
-    {{-- Per-Item Classification Table --}}
     <div id="pv-items-container" style="padding:0 24px; margin-top:10px; display:none;">
       <div style="font-size:12px; font-weight:600; color:var(--color-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">Klasifikasi Per-Item</div>
       <div style="overflow-x:auto;">
@@ -278,7 +271,6 @@
 
 @push('scripts')
 <script>
-// ── CAPEX/OPEX → Filter Kategori ─────────────────
 function filterCategories(type) {
   const sel = document.getElementById('category');
   const opts = sel.querySelectorAll('option[data-type]');
@@ -299,7 +291,6 @@ window.addEventListener('DOMContentLoaded', () => {
   recalcAll();
 });
 
-// ── Multi-Item Table ──────────────────────────────
 let itemCounter = {{ count(old('items', [[]])) }};
 
 function formatItemPrice(input) {
@@ -369,7 +360,6 @@ function updateItemDeleteButtons() {
   rows.forEach(r => { const b = r.querySelector('button[onclick="removeItemRow(this)"]'); if (b) b.style.display = rows.length > 1 ? 'inline-flex' : 'none'; });
 }
 
-// ── Document Rows ─────────────────────────────────
 function addDocumentRow() {
   const c = document.getElementById('documents-container');
   const d = document.createElement('div');
@@ -385,7 +375,6 @@ function updateDocDeleteButtons() {
   rows.forEach(r => { const b = r.querySelector('button[onclick="removeDocumentRow(this)"]'); if (b) b.style.display = rows.length > 1 ? 'inline-flex' : 'none'; });
 }
 
-// ── PIC Rows ──────────────────────────────────────
 function addPicRow() {
   const c = document.getElementById('pic-container');
   if (c.children.length >= 2) return;
@@ -412,7 +401,6 @@ function validatePdfFile(input) {
   }
 }
 
-// ── Upfront Smart Validation Preview — Gate Card Modal (Transkrip 2) ──
 function runPreviewValidation() {
   const btn = document.getElementById('btn-preview-val');
 
@@ -574,7 +562,6 @@ document.getElementById('ticket-form').addEventListener('submit', function() {
   localStorage.removeItem('ticket_form_draft');
 });
 
-// ── Auto-save Form Draft Functions (Transkrip 2) ──
 function saveFormDraft() {
   const title = document.getElementById('title')?.value || '';
   const expType = document.getElementById('expenditure_type')?.value || '';

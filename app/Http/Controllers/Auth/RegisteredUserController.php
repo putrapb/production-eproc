@@ -16,7 +16,7 @@ use Illuminate\View\View;
 class RegisteredUserController extends Controller
 {
     /**
-     * Display the registration view.
+     * Tampilkan form registrasi
      */
     public function create(): View
     {
@@ -24,14 +24,7 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Handle an incoming registration request.
-     *
-     * Flow:
-     *  1. Validate NIP exists in hr_employees and belongs to allowed division
-     *  2. Derive role from position
-     *  3. Create user (unverified)
-     *  4. Send OTP to corporate email
-     *  5. Redirect to OTP verification page
+     * Proses pendaftaran user baru (cek NIP & kirim OTP)
      */
     public function store(Request $request): RedirectResponse
     {
@@ -41,11 +34,10 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Security: gunakan pesan error generik untuk mencegah NIP enumeration (H-2)
-        // Security: sleep konstan untuk mencegah timing attack (M-3)
+        // Error generik + sleep konstan untuk mencegah NIP enumeration & timing attack
         $genericNipError = 'NIP atau data Anda tidak valid, tidak terdaftar, atau tidak memiliki akses ke sistem ini.';
 
-        // Step 1: Validate NIP against HR database
+        // Validasi NIP di database HR
         $hrEmployee = HrEmployee::where('nip', $request->nip)->first();
 
         if (! $hrEmployee) {
@@ -53,23 +45,23 @@ class RegisteredUserController extends Controller
             return back()->withErrors(['nip' => $genericNipError])->withInput();
         }
 
-        // Step 2: Validate division
+        // Cek divisi yang diizinkan
         $allowedDivision = config('eprocurement.allowed_division_keyword', 'IT Infrastructure Management');
         if (! str_contains($hrEmployee->division, $allowedDivision)) {
             usleep(random_int(100000, 300000));
             return back()->withErrors(['nip' => $genericNipError])->withInput();
         }
 
-        // Step 3: Check that this HR record doesn't already have an account
+        // Pastikan NIP belum digunakan untuk registrasi
         if ($hrEmployee->user()->exists()) {
             usleep(random_int(100000, 300000));
             return back()->withErrors(['nip' => $genericNipError])->withInput();
         }
 
-        // Step 4: Derive role from position
+        // Tentukan role dari jabatan
         $role = $hrEmployee->deriveRole();
 
-        // Step 5: Create user (email_verified_at = null until OTP verified)
+        // Buat akun user (status belum terverifikasi)
         User::create([
             'hr_employee_id'   => $hrEmployee->id,
             'name'             => $hrEmployee->name,
@@ -79,7 +71,7 @@ class RegisteredUserController extends Controller
             'email_verified_at' => null,
         ]);
 
-        // Step 6: Generate and send OTP via queued Mailable
+        // Generate & kirim OTP via email
         $otp = OtpVerification::generate(strtolower($request->email));
 
         Mail::to($request->email)->send(new OtpMail(
@@ -88,7 +80,7 @@ class RegisteredUserController extends Controller
             isResend:   false,
         ));
 
-        // Step 7: Redirect to OTP verification, passing email in session
+        // Redirect ke verifikasi OTP
         $request->session()->put('otp_email', strtolower($request->email));
 
         return redirect()->route('otp.show')

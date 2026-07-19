@@ -21,10 +21,8 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        // ─── Ticket Status Summary ───
         $ticketSummary = $this->buildTicketSummary($user);
 
-        // ─── Recent Activity ───
         $recentTickets = Ticket::with(['user', 'approvalLogs.user'])
             ->forRole($user)
             ->where('id', '!=', 5)
@@ -33,10 +31,8 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // ─── Budget Utilization (all roles see this) ───
         $budgetData = $this->buildBudgetUtilization();
 
-        // ─── Chart Data (Trend & Composition) ───
         $year = now()->year;
         $monthlyTickets = Ticket::whereYear('created_at', $year)
             ->where('id', '!=', 5)

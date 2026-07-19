@@ -271,9 +271,7 @@ class SmartValidationService
         ];
     }
 
-    // ──────────────────────────────────────────────────────────
     // Gate Implementations
-    // ──────────────────────────────────────────────────────────
 
     /**
      * Gate 1 — Duplicate Check (SOFT WARNING — user can override)
@@ -350,14 +348,12 @@ class SmartValidationService
     {
         $category = $ticket->category;
 
-        // ── Always CAPEX ─────────────────────────────────────────────
         // Infrastruktur Utama: server, storage, network hardware
         // These are long-lived physical assets → PSAK 16 Aset Tetap
         if ($category === Ticket::CATEGORY_INFRASTRUKTUR_UTAMA) {
             return Ticket::TYPE_CAPEX;
         }
 
-        // ── Always OPEX ──────────────────────────────────────────────
         // Layanan Pemeliharaan: maintenance contracts, managed services, ITSM
         // Perlengkapan Operasional: consumables, ATK, spare parts
         // These are recurring operational costs — never capitalized
@@ -368,7 +364,6 @@ class SmartValidationService
             return Ticket::TYPE_OPEX;
         }
 
-        // ── Lisensi Sistem — keyword disambiguation ───────────────────
         // PSAK 19: Software licenses are intangible assets (CAPEX) IF perpetual.
         // SaaS/cloud/subscription = no asset ownership → OPEX.
         //
@@ -417,9 +412,7 @@ class SmartValidationService
              . "Apakah Anda yakin ingin mempertahankan pilihan {$requesterType}?";
     }
 
-    // ──────────────────────────────────────────────────────────
     // Internal Helpers
-    // ──────────────────────────────────────────────────────────
 
     private function fail(int $gate, string $message): array
     {
@@ -473,7 +466,6 @@ class SmartValidationService
         $items       = $data['items'] ?? [];
         $suggestions = [];
 
-        // ─── Gate 3 Preview: Klasifikasi per-item ───────────────────────
         // Aturan: category di level tiket menentukan basis CAPEX/OPEX,
         // tapi item_name dari lisensi_sistem bisa override ke OPEX via keyword.
         $opexSignals = [
@@ -541,7 +533,6 @@ class SmartValidationService
             $classifiedType = $capexTotal >= $opexTotal ? Ticket::TYPE_CAPEX : Ticket::TYPE_OPEX;
         }
 
-        // ─── Gate 1 Preview: Cek duplikasi berdasarkan title ─────────────
         $gate1 = ['status' => 'pass', 'message' => 'Tidak ditemukan tiket dengan judul serupa.'];
         $hasDuplicate = false;
         if ($title) {
@@ -558,7 +549,6 @@ class SmartValidationService
             }
         }
 
-        // ─── Gate 2 Preview: Cek nominal ────────────────────────────────
         $nominalWarning = null;
         $gate2 = ['status' => 'pass', 'message' => 'Nominal pengajuan valid.'];
         if ($totalAmount <= 0) {
@@ -569,7 +559,6 @@ class SmartValidationService
             $gate2 = ['status' => 'warning', 'message' => $nominalWarning];
         }
 
-        // ─── Gate 3 Preview: Ringkasan Klasifikasi ───────────────────────
         $gate3 = ['status' => 'skipped', 'message' => 'Pilih kategori terlebih dahulu.'];
         if ($category && $classifiedType) {
             $userSelectedType = $data['expenditure_type'] ?? null;
@@ -604,7 +593,6 @@ class SmartValidationService
             }
         }
 
-        // ─── Gate 4 Preview: Cek ketersediaan anggaran per-type ─────────
         $gate4 = ['status' => 'skipped', 'message' => 'Klasifikasi belum selesai — pilih kategori dulu.'];
         $budgetStatus     = null;
         $capexBudgetStatus = null;

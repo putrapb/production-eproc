@@ -20,7 +20,7 @@
   <div class="card" style="margin-bottom: var(--space-lg);">
     <div class="card-body" style="padding: var(--space-md) var(--space-lg);">
       <form method="GET" action="{{ route('audit-logs.index') }}" class="audit-filters-form" style="display: flex; gap: var(--space-md); flex-wrap: wrap; align-items: flex-end; width: 100%;">
-        
+
         <div class="form-group" style="flex: 1; min-width: 240px; margin-bottom: 0;">
           <label class="form-label" for="search" style="font-size: 12px; margin-bottom: 6px;">Pencarian Tiket / Aktor</label>
           <input type="text" id="search" name="search" class="form-control" 
@@ -46,7 +46,7 @@
             </svg>
             Cari
           </button>
-          
+
           @if($search || $action)
             <a href="{{ route('audit-logs.index') }}" class="btn btn-secondary" style="height: 38px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none;">
               Reset
@@ -157,7 +157,7 @@
             @endif
           </div>
         </div>
-        
+
         @if($log->ticket)
           <div class="log-card-title">{{ $log->ticket->title }}</div>
         @endif
@@ -173,7 +173,7 @@
               @endif
             </div>
           </div>
-          
+
           <div class="log-card-action">
             @php
               $badgeType = match ($log->action) {

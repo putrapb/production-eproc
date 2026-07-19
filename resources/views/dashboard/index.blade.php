@@ -22,7 +22,6 @@
 
 <div class="page-content">
 
-  {{-- ─── STAT CARDS ─────────────────────────────── --}}
   <div class="stat-grid">
     @if(auth()->user()->isRequester())
       @php $s = $ticketSummary; @endphp
@@ -118,9 +117,8 @@
     @endif
   </div>
 
-  {{-- ─── CHARTS ROW ─────────────────────────────── --}}
   <div class="dashboard-grid dashboard-grid-2-1">
-    {{-- Trend Chart --}}
+
     <div class="card">
       <div class="card-header">
         <div>
@@ -133,7 +131,6 @@
       </div>
     </div>
 
-    {{-- Composition Chart --}}
     <div class="card">
       <div class="card-header">
         <div>
@@ -147,10 +144,8 @@
     </div>
   </div>
 
-  {{-- ─── BOTTOM ROW: Budget + Recent Activity ────── --}}
   <div class="dashboard-grid dashboard-grid-1-1">
 
-    {{-- Budget Utilization Card --}}
     <div class="card">
       <div class="card-header">
         <div>
@@ -221,7 +216,6 @@
       </div>
     </div>
 
-    {{-- Recent Activity Card --}}
     <div class="card">
       <div class="card-header">
         <div>
@@ -365,3 +359,4 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 @endpush
 @endsection
+

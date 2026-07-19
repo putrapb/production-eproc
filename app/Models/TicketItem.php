@@ -27,21 +27,17 @@ class TicketItem extends Model
         ];
     }
 
-    // ─────────────────────────────────────────────
-    // Relationships
-    // ─────────────────────────────────────────────
+    // Relasi
 
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
     }
 
-    // ─────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────
+    // Helper
 
     /**
-     * Get subtotal formatted as Rupiah.
+     * Format rupiah subtotal
      */
     public function getFormattedSubtotalAttribute(): string
     {
@@ -49,7 +45,7 @@ class TicketItem extends Model
     }
 
     /**
-     * Get unit_price formatted as Rupiah.
+     * Format rupiah harga satuan
      */
     public function getFormattedUnitPriceAttribute(): string
     {
@@ -57,10 +53,7 @@ class TicketItem extends Model
     }
 
     /**
-     * Get the effective expenditure_type for this item.
-     *
-     * If the item has its own per-item classification, use it.
-     * Otherwise fall back to the parent ticket's type (for legacy items / null).
+     * Ambil tipe pengeluaran (cek item dulu, jika kosong pakai tipe tiket induk)
      */
     public function getEffectiveExpenditureTypeAttribute(): ?string
     {
@@ -68,7 +61,7 @@ class TicketItem extends Model
             return $this->expenditure_type;
         }
 
-        // Avoid extra query if ticket is already loaded via eager-load
+        // Ambil dari tiket induk (hindari N+1 query jika sudah eager loaded)
         return $this->ticket?->expenditure_type;
     }
 }

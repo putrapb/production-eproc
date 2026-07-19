@@ -23,9 +23,7 @@ class Notification extends Model
         ];
     }
 
-    // ─────────────────────────────────────────────
-    // Relationships
-    // ─────────────────────────────────────────────
+    // Relasi
 
     public function user(): BelongsTo
     {
@@ -37,9 +35,7 @@ class Notification extends Model
         return $this->belongsTo(Ticket::class);
     }
 
-    // ─────────────────────────────────────────────
-    // Scopes
-    // ─────────────────────────────────────────────
+    // Scope pencarian
 
     public function scopeUnread($query)
     {
@@ -51,9 +47,7 @@ class Notification extends Model
         return $query->where('user_id', $userId);
     }
 
-    // ─────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────
+    // Helper
 
     public function markAsRead(): void
     {
@@ -63,7 +57,7 @@ class Notification extends Model
     }
 
     /**
-     * Send a notification to a specific user.
+     * Kirim notifikasi ke user tertentu
      */
     public static function notify(
         int $userId,
@@ -83,7 +77,7 @@ class Notification extends Model
     }
 
     /**
-     * Notify all users with a given role.
+     * Kirim notifikasi ke semua user dengan role tertentu
      */
     public static function notifyRole(
         string $role,

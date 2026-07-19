@@ -169,7 +169,7 @@
       </div>
 
       <div class="topbar-actions">
-        {{-- Notification Bell --}}
+
         <div style="position:relative; display:flex; align-items:center;">
           <button id="notif-bell" onclick="toggleNotifDropdown()" title="Notifikasi"
             style="position:relative; background:none; border:none; cursor:pointer; padding:4px; color:#9ca3af; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:color 0.15s;"
@@ -178,11 +178,10 @@
               <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M13.73 21a2 2 0 01-3.46 0"/>
             </svg>
-            {{-- Bintik merah --}}
+
             <span id="notif-badge" style="display:none; position:absolute; top:2px; right:2px; width:8px; height:8px; background:#ef4444; border-radius:50%; border:2px solid #fff; z-index:1;"></span>
           </button>
 
-          {{-- Notification Dropdown — hidden by default --}}
           <div id="notif-dropdown" onclick="event.stopPropagation()"
             style="display:none; position:absolute; top:calc(100% + 8px); right:0; width:320px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.12); z-index:9999; flex-direction:column; overflow:hidden;">
             <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px 10px; border-bottom:1px solid #f3f4f6;">
@@ -194,7 +193,7 @@
               </div>
             </div>
             <div id="notif-list" style="max-height:340px; overflow-y:auto;">
-              {{-- Diisi JS saat diklik --}}
+
             </div>
           </div>
         </div>
@@ -248,7 +247,6 @@ function closeSidebar() {
   document.body.classList.remove('sidebar-open');
 }
 
-// ── Avatar menu toggle ──────────────────────────
 function toggleAvatarMenu() {
   document.getElementById('avatar-menu').classList.toggle('open');
 }
@@ -258,7 +256,6 @@ document.addEventListener('click', function(e) {
   if (btn && menu && !btn.contains(e.target)) menu.classList.remove('open');
 });
 
-// ── Toast system ────────────────────────────────
 function showToast(type, title, message, duration = 4000) {
   const icons = {
     success: `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>`,
@@ -281,7 +278,6 @@ function showToast(type, title, message, duration = 4000) {
   if (duration > 0) setTimeout(() => toast.remove(), duration);
 }
 
-// ── Auto-fire flash session toasts ─────────────
 @if(session('success'))
   showToast('success', 'Berhasil', @json(session('success')));
 @endif
@@ -295,7 +291,6 @@ function showToast(type, title, message, duration = 4000) {
   showToast('info', 'Informasi', @json(session('info')));
 @endif
 
-// ── Modal helpers ────────────────────────────────
 function openModal(id) {
   document.getElementById(id).classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -311,7 +306,6 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   });
 });
 
-// ── Notification Bell (Polling every 5s) ─────────
 const notifBell      = document.getElementById('notif-bell');
 const notifDropdown  = document.getElementById('notif-dropdown');
 const notifBadge     = document.getElementById('notif-badge');
@@ -468,7 +462,6 @@ function checkEmptyNotif() {
   }
 }
 
-
 // Polling badge setiap 5 detik (background), hanya jalan kalau tab aktif
 setInterval(() => {
   if (!document.hidden) fetchBadge();
@@ -478,3 +471,4 @@ setInterval(() => {
 @stack('scripts')
 </body>
 </html>
+

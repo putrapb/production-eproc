@@ -18,7 +18,7 @@ class UpdateTicketRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Header
+            // Data utama
             'title'                    => ['required', 'string', 'max:255'],
             'expenditure_type'         => ['required', 'in:CAPEX,OPEX'],
             'category'                 => ['required', 'in:infrastruktur_utama,lisensi_sistem,layanan_pemeliharaan,perlengkapan_operasional'],
@@ -27,13 +27,13 @@ class UpdateTicketRequest extends FormRequest
             'pic_name'                 => ['required', 'array', 'max:2'],
             'pic_name.*'               => ['required', 'string', 'max:255'],
 
-            // Multi-item (maks 9)
+            // Detail item (maksimal 9)
             'items'                    => ['required', 'array', 'min:1', 'max:9'],
             'items.*.item_name'        => ['required', 'string', 'max:255'],
             'items.*.quantity'         => ['required', 'integer', 'min:1'],
             'items.*.unit_price'       => ['required', 'numeric', 'min:1'],
 
-            // Documents (all nullable during edit, because user might not change them)
+            // Dokumen pendukung (opsional saat edit jika tidak ada perubahan)
             'document_files'               => ['nullable', 'array'],
             'document_files.*'             => ['file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'],
             'new_document_files'           => ['nullable', 'array'],

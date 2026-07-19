@@ -26,10 +26,8 @@
 <form method="POST" action="{{ route('otp.verify') }}" id="otp-form">
   @csrf
 
-  {{-- Hidden combined OTP field --}}
   <input type="hidden" name="otp_code" id="otp-combined">
 
-  {{-- OTP visual boxes --}}
   <div class="otp-grid" id="otp-grid">
     @for($i = 0; $i < 6; $i++)
       <input
@@ -135,3 +133,4 @@ const countdownInterval = setInterval(() => {
 </script>
 @endpush
 @endsection
+

@@ -14,7 +14,7 @@ class StoreTicketRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Header
+            // Data utama
             'title'                    => ['required', 'string', 'max:255'],
             'expenditure_type'         => ['required', 'in:CAPEX,OPEX'],
             'category'                 => ['required', 'in:infrastruktur_utama,lisensi_sistem,layanan_pemeliharaan,perlengkapan_operasional'],
@@ -23,13 +23,13 @@ class StoreTicketRequest extends FormRequest
             'pic_name'                 => ['required', 'array', 'max:2'],
             'pic_name.*'               => ['required', 'string', 'max:255'],
 
-            // Multi-item (maks 9)
+            // Detail item (maksimal 9)
             'items'                    => ['required', 'array', 'min:1', 'max:9'],
             'items.*.item_name'        => ['required', 'string', 'max:255'],
             'items.*.quantity'         => ['required', 'integer', 'min:1'],
             'items.*.unit_price'       => ['required', 'numeric', 'min:1'],
 
-            // Documents
+            // Dokumen pendukung
             'document_files'           => ['required', 'array', 'min:1'],
             'document_files.*'         => ['required', 'file', 'mimes:pdf', 'mimetypes:application/pdf', 'max:10240'],
             'document_descriptions'    => ['required', 'array', 'min:1'],

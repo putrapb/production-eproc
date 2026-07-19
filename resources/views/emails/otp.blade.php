@@ -11,7 +11,6 @@
       <td align="center">
         <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
 
-          {{-- Header --}}
           <tr>
             <td style="background:#006885;padding:28px 36px;">
               <div style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:0.5px;">
@@ -23,7 +22,6 @@
             </td>
           </tr>
 
-          {{-- Body --}}
           <tr>
             <td style="padding:36px 36px 28px;">
               <p style="margin:0 0 16px;font-size:14px;color:#333;">Halo,</p>
@@ -32,7 +30,6 @@
                 Kode ini hanya berlaku selama <strong>{{ $ttlMinutes }} menit</strong>.
               </p>
 
-              {{-- OTP Code Box --}}
               <div style="text-align:center;margin:28px 0;">
                 <div style="display:inline-block;background:#f0f7fa;border:2px dashed #006885;border-radius:8px;padding:20px 40px;">
                   <div style="font-size:36px;font-weight:bold;letter-spacing:12px;color:#006885;">
@@ -47,14 +44,12 @@
             </td>
           </tr>
 
-          {{-- Divider --}}
           <tr>
             <td style="padding:0 36px;">
               <hr style="border:none;border-top:1px solid #eee;margin:0;">
             </td>
           </tr>
 
-          {{-- Footer --}}
           <tr>
             <td style="padding:20px 36px;background:#f9fbfc;">
               <p style="margin:0;font-size:11px;color:#aaa;text-align:center;line-height:1.6;">
@@ -70,3 +65,4 @@
   </table>
 </body>
 </html>
+

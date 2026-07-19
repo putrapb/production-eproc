@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Form Pengadaan | FORM-{{ str_pad($ticket->id, 6, '0', STR_PAD_LEFT) }}</title>
     <style>
-        /* ─── Reset & Base ─────────────────────────────── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
@@ -15,14 +14,12 @@
             line-height: 1.5;
         }
 
-        /* ─── Document Wrapper ──────────────────────────── */
         .page {
             padding: 0;
             max-width: 800px;
             margin: 0 auto;
         }
 
-        /* ─── Header Band ───────────────────────────────── */
         .header-band {
             background: #006885;
             padding: 0;
@@ -71,7 +68,6 @@
             margin-top: 4px;
         }
 
-        /* ─── Meta Strip ────────────────────────────────── */
         .meta-strip {
             background: #f0f7fa;
             border-bottom: 2px solid #006885;
@@ -98,12 +94,10 @@
             margin-top: 2px;
         }
 
-        /* ─── Body Padding ──────────────────────────────── */
         .body {
             padding: 24px 28px;
         }
 
-        /* ─── Section Header ────────────────────────────── */
         .section-header {
             display: table;
             width: 100%;
@@ -120,7 +114,6 @@
             letter-spacing: 1px;
         }
 
-        /* ─── Two-column Info Grid ──────────────────────── */
         .info-grid {
             display: table;
             width: 100%;
@@ -154,7 +147,6 @@
             font-size: 11px;
         }
 
-        /* ─── Amount Highlight ──────────────────────────── */
         .amount-box {
             background: #006885;
             border-radius: 6px;
@@ -207,7 +199,6 @@
             border: 1px solid rgba(255,255,255,0.4);
         }
 
-        /* ─── Approval Table ────────────────────────────── */
         .approval-table {
             width: 100%;
             border-collapse: collapse;
@@ -248,7 +239,6 @@
         .pill-gray   { background: #f0f0f0; color: #555; }
         .pill-orange { background: #fff3e6; color: #c0560a; }
 
-        /* ─── Signature Block ───────────────────────────── */
         .signature-row {
             display: table;
             width: 100%;
@@ -310,7 +300,6 @@
             letter-spacing: 1px;
         }
 
-        /* ─── Footer ────────────────────────────────────── */
         .footer-band {
             margin-top: 24px;
             background: #f0f7fa;
@@ -334,7 +323,6 @@
             vertical-align: middle;
         }
 
-        /* ─── Utility ───────────────────────────────────── */
         .text-muted { color: #888; font-style: italic; }
         .bold { font-weight: bold; }
         .divider {
@@ -343,7 +331,6 @@
             margin: 16px 0;
         }
 
-        /* ─── Items Table ───────────────────────────────── */
         .items-table {
             width: 100%;
             border-collapse: collapse;
@@ -376,7 +363,6 @@
 <body>
 <div class="page">
 
-    {{-- ═══ HEADER BAND ═══ --}}
     <div class="header-band">
         <div class="header-left">
             <div class="org-name">Internal System</div>
@@ -388,7 +374,6 @@
         </div>
     </div>
 
-    {{-- ═══ META STRIP ═══ --}}
     <div class="meta-strip">
         <div class="meta-item">
             <div class="meta-label">Tanggal Terbit</div>
@@ -411,10 +396,8 @@
         </div>
     </div>
 
-    {{-- ═══ BODY ═══ --}}
     <div class="body">
 
-        {{-- ─── Nominal ─── --}}
         <div class="amount-box">
             <div class="amount-label-cell">
                 Total Nilai Pengadaan<br>
@@ -431,11 +414,10 @@
             </div>
         </div>
 
-        {{-- ─── Detail Pengadaan ─── --}}
         <div class="section-header">
             <div class="section-title">A. Informasi Pengadaan</div>
         </div>
-        
+
         <!-- Metadata Pengadaan -->
         <div class="info-grid" style="margin-bottom: 8px;">
             <div class="info-row">
@@ -496,7 +478,6 @@
             </tbody>
         </table>
 
-        {{-- ─── Requester ─── --}}
         <div class="section-header" style="margin-top:16px;">
             <div class="section-title">B. Data Pengaju</div>
         </div>
@@ -525,7 +506,6 @@
             @endif
         </div>
 
-        {{-- ─── Riwayat Persetujuan ─── --}}
         <div class="section-header" style="margin-top:16px;">
             <div class="section-title">C. Rantai Persetujuan</div>
         </div>
@@ -561,7 +541,6 @@
             </tbody>
         </table>
 
-        {{-- ─── Informasi Penerbitan ─── --}}
         <div style="page-break-before: always;">
         <div class="section-header" style="margin-top:22px;">
             <div class="section-title">D. Informasi Penerbitan Form</div>
@@ -583,9 +562,8 @@
 
         <hr class="divider">
 
-        {{-- ─── Tanda Tangan ─── --}}
         <div class="signature-row">
-            {{-- Requester --}}
+
             <div class="signature-cell">
                 <div class="sig-role">Dibuat oleh / Requester</div>
                 <div class="sig-name-box">
@@ -604,7 +582,6 @@
                 </div>
             </div>
 
-            {{-- Team Leader --}}
             <div class="signature-cell">
                 <div class="sig-role">Diterbitkan oleh / Team Leader</div>
                 <div class="sig-name-box">
@@ -622,7 +599,6 @@
                 </div>
             </div>
 
-            {{-- Division Head --}}
             @php
                 $divHeadLog = $ticket->approvalLogs->filter(fn($l) => $l->action === 'approved')->sortByDesc('created_at')->first();
             @endphp
@@ -643,9 +619,8 @@
         </div>
 
         </div>
-    </div>{{-- end .body --}}
+    </div>
 
-    {{-- ═══ FOOTER BAND ═══ --}}
     <div class="footer-band">
         <div class="footer-left">
             Helpdesk E-Procurement Pejompongan &nbsp;&middot;&nbsp; Departemen IHS
@@ -659,3 +634,4 @@
 </div>
 </body>
 </html>
+

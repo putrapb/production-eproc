@@ -47,7 +47,6 @@
     <div class="card">
       <div class="card-body">
 
-        {{-- SECTION: Informasi Pengadaan --}}
         <div class="detail-section-title">Informasi Pengadaan</div>
 
         <div class="form-group">
@@ -139,7 +138,6 @@
 
         <hr class="divider">
 
-        {{-- SECTION: Daftar Item --}}
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
           <div class="detail-section-title" style="margin-bottom:0;">Daftar Item Pengadaan <span class="required">*</span></div>
           <button type="button" id="btn-add-item" class="btn btn-outline btn-sm" style="display:none;">
@@ -195,7 +193,7 @@
                   <td style="padding:6px 12px; text-align:right; font-size:13px; font-weight:600;" class="item-subtotal">
                     Rp {{ (isset($oldItem['unit_price']) && isset($oldItem['quantity'])) ? number_format($oldItem['unit_price'] * $oldItem['quantity'], 0, ',', '.') : '0' }}
                   </td>
-                  {{-- Editable: per-item CAPEX/OPEX classification --}}
+
                   <td style="padding:4px 6px;">
                     <select name="items[{{ $i }}][expenditure_type]" class="form-control" style="font-size:12px; padding:5px 8px; min-width:90px;" required
                       title="Klasifikasi anggaran untuk item ini">
@@ -224,9 +222,8 @@
 
         <hr class="divider">
 
-        {{-- SECTION: Dokumen --}}
         <div class="detail-section-title">Dokumen Pendukung</div>
-        
+
         <div style="display:flex; flex-direction:column; gap:var(--space-md); margin-bottom:var(--space-xl);">
           @foreach($ticket->documents as $doc)
             <div style="background:var(--color-surface-soft); padding:var(--space-md); border-radius:var(--radius-md); border:1px solid var(--color-border);">
@@ -297,11 +294,11 @@
   function formatItemPrice(input) {
     const rawVal = parseRupiah(input.value);
     input.value = rawVal === 0 ? '' : formatRupiah(rawVal);
-    
+
     // Update hidden field
     const row = input.closest('.item-row');
     row.querySelector('.item-price-raw').value = rawVal === 0 ? '' : rawVal;
-    
+
     recalcRow(input);
   }
 
@@ -309,10 +306,10 @@
     const row = el.closest('.item-row');
     const qty = parseInt(row.querySelector('.item-qty').value) || 0;
     const price = parseInt(row.querySelector('.item-price-raw').value) || 0;
-    
+
     const subtotal = qty * price;
     row.querySelector('.item-subtotal').textContent = 'Rp ' + formatRupiah(subtotal);
-    
+
     recalcGrandTotal();
   }
 
@@ -333,7 +330,7 @@
       showToast('error', 'Batas Maksimal', 'Anda hanya dapat menambahkan maksimal 9 item.');
       return;
     }
-    
+
     const nextIdx = rows.length;
     const newRow = document.createElement('tr');
     newRow.className = 'item-row';
@@ -357,7 +354,7 @@
       </td>
     `;
     tbody.appendChild(newRow);
-    
+
     // Tampilkan semua tombol hapus jika row > 1
     updateRemoveButtons();
   }
@@ -375,7 +372,7 @@
   function updateRowNumbers() {
     document.querySelectorAll('#items-body .item-row').forEach((row, idx) => {
       row.querySelector('.item-no').textContent = idx + 1;
-      
+
       // Update name attributes to keep array contiguous
       row.querySelector('input[name$="[item_name]"]').name = `items[${idx}][item_name]`;
       row.querySelector('input[name$="[quantity]"]').name = `items[${idx}][quantity]`;
@@ -395,7 +392,7 @@
     let firstMatch = null;
     let foundCurrent = false;
     const currentVal = catSelect.value;
-    
+
     options.forEach(opt => {
       if (opt.getAttribute('data-type') === expType) {
         opt.style.display = 'block';
@@ -414,7 +411,7 @@
   function addPicRow() {
     const container = document.getElementById('pic-container');
     if (container.children.length >= 2) return;
-    
+
     const div = document.createElement('div');
     div.className = 'pic-row';
     div.style.cssText = 'display:flex; gap:var(--space-sm); align-items:center;';
@@ -427,9 +424,9 @@
       </button>
     `;
     container.appendChild(div);
-    
+
     document.getElementById('btn-add-pic').style.display = 'none';
-    
+
     const removeBtns = container.querySelectorAll('.btn-danger');
     removeBtns.forEach(btn => btn.style.display = 'inline-flex');
   }
@@ -437,9 +434,9 @@
   function removePicRow(btn) {
     const container = document.getElementById('pic-container');
     btn.closest('.pic-row').remove();
-    
+
     document.getElementById('btn-add-pic').style.display = 'inline-flex';
-    
+
     if (container.children.length === 1) {
       container.querySelector('.btn-danger').style.display = 'none';
     }
@@ -489,3 +486,4 @@
 </script>
 @endpush
 @endsection
+

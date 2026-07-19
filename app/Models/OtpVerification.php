@@ -24,9 +24,7 @@ class OtpVerification extends Model
         ];
     }
 
-    // ─────────────────────────────────────────────
     // Query Scopes
-    // ─────────────────────────────────────────────
 
     public function scopeValid($query)
     {
@@ -38,9 +36,7 @@ class OtpVerification extends Model
         return $query->where('email', $email);
     }
 
-    // ─────────────────────────────────────────────
     // Helpers
-    // ─────────────────────────────────────────────
 
     public function isExpired(): bool
     {

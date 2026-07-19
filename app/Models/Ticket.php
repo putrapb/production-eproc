@@ -12,45 +12,33 @@ class Ticket extends Model
 {
     use HasFactory;
 
-    // ─────────────────────────────────────────────
-    // Status Constants
-    // ─────────────────────────────────────────────
+    // Konstanta status
 
     const STATUS_PENDING_REVIEW    = 'pending_review';
     const STATUS_REVISION          = 'revision';
     const STATUS_NEED_TO_VALIDATE  = 'need_to_validate';
-    const STATUS_PENDING_DEPT_HEAD = 'pending_dept_head';  // Menunggu Department Head (decision maker)
+    const STATUS_PENDING_DEPT_HEAD = 'pending_dept_head';  // menunggu dept head
     const STATUS_DECLINED          = 'declined';
     const STATUS_APPROVED          = 'approved';
-    const STATUS_FORM_GENERATED    = 'form_generated';     // Form pengadaan diterbitkan oleh Team Leader
+    const STATUS_FORM_GENERATED    = 'form_generated';     // form diterbitkan TL
 
-    // ─────────────────────────────────────────────
-    // Category Constants
-    // ─────────────────────────────────────────────
+    // Kategori aset
 
-    // Asset class categories (4 corporate standard classes)
-    const CATEGORY_INFRASTRUKTUR_UTAMA      = 'infrastruktur_utama';      // Server, network, devices
-    const CATEGORY_LISENSI_SISTEM           = 'lisensi_sistem';           // Software licenses, SaaS
-    const CATEGORY_LAYANAN_PEMELIHARAAN     = 'layanan_pemeliharaan';     // Maintenance, managed services
-    const CATEGORY_PERLENGKAPAN_OPERASIONAL = 'perlengkapan_operasional'; // Stationery, operational supplies
+    // Klasifikasi standar perusahaan
+    const CATEGORY_INFRASTRUKTUR_UTAMA      = 'infrastruktur_utama';      // hardware/jaringan
+    const CATEGORY_LISENSI_SISTEM           = 'lisensi_sistem';           // lisensi/SaaS
+    const CATEGORY_LAYANAN_PEMELIHARAAN     = 'layanan_pemeliharaan';     // jasa/maintenance
+    const CATEGORY_PERLENGKAPAN_OPERASIONAL = 'perlengkapan_operasional'; // ATK/operasional
 
-    // ─────────────────────────────────────────────
-    // Expenditure Type Constants
-    // ─────────────────────────────────────────────
+    // Tipe pengeluaran
 
     const TYPE_CAPEX = 'CAPEX';
     const TYPE_OPEX  = 'OPEX';
-    /**
-     * H-1 Security: Gunakan $guarded instead of $fillable.
-     * Field di bawah ini adalah field yang paling sensitif dan TIDAK BOLEH
-     * pernah di-assign dari input user secara langsung.
-     * Semua field lain bisa di-mass-assign, tapi controller wajib menggunakan
-     * Form Request yang sudah divalidasi — jangan pernah pakai $request->all().
-     */
+    // Field sensitif yang tidak boleh di-mass-assign langsung
     protected $guarded = [
         'id',
-        'is_cross_fund',   // diset hanya oleh logika cross-fund internal
-        'form_path',       // alias untuk document_po_path — diset oleh PO generator
+        'is_cross_fund',   // diatur oleh internal silang dana
+        'form_path',       // diatur otomatis oleh generator
     ];
 
     protected function casts(): array
@@ -62,9 +50,7 @@ class Ticket extends Model
         ];
     }
 
-    // ─────────────────────────────────────────────
-    // Relationships
-    // ─────────────────────────────────────────────
+    // Relasi
 
     public function user(): BelongsTo
     {
@@ -91,9 +77,7 @@ class Ticket extends Model
         return $this->hasMany(TicketItem::class, 'ticket_id')->orderBy('id');
     }
 
-    // ─────────────────────────────────────────────
-    // Query Scopes
-    // ─────────────────────────────────────────────
+    // Query scope
 
     /** Tiket milik requester tertentu */
     public function scopeForRequester($query, int $userId)
@@ -131,19 +115,19 @@ class Ticket extends Model
         return $query->where('status', self::STATUS_APPROVED);
     }
 
-    /** Filter tiket yang relevan berdasarkan role pengguna */
+    /** Filter tiket yang sesuai porsi role */
     public function scopeForRole($query, User $user)
     {
         return match ($user->role) {
             'requester'       => $query->where('user_id', $user->id),
-            // Team Leader: cek dokumen (pending_review) + generate form (approved) + arsip (form_generated)
+            // TL melihat tiket aksi dan arsip
             'team_leader'     => $query->whereIn('status', [
                 self::STATUS_PENDING_REVIEW,
                 self::STATUS_APPROVED,
                 self::STATUS_DECLINED,
                 self::STATUS_FORM_GENERATED,
             ]),
-            // Department Head: keputusan final (pending_dept_head) + arsip
+            // DH melihat tiket keputusan dan arsip
             'department_head' => $query->whereIn('status', [
                 self::STATUS_PENDING_DEPT_HEAD,
                 self::STATUS_APPROVED,
@@ -154,9 +138,7 @@ class Ticket extends Model
         };
     }
 
-    // ─────────────────────────────────────────────
-    // Status Helpers
-    // ─────────────────────────────────────────────
+    // Helper status
 
     public function isPendingReview(): bool
     {
@@ -193,15 +175,13 @@ class Ticket extends Model
         return $this->status === self::STATUS_FORM_GENERATED;
     }
 
-    /** @deprecated Use isFormGenerated() — kept for backward compatibility with old data */
+    /** Kompatibilitas data lama */
     public function isPoGenerated(): bool
     {
         return $this->isFormGenerated();
     }
 
-    /**
-     * Get human-readable status label (Bahasa Indonesia).
-     */
+    /** Label status untuk UI */
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
@@ -216,9 +196,7 @@ class Ticket extends Model
         };
     }
 
-    /**
-     * Get semantic color class for status badge.
-     */
+    /** Warna badge status di UI */
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {
@@ -233,10 +211,7 @@ class Ticket extends Model
         };
     }
 
-    /**
-     * Get who currently "holds the ball" for this ticket.
-     * Returns the role label of who needs to act next.
-     */
+    /** Siapa yang memegang kendali tiket (pemegang bola) */
     public function getBallHolderAttribute(): string
     {
         if ($this->pending_with_role) {
@@ -298,9 +273,7 @@ class Ticket extends Model
         return 'Rp ' . number_format($this->total_amount, 0, ',', '.');
     }
 
-    // ─────────────────────────────────────────────
     // Column Alias Accessors (for template readability)
-    // ─────────────────────────────────────────────
 
     public function getIzinPrinsipPathAttribute(): ?string
     {

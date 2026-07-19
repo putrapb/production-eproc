@@ -28,12 +28,10 @@ class Budget extends Model
         ];
     }
 
-    // ─────────────────────────────────────────────
-    // Computed Properties
-    // ─────────────────────────────────────────────
+    // Properti kalkulasi
 
     /**
-     * Available balance = total_limit - locked_amount - used_amount
+     * Sisa anggaran yang tersedia
      */
     public function getAvailableBalanceAttribute(): float
     {
@@ -43,7 +41,7 @@ class Budget extends Model
     }
 
     /**
-     * Utilization percentage (used + locked) / total_limit * 100
+     * Persentase serapan anggaran
      */
     public function getUtilizationPercentageAttribute(): float
     {
@@ -57,9 +55,7 @@ class Budget extends Model
         );
     }
 
-    // ─────────────────────────────────────────────
-    // Query Scopes
-    // ─────────────────────────────────────────────
+    // Scope pencarian
 
     public function scopeForCurrentYear($query)
     {
@@ -76,12 +72,10 @@ class Budget extends Model
         return $query->where('expenditure_type', Ticket::TYPE_OPEX);
     }
 
-    // ─────────────────────────────────────────────
-    // Budget Operations
-    // ─────────────────────────────────────────────
+    // Operasi anggaran
 
     /**
-     * Find the budget record for a given expenditure type and category in current fiscal year.
+     * Cari pagu anggaran berdasarkan tipe dan kategori di tahun berjalan
      */
     public static function findForTicket(string $expenditureType, string $category, int $fiscalYear, bool $lock = true): ?self
     {
@@ -97,7 +91,7 @@ class Budget extends Model
     }
 
     /**
-     * Temporarily lock budget amount (Gate 4 — budget reservation).
+     * Kunci anggaran sementara saat pengajuan
      */
     public function lock(float $amount): void
     {
@@ -105,7 +99,7 @@ class Budget extends Model
     }
 
     /**
-     * Release temporary lock (on decline or cancel).
+     * Lepaskan kunci anggaran (saat ditolak atau batal)
      */
     public function unlock(float $amount): void
     {
@@ -113,7 +107,7 @@ class Budget extends Model
     }
 
     /**
-     * Convert temporary lock to permanent deduction (on Division Head approval).
+     * Potong anggaran permanen setelah disetujui
      */
     public function permanentDeduct(float $amount): void
     {

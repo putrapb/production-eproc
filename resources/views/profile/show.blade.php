@@ -17,13 +17,12 @@
 <div class="page-content">
   <div class="profile-grid">
 
-    {{-- Profile Card --}}
     <div class="card">
       <div class="card-header">
         <div class="heading-sm">Informasi Akun</div>
       </div>
       <div class="card-body">
-        {{-- Avatar Display --}}
+
         <div style="display:flex; align-items:center; gap:var(--space-lg); margin-bottom:var(--space-xl); padding-bottom:var(--space-xl); border-bottom:1px solid var(--color-hairline-soft);">
           <div style="width:64px; height:64px; border-radius:50%; background:var(--color-primary-soft); color:var(--color-primary); font-size:22px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
             {{ auth()->user()->initials }}
@@ -66,7 +65,6 @@
       </div>
     </div>
 
-    {{-- Change Password Card --}}
     <div class="card">
       <div class="card-header">
         <div class="heading-sm">Ubah Password</div>
@@ -169,3 +167,4 @@ function togglePasswordVisibility(inputId, iconId) {
 </script>
 @endpush
 @endsection
+

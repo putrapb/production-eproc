@@ -26,7 +26,6 @@
   </div>
 </div>
 
-{{-- Filter + Search + Per-page --}}
 <div class="filter-row">
   <div class="filter-tabs">
     <a href="{{ route('tickets.index') }}"
@@ -50,7 +49,7 @@
   </div>
 
   <div style="display:flex; align-items:center; gap:var(--space-sm);">
-    {{-- Per-page selector --}}
+
     <div style="display:flex; align-items:center; gap:6px; font-size:13px; color:var(--color-muted);">
       <span>Tampilkan:</span>
       @foreach([10, 25, 50, 100] as $size)
@@ -64,7 +63,6 @@
       @endforeach
     </div>
 
-    {{-- Filter Pending Dengan (Transkrip 2) --}}
     <div style="display:inline-flex; align-items:center;">
       <select id="pending-with-select" onchange="applyPendingWith(this.value)"
               style="padding:6px 12px; font-size:13px; border:1px solid var(--color-border); border-radius:var(--radius-md); background:#fff; color:var(--color-text); font-weight:600; outline:none; height:38px; cursor:pointer;">
@@ -75,7 +73,6 @@
       </select>
     </div>
 
-    {{-- Search --}}
     <div class="search-input-wrap">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input
@@ -90,7 +87,6 @@
   </div>
 </div>
 
-{{-- Bulk Action Bar (shown when checkboxes are selected) --}}
 @php
   $isBulkRole = auth()->user()->isTeamLeader() || auth()->user()->isDepartmentHead();
   // TL: bulk review documents from pending_review queue
@@ -106,7 +102,7 @@
   <div class="action-panel-buttons">
 
     @if(auth()->user()->isTeamLeader())
-      {{-- Bulk Review Form: Accept or Reject --}}
+
       <form id="bulk-review-form" method="POST" action="{{ route('tickets.bulk-review') }}" style="margin:0; display:inline-flex; gap:var(--space-sm);">
         @csrf
         <input type="hidden" name="action" id="bulk-review-action" value="">
@@ -146,7 +142,6 @@
   </div>
 </div>
 
-{{-- Modal Custom untuk Bulk Reject Notes --}}
 <div class="modal-overlay" id="modal-bulk-reject-notes" style="z-index:10000;">
   <div class="modal-card">
     <div class="modal-icon danger">
@@ -167,7 +162,6 @@
   </div>
 </div>
 
-{{-- Modal Custom untuk Bulk Accept (Team Leader) --}}
 <div class="modal-overlay" id="modal-bulk-accept-confirm" style="z-index:10000;">
   <div class="modal-card">
     <div class="modal-icon success" style="background: var(--color-success-soft); color: var(--color-success-text);">
@@ -190,7 +184,6 @@
   </div>
 </div>
 
-{{-- Modal Custom untuk Bulk Approve (Dept Head) --}}
 <div class="modal-overlay" id="modal-bulk-approve-confirm" style="z-index:10000;">
   <div class="modal-card">
     <div class="modal-icon success" style="background: var(--color-success-soft); color: var(--color-success-text);">
@@ -214,7 +207,6 @@
 </div>
 @endif
 
-{{-- Table --}}
 <div class="page-content">
   <div class="table-wrapper">
     <table class="data-table" id="tickets-table">
@@ -306,7 +298,6 @@
       </tbody>
     </table>
 
-    {{-- Pagination --}}
     <div style="display:flex; align-items:center; justify-content:space-between; padding:var(--space-md) 0; flex-wrap:wrap; gap:var(--space-sm);">
       <div style="font-size:13px; color:var(--color-muted);">
         Menampilkan {{ $tickets->firstItem() ?? 0 }}–{{ $tickets->lastItem() ?? 0 }} dari {{ $tickets->total() }} tiket
@@ -314,7 +305,7 @@
 
       @if($tickets->hasPages())
         <div class="pagination">
-          {{-- Previous --}}
+
           @if($tickets->onFirstPage())
             <span class="page-link disabled">
               <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
@@ -332,7 +323,6 @@
             </a>
           @endforeach
 
-          {{-- Next --}}
           @if($tickets->hasMorePages())
             <a href="{{ $tickets->nextPageUrl() }}&{{ http_build_query(request()->except('page')) }}" class="page-link">
               <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
@@ -352,7 +342,6 @@
 <script>
 const LS_KEY = '{{ $lsKey ?? "bulk_selected" }}';
 
-// ── Search ────────────────────────────────────────────────────
 function applySearch() {
   const q = document.getElementById('search-input').value;
   const url = new URL(window.location.href);
@@ -370,8 +359,6 @@ function applyPendingWith(val) {
   window.location.href = url.toString();
 }
 
-
-// ── Bulk Selection ────────────────────────────────────────────
 const bulkBar     = document.getElementById('bulk-action-bar');
 const selectAllCb = document.getElementById('select-all-checkbox');
 
@@ -436,22 +423,21 @@ function handleRowClick(e, row) {
   window.location.href = row.dataset.url;
 }
 
-// ── Bulk Custom Modal Handlers ─────────────────────────────────
 let activeBulkActionType = ''; // 'review' or 'decide'
 
 function openBulkRejectModal(type) {
   const checked = getCheckedBoxes();
   if (checked.length === 0) return;
-  
+
   activeBulkActionType = type;
-  
+
   // Reset textarea
   document.getElementById('bulk-reject-textarea').value = '';
-  
+
   // Show modal
   const modal = document.getElementById('modal-bulk-reject-notes');
   if (modal) modal.classList.add('open');
-  
+
   // Set up click handler for the submit button inside modal
   const submitBtn = document.getElementById('btn-submit-bulk-reject');
   submitBtn.onclick = function() {
@@ -460,7 +446,7 @@ function openBulkRejectModal(type) {
       alert('Catatan penolakan wajib diisi!');
       return;
     }
-    
+
     if (activeBulkActionType === 'review') {
       executeBulkReviewReject(notes);
     } else if (activeBulkActionType === 'decide') {
@@ -480,10 +466,10 @@ function executeBulkReviewReject(notes) {
 
   const form      = document.getElementById('bulk-review-form');
   const container = document.getElementById('bulk-review-inputs');
-  
+
   document.getElementById('bulk-review-action').value = 'reject';
   document.getElementById('bulk-review-notes').value  = notes;
-  
+
   container.innerHTML = '';
   checked.forEach(cb => {
     const inp = document.createElement('input');
@@ -492,7 +478,7 @@ function executeBulkReviewReject(notes) {
     inp.value = cb.value;
     container.appendChild(inp);
   });
-  
+
   localStorage.removeItem(LS_KEY);
   closeBulkRejectModal();
   form.submit();
@@ -504,10 +490,10 @@ function executeBulkDecideDecline(notes) {
 
   const form      = document.getElementById('bulk-decide-form');
   const container = document.getElementById('bulk-decide-inputs');
-  
+
   document.getElementById('bulk-action-input').value = 'decline';
   document.getElementById('bulk-decide-notes').value  = notes;
-  
+
   container.innerHTML = '';
   checked.forEach(cb => {
     const inp = document.createElement('input');
@@ -516,13 +502,12 @@ function executeBulkDecideDecline(notes) {
     inp.value = cb.value;
     container.appendChild(inp);
   });
-  
+
   localStorage.removeItem(LS_KEY);
   closeBulkRejectModal();
   form.submit();
 }
 
-// ── Bulk Review - Accept (Team Leader) ─────────────────────────
 function openBulkAcceptModal() {
   const checked = getCheckedBoxes();
   if (checked.length === 0) return;
@@ -544,10 +529,10 @@ function executeBulkAccept() {
 
   const form      = document.getElementById('bulk-review-form');
   const container = document.getElementById('bulk-review-inputs');
-  
+
   document.getElementById('bulk-review-action').value = 'accept';
   document.getElementById('bulk-review-notes').value  = 'Semua dokumen diterima.';
-  
+
   container.innerHTML = '';
   checked.forEach(cb => {
     const inp = document.createElement('input');
@@ -556,13 +541,12 @@ function executeBulkAccept() {
     inp.value = cb.value;
     container.appendChild(inp);
   });
-  
+
   localStorage.removeItem(LS_KEY);
   closeBulkAcceptModal();
   form.submit();
 }
 
-// ── Bulk Decide - Approve (Dept Head) ──────────────────────────
 function openBulkApproveModal() {
   const checked = getCheckedBoxes();
   if (checked.length === 0) return;
@@ -584,9 +568,9 @@ function executeBulkApprove() {
 
   const form      = document.getElementById('bulk-decide-form');
   const container = document.getElementById('bulk-decide-inputs');
-  
+
   document.getElementById('bulk-action-input').value = 'approve';
-  
+
   container.innerHTML = '';
   checked.forEach(cb => {
     const inp = document.createElement('input');
@@ -595,7 +579,7 @@ function executeBulkApprove() {
     inp.value = cb.value;
     container.appendChild(inp);
   });
-  
+
   localStorage.removeItem(LS_KEY);
   closeBulkApproveModal();
   form.submit();
@@ -611,3 +595,4 @@ document.querySelectorAll('.bulk-checkbox').forEach(cb => {
 </script>
 @endpush
 @endsection
+

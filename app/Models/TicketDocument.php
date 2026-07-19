@@ -19,18 +19,14 @@ class TicketDocument extends Model
         'feedback',
     ];
 
-    // ─────────────────────────────────────────────
     // Relationships
-    // ─────────────────────────────────────────────
 
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
     }
 
-    // ─────────────────────────────────────────────
     // Accessors & Helpers
-    // ─────────────────────────────────────────────
 
     public function getStatusLabelAttribute(): string
     {

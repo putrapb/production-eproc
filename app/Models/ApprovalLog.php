@@ -10,22 +10,20 @@ class ApprovalLog extends Model
 {
     use HasFactory;
 
-    // ─────────────────────────────────────────────
-    // Action Constants
-    // ─────────────────────────────────────────────
+    // Konstanta aksi
 
     const ACTION_SUBMITTED            = 'submitted';
-    const ACTION_FOLLOWED_UP          = 'followed_up';       // PFA accept doc
-    const ACTION_REJECTED_DOCUMENT    = 'rejected_document'; // PFA reject doc
-    const ACTION_EDITED               = 'edited';            // Requester edits before review
-    const ACTION_REVISED              = 'revised';           // Requester re-upload after rejection
-    const ACTION_VALIDATED            = 'validated';         // Smart Validation pass
+    const ACTION_FOLLOWED_UP          = 'followed_up';       // TL terima doc
+    const ACTION_REJECTED_DOCUMENT    = 'rejected_document'; // TL tolak doc
+    const ACTION_EDITED               = 'edited';            // Requester perbarui form
+    const ACTION_REVISED              = 'revised';           // Requester perbarui doc
+    const ACTION_VALIDATED            = 'validated';         // Lolos validasi
     const ACTION_CROSS_FUND_REQUESTED = 'cross_fund_requested';
-    const ACTION_FORWARDED            = 'forwarded';         // Team Leader → DeptHead
-    const ACTION_APPROVED             = 'approved';          // DeptHead approve
-    const ACTION_DECLINED             = 'declined';          // DeptHead decline
-    const ACTION_PO_ISSUED            = 'po_issued';         // Legacy PFA generate PO
-    const ACTION_FORM_ISSUED          = 'form_issued';       // Team Leader generate Form
+    const ACTION_FORWARDED            = 'forwarded';         // TL -> DeptHead
+    const ACTION_APPROVED             = 'approved';          // DeptHead setuju
+    const ACTION_DECLINED             = 'declined';          // DeptHead tolak
+    const ACTION_PO_ISSUED            = 'po_issued';         // (Data lama) PFA buat PO
+    const ACTION_FORM_ISSUED          = 'form_issued';       // TL terbitkan form
 
     protected $fillable = [
         'ticket_id',
@@ -35,9 +33,7 @@ class ApprovalLog extends Model
     ];
 
     /**
-     * M-1 Security: ApprovalLog adalah immutable audit trail.
-     * Setelah dibuat (create), entri log TIDAK BOLEH dimodifikasi atau dihapus.
-     * Ini penting untuk kepatuhan compliance & integritas audit trail (PSAK).
+     * Log audit bersifat immutable (tidak boleh diubah/dihapus demi kepatuhan PSAK)
      */
     protected static function booted(): void
     {
@@ -50,9 +46,7 @@ class ApprovalLog extends Model
         });
     }
 
-    // ─────────────────────────────────────────────
-    // Relationships
-    // ─────────────────────────────────────────────
+    // Relasi
 
     public function ticket(): BelongsTo
     {
@@ -65,9 +59,7 @@ class ApprovalLog extends Model
     }
 
 
-    // ─────────────────────────────────────────────
     // Display Helpers
-    // ─────────────────────────────────────────────
 
     /**
      * Get human-readable action label (Bahasa Indonesia).
