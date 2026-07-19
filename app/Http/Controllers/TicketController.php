@@ -21,7 +21,7 @@ class TicketController extends Controller
     public function __construct(private SmartValidationService $smartValidation) {}
 
     /**
-     * Display role-filtered ticket list.
+     * Daftar tiket, difilter berdasarkan role user yang login.
      */
     public function index(Request $request): View
     {
@@ -147,13 +147,13 @@ class TicketController extends Controller
     }
 
     /**
-     * Display detailed ticket information with approval log.
+     * Tampilkan detail tiket beserta riwayat persetujuannya.
      */
     public function show(Ticket $ticket, Request $request): View
     {
         $user = $request->user();
 
-        // Ensure the user has access to this ticket based on their role
+        // Pastikan user punya akses ke tiket ini
         $this->authorizeView($ticket, $user);
 
         $ticket->load(['user', 'approvalLogs.user', 'items', 'documents']);
@@ -162,7 +162,7 @@ class TicketController extends Controller
     }
 
     /**
-     * Show form for creating a new ticket. (Requester only)
+     * Tampilkan form buat tiket baru. (Requester only)
      */
     public function create(): View
     {
@@ -277,7 +277,7 @@ class TicketController extends Controller
     }
 
     /**
-     * Show revision form for re-uploading document. (Requester, status: revision)
+     * Tampilkan form edit tiket. (Requester, status: revision atau pending_review)
      */
     public function edit(Ticket $ticket, Request $request): View|RedirectResponse
     {
@@ -291,7 +291,7 @@ class TicketController extends Controller
     }
 
     /**
-     * Handle full ticket revision. (Requester, status: revision or pending_review)
+     * Simpan perubahan tiket yang diedit. (Requester, status: revision atau pending_review)
      */
     public function update(\App\Http\Requests\UpdateTicketRequest $request, Ticket $ticket): RedirectResponse
     {
@@ -388,7 +388,7 @@ class TicketController extends Controller
     }
 
     /**
-     * PFA: Review the izin prinsip document — accept or reject.
+     * Team Leader: review dokumen pendukung — terima atau tolak per dokumen.
      */
     public function review(Request $request, Ticket $ticket): RedirectResponse
     {
@@ -938,9 +938,7 @@ class TicketController extends Controller
         return response()->file($path, $headers);
     }
 
-    // ──────────────────────────────────────────────────────────
-    // Public Verification
-    // ──────────────────────────────────────────────────────────
+    // Verifikasi publik (link QR code di dokumen)
 
     public function verifyPublic(Request $request, Ticket $ticket)
     {
@@ -960,9 +958,7 @@ class TicketController extends Controller
         ]);
     }
 
-    // ──────────────────────────────────────────────────────────
-    // Private Helpers
-    // ──────────────────────────────────────────────────────────
+    // Helper privat
 
     private function ensureStatus(Ticket $ticket, string $expectedStatus): void
     {

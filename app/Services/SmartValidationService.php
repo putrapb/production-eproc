@@ -11,38 +11,26 @@ use Illuminate\Support\Facades\DB;
 /**
  * SmartValidationService
  *
- * Executes the 4-Gate validation engine sequentially.
- * Each gate runs only if the previous gate passed.
+ * Menjalankan validasi 4-Gate secara berurutan sebelum tiket diteruskan ke Dept Head.
+ * Setiap gate hanya berjalan jika gate sebelumnya lolos.
  *
- * Gate 1 — Duplicate Check              (soft warning: user can override)
- * Gate 2 — Nominal Validation           (soft warning: user can override if > 99B)
- * Gate 3 — CAPEX/OPEX Classification   (industry-based per PSAK 16 & 19, soft warning if mismatch)
- * Gate 4 — Budget Availability Check   (hard: insufficient budget = block)
+ * Gate 1 - Cek Duplikasi          (peringatan lunak, bisa di-override user)
+ * Gate 2 - Validasi Nominal       (peringatan lunak jika > 99M, hard fail jika <= 0)
+ * Gate 3 - Klasifikasi CAPEX/OPEX (berbasis PSAK 16 & 19, peringatan jika tidak cocok)
+ * Gate 4 - Ketersediaan Anggaran  (keras: blokir jika saldo tidak cukup)
  *
- * Classification rules (Gate 3) — based on PSAK 16 (Aset Tetap) & PSAK 19 (Aset Takberwujud):
- *
- *  infrastruktur_utama      → CAPEX  (server, storage, network hardware = fixed asset per PSAK 16)
- *  lisensi_sistem           → depends on item keywords:
- *                               OPEX keywords (subscription/SaaS/cloud/langganan/sewa) → OPEX
- *                               else → CAPEX (perpetual license = intangible asset per PSAK 19)
- *  layanan_pemeliharaan     → OPEX   (recurring maintenance/managed service = operational cost)
- *  perlengkapan_operasional → OPEX   (consumables, not capitalized)
+ * Aturan klasifikasi Gate 3 (PSAK 16 Aset Tetap & PSAK 19 Aset Takberwujud):
+ *  infrastruktur_utama      -> CAPEX (server, storage, hardware jaringan)
+ *  lisensi_sistem           -> tergantung kata kunci item:
+ *                               OPEX jika ada kata kunci SaaS/cloud/langganan/sewa
+ *                               CAPEX jika lisensi perpetual (aset takberwujud)
+ *  layanan_pemeliharaan     -> OPEX (biaya pemeliharaan rutin)
+ *  perlengkapan_operasional -> OPEX (perlengkapan habis pakai)
  */
 class SmartValidationService
 {
     /**
-     * Run the 4-gate validation engine.
-     *
-     * @return array{
-     *   success: bool,
-     *   gate: int,
-     *   message: string,
-     *   needs_duplicate_confirmation: bool,
-     *   needs_nominal_confirmation: bool,
-     *   over_budget: bool,
-     *   classified_type: string|null,
-     *   available_balance: float|null,
-     * }
+     * Jalankan 4-gate validation untuk sebuah tiket.
      */
     public function run(
         Ticket $ticket,
@@ -51,13 +39,13 @@ class SmartValidationService
         bool   $nominalConfirmed        = false,
         bool   $classificationConfirmed = false
     ): array {
-        // Guard: ticket must be in 'need_to_validate' status
+        // Tiket harus dalam status need_to_validate
         if (! $ticket->isNeedToValidate()) {
             return $this->fail(0, 'Tiket tidak dalam status yang dapat divalidasi.');
         }
 
-        // ─────────────── GATE 1: Duplicate Check ───────────────
-        // Soft warning — user can override by confirming
+        // Gate 1: cek duplikasi pengajuan yang mirip
+        // Kalau sudah dikonfirmasi user, skip gate ini
         if (! $duplicateConfirmed) {
             $gate1 = $this->gate1DuplicateCheck($ticket, $requester);
             if ($gate1['has_duplicate']) {
@@ -75,9 +63,7 @@ class SmartValidationService
             }
         }
 
-        // ─────────────── GATE 2: Nominal Validation ───────────────
-        // Hard fail: amount <= 0
-        // Soft warning: amount > max_reasonable (user can confirm to proceed)
+        // Gate 2: cek kewajaran nominal pengajuan
         if (! $nominalConfirmed) {
             $gate2 = $this->gate2NominalValidation($ticket);
             if ($gate2['hard_fail']) {
@@ -98,9 +84,8 @@ class SmartValidationService
             }
         }
 
-        // ─────────────── GATE 3: CAPEX/OPEX Industry Classification ───────────────
-        // System suggests CAPEX/OPEX based on PSAK 16 & 19 rules.
-        // If requester's upfront choice differs → soft warning (can be overridden).
+        // Gate 3: sistem menyarankan CAPEX/OPEX berdasarkan PSAK 16 & 19
+        // Kalau beda sama pilihan requester, tampilkan peringatan lunak
         $suggestedType  = $this->gate3Classification($ticket);
         $requesterType  = $ticket->expenditure_type; // already set by requester at create-time
         $typeMismatch   = $requesterType && ($suggestedType !== $requesterType);
@@ -119,7 +104,7 @@ class SmartValidationService
             ];
         }
 
-        // Use requester's choice if they confirmed mismatch, otherwise use system suggestion
+        // Pakai pilihan requester jika mereka mengkonfirmasi ketidaksesuaian, selain itu pakai saran sistem
         $classifiedType = ($typeMismatch && $classificationConfirmed)
             ? $requesterType
             : $suggestedType;
@@ -128,18 +113,9 @@ class SmartValidationService
             $ticket->update(['expenditure_type' => $classifiedType]);
         });
 
-        // ─────────────── GATE 4: Budget Availability Check (READ-ONLY) ───────────────
-        //
-        // NOTE: Budget is NO LONGER locked here. Locking happens only after:
-        //  - Cross-fund confirmation (applyCrossFund)
-        // This allows users to see the budget situation before committing.
-        //
-        // Budget check uses a 3-tier monthly rule:
-        //  - Tier 1: amount <= monthly_limit (annual/12) → pass normally
-        //  - Tier 2: monthly_limit < amount <= monthly_limit * 1.30 → pass with tolerance (10–30% over)
-        //  - Tier 3: amount > monthly_limit * 1.30 → mandatory cross-fund (> 30% over monthly limit)
-        //
-        // We calculate CAPEX and OPEX totals per-item and validate them against their respective budgets.
+        // Gate 4: cek ketersediaan anggaran
+        // Budget dikunci di sini kalau lolos, bukan sebelumnya
+        // Hitungan pakai aturan monthly limit: >30% dari batas bulanan = wajib silang dana
         $gate4Result = DB::transaction(function () use ($ticket, $requester) {
             $capexTotal = 0.0;
             $opexTotal  = 0.0;
@@ -242,10 +218,8 @@ class SmartValidationService
     }
 
     /**
-     * Apply cross-fund: flag ticket, lock alternate budget, advance to pending_team_leader.
-     *
-     * When OPEX is over-budget → try CAPEX of same category, and vice versa.
-     * Budget lock happens HERE (not in Gate 4) per Revisi 3.
+     * Jalankan silang dana: kunci anggaran alternatif dan teruskan tiket ke Dept Head.
+     * Dipanggil saat Gate 4 gagal karena over-budget dan requester memilih cross-fund.
      *
      * @return array{success: bool, message: string}
      */
