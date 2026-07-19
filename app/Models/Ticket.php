@@ -72,10 +72,7 @@ class Ticket extends Model
         return $this->hasMany(TicketDocument::class, 'ticket_id');
     }
 
-    public function items(): HasMany
-    {
-        return $this->hasMany(TicketItem::class, 'ticket_id')->orderBy('id');
-    }
+
 
     // Query scope
 

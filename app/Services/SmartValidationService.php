@@ -120,13 +120,11 @@ class SmartValidationService
             $capexTotal = 0.0;
             $opexTotal  = 0.0;
 
-            foreach ($ticket->items as $item) {
-                $type = $item->effective_expenditure_type;
-                if ($type === Ticket::TYPE_CAPEX) {
-                    $capexTotal += (float) $item->subtotal;
-                } elseif ($type === Ticket::TYPE_OPEX) {
-                    $opexTotal += (float) $item->subtotal;
-                }
+            $type = $classifiedType ?? $ticket->expenditure_type;
+            if ($type === Ticket::TYPE_CAPEX) {
+                $capexTotal = (float) $ticket->amount;
+            } else {
+                $opexTotal = (float) $ticket->amount;
             }
 
             $capexBudget = null;
@@ -374,7 +372,7 @@ class SmartValidationService
             'support contract', 'maintenance fee', 'hosting', 'recurring',
         ];
 
-        $itemNames = $ticket->items->pluck('item_name')->map(fn ($n) => strtolower($n))->implode(' ');
+        $itemNames = strtolower($ticket->item_name);
 
         foreach ($opexSignals as $signal) {
             if (str_contains($itemNames, $signal)) {
