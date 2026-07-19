@@ -319,14 +319,14 @@ const notifList      = document.getElementById('notif-list');
 let notifOpen = false;
 
 const typeIcon = {
-  ticket_submitted: '📋',
-  ticket_reviewed:  '✅',
-  ticket_revised:   '📝',
-  ticket_validated: '🔍',
-  ticket_forwarded: '➡️',
-  ticket_approved:  '🎉',
-  ticket_declined:  '❌',
-  po_generated:     '📄',
+  ticket_submitted: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>',
+  ticket_reviewed:  '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>',
+  ticket_revised:   '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  ticket_validated: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>',
+  ticket_forwarded: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>',
+  ticket_approved:  '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  ticket_declined:  '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
+  po_generated:     '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
 };
 
 function toggleNotifDropdown() {
@@ -362,7 +362,7 @@ function renderNotifications(data) {
   if (!notifList) return;
 
   if (!data.notifications || data.notifications.length === 0) {
-    notifList.innerHTML = '<div style="padding:32px 16px; text-align:center; color:var(--color-muted); font-size:13px;"><div style="font-size:28px; margin-bottom:8px;">🔔</div>Belum ada notifikasi di sini.</div>';
+    notifList.innerHTML = '<div style="padding:32px 16px; text-align:center; color:var(--color-muted); font-size:13px;"><div style="margin-bottom:8px; display:flex; justify-content:center;"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:#9ca3af;"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>Belum ada notifikasi di sini.</div>';
     return;
   }
 
@@ -370,7 +370,7 @@ function renderNotifications(data) {
     <div class="notif-item ${n.read ? '' : 'unread'}" data-id="${n.id}"
        style="position:relative; display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-bottom:1px solid #f9fafb; cursor:pointer;"
        onclick="handleNotifClick(${n.id}, '${n.ticket_url || '#'}', this)">
-      <span style="font-size:18px; flex-shrink:0;">${typeIcon[n.type] || '🔔'}</span>
+      <span style="flex-shrink:0; display:flex; align-items:center; color:var(--color-primary);">${typeIcon[n.type] || '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>'}</span>
       <div style="flex:1; min-width:0;">
         <div style="font-weight:600; font-size:13px; color:#111827;">${n.title}</div>
         <div style="font-size:12px; color:#6b7280; margin-top:2px; line-height:1.4; word-break:break-word;">${n.message}</div>
@@ -453,7 +453,7 @@ function deleteNotif(id, btn) {
 
 function clearAllNotif() {
   if (!confirm('Hapus semua notifikasi?')) return;
-  if (notifList) notifList.innerHTML = '<div style="padding:32px 16px; text-align:center; color:#9ca3af; font-size:13px;"><div style="font-size:28px; margin-bottom:8px;">🔔</div>Belum ada notifikasi di sini.</div>';
+  if (notifList) notifList.innerHTML = '<div style="padding:32px 16px; text-align:center; color:#9ca3af; font-size:13px;"><div style="margin-bottom:8px; display:flex; justify-content:center;"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:#9ca3af;"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>Belum ada notifikasi di sini.</div>';
   if (notifBadge) notifBadge.style.display = 'none';
   fetch('/notifications', {
     method: 'DELETE',

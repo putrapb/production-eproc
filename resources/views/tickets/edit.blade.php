@@ -159,7 +159,7 @@
                 <th style="padding:10px 12px; text-align:center; border-bottom:1px solid var(--color-border); width:90px;">Qty <span class="required">*</span></th>
                 <th style="padding:10px 12px; text-align:right; border-bottom:1px solid var(--color-border); width:200px;">Harga Satuan (Rp) <span class="required">*</span></th>
                 <th style="padding:10px 12px; text-align:right; border-bottom:1px solid var(--color-border); width:140px;">Subtotal</th>
-                <th style="padding:10px 12px; text-align:center; border-bottom:1px solid var(--color-border); width:105px;" title="Klasifikasi anggaran per item: CAPEX atau OPEX">Klasifikasi 🏷️</th>
+                <th style="padding:10px 12px; text-align:center; border-bottom:1px solid var(--color-border); width:105px;" title="Klasifikasi anggaran per item: CAPEX atau OPEX">Klasifikasi <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></th>
                 <th style="padding:10px 12px; border-bottom:1px solid var(--color-border); width:50px;"></th>
               </tr>
             </thead>
@@ -233,9 +233,9 @@
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-xs);">
                 <span style="font-weight:600; font-size:14px; color:var(--color-text);">{{ $doc->description }}</span>
                 @if($doc->isAccepted())
-                  <span class="badge" style="background:var(--color-success-soft); color:var(--color-success); font-weight:600;">✓ Disetujui</span>
+                  <span class="badge" style="background:var(--color-success-soft); color:var(--color-success); font-weight:600; display:inline-flex; align-items:center; gap:4px;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Disetujui</span>
                 @elseif($doc->isRejected())
-                  <span class="badge" style="background:var(--color-error-soft); color:var(--color-error); font-weight:600;">✗ Perlu Revisi</span>
+                  <span class="badge" style="background:var(--color-error-soft); color:var(--color-error); font-weight:600; display:inline-flex; align-items:center; gap:4px;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Perlu Revisi</span>
                 @else
                   <span class="badge" style="background:var(--color-info-soft); color:var(--color-info); font-weight:600;">Pending</span>
                 @endif

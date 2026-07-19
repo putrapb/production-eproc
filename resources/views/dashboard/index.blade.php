@@ -246,7 +246,7 @@
           </a>
         @empty
           <div class="empty-state" style="padding:var(--space-xxl) var(--space-xl);">
-            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-icon"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--color-muted);"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg></div>
             <h3>Belum ada tiket</h3>
             <p>Aktivitas pengadaan akan muncul di sini.</p>
           </div>

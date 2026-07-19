@@ -15,7 +15,10 @@
     <div style="display:flex; align-items:center; gap:var(--space-sm); margin-top:var(--space-xs);">
       <span class="badge badge-{{ str_replace('_','-',$ticket->status) }}">{{ $ticket->status_label }}</span>
       @if($ticket->is_cross_fund)
-        <span class="badge badge-cross-fund">⇄ Silang Dana</span>
+        <span class="badge badge-cross-fund" style="display:inline-flex; align-items:center; gap:4px;">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+          Silang Dana
+        </span>
       @endif
       @if($ticket->expenditure_type)
         <span class="badge badge-{{ strtolower($ticket->expenditure_type) }}">{{ $ticket->expenditure_type }}</span>
@@ -186,7 +189,10 @@
               <div class="detail-field-label">Silang Dana</div>
               <div class="detail-field-value">
                 @if($ticket->is_cross_fund)
-                  <span class="badge badge-cross-fund">⇄ Aktif</span>
+                  <span class="badge badge-cross-fund" style="display:inline-flex; align-items:center; gap:4px;">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+                    Aktif
+                  </span>
                 @else
                   <span class="text-muted">Tidak</span>
                 @endif
@@ -345,7 +351,9 @@
             </div>
           @else
             <div class="empty-state" style="padding:var(--space-xl) 0;">
-              <div style="font-size:32px; margin-bottom:var(--space-sm);">📋</div>
+              <div style="margin-bottom:var(--space-sm); display:flex; justify-content:center;">
+                <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--color-muted);"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+              </div>
               <p class="text-muted">Belum ada riwayat aksi.</p>
             </div>
           @endif

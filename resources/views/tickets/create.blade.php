@@ -444,7 +444,7 @@ function runPreviewValidation() {
   }
 
   btn.disabled = true;
-  btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;">⏳ Mengecek...</span>';
+  btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Mengecek...</span>';
 
   fetch('{{ route("tickets.preview-validation") }}', {
     method: 'POST',
@@ -478,20 +478,20 @@ function renderGateCardModal(data) {
   const submitBtn = document.getElementById('btn-submit-ticket');
   const gates = data.gates || {};
 
-  // Gate labels and icons
+  // Label dan ikon per Gate
   const gateMeta = {
-    1: { label: 'Gate 1 — Duplikasi Pengajuan', icon: '🔁' },
-    2: { label: 'Gate 2 — Validasi Nominal',    icon: '💰' },
-    3: { label: 'Gate 3 — Klasifikasi CAPEX/OPEX', icon: '🏷️' },
-    4: { label: 'Gate 4 — Ketersediaan Anggaran',  icon: '🏦' },
+    1: { label: 'Gate 1 — Duplikasi Pengajuan',    icon: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2"/><rect x="2" y="9" width="6" height="6" rx="1"/></svg>' },
+    2: { label: 'Gate 2 — Validasi Nominal',       icon: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>' },
+    3: { label: 'Gate 3 — Klasifikasi CAPEX/OPEX', icon: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>' },
+    4: { label: 'Gate 4 — Ketersediaan Anggaran',  icon: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>' },
   };
 
   const statusConfig = {
-    pass:    { bg: 'var(--color-success-soft, #d1fae5)', border: 'var(--color-success, #10b981)', badge: '#10b981', label: '✅ Lolos' },
-    warning: { bg: 'var(--color-warning-soft, #fef3c7)', border: 'var(--color-warning, #f59e0b)', badge: '#f59e0b', label: '⚠️ Peringatan' },
-    info:    { bg: 'var(--color-primary-soft, #eff6ff)',  border: 'var(--color-primary, #3b82f6)', badge: '#3b82f6', label: 'ℹ️ Info' },
-    fail:    { bg: 'var(--color-danger-soft, #fee2e2)',  border: 'var(--color-danger, #ef4444)', badge: '#ef4444', label: '❌ Gagal' },
-    skipped: { bg: 'var(--color-surface-soft)',           border: 'var(--color-border)',           badge: '#9ca3af', label: '⏭️ Dilewati' },
+    pass:    { bg: 'var(--color-success-soft, #d1fae5)', border: 'var(--color-success, #10b981)', badge: '#10b981', label: '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg> Lolos' },
+    warning: { bg: 'var(--color-warning-soft, #fef3c7)', border: 'var(--color-warning, #f59e0b)', badge: '#f59e0b', label: '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 9v4M12 16h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg> Peringatan' },
+    info:    { bg: 'var(--color-primary-soft, #eff6ff)',  border: 'var(--color-primary, #3b82f6)', badge: '#3b82f6', label: '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg> Info' },
+    fail:    { bg: 'var(--color-danger-soft, #fee2e2)',  border: 'var(--color-danger, #ef4444)', badge: '#ef4444', label: '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Gagal' },
+    skipped: { bg: 'var(--color-surface-soft)',           border: 'var(--color-border)',           badge: '#9ca3af', label: '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg> Dilewati' },
   };
 
   let hasFailure = false;

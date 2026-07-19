@@ -647,15 +647,15 @@ class SmartValidationService
                 if (! $capexBudget) {
                     $capexBudgetStatus = 'no_budget';
                     $gate4Status = 'fail';
-                    $gate4Messages[] = "❌ Tidak ditemukan anggaran <strong>CAPEX</strong> untuk kategori ini.";
+                    $gate4Messages[] = "[Gagal] Tidak ditemukan anggaran <strong>CAPEX</strong> untuk kategori ini.";
                 } elseif ($capexTotal > $capexBudget->available_balance) {
                     $capexBudgetStatus = 'over_budget';
                     $gate4Status = 'fail';
-                    $gate4Messages[] = "❌ Anggaran <strong>CAPEX</strong> tidak mencukupi. "
+                    $gate4Messages[] = "[Gagal] Anggaran <strong>CAPEX</strong> tidak mencukupi. "
                         . "Dibutuhkan: Rp " . number_format($capexTotal, 0, ',', '.');
                 } else {
                     $capexBudgetStatus = 'ok';
-                    $gate4Messages[] = "✅ Anggaran <strong>CAPEX</strong> memadai.";
+                    $gate4Messages[] = "[Lolos] Anggaran <strong>CAPEX</strong> memadai.";
                 }
             }
 
@@ -665,15 +665,15 @@ class SmartValidationService
                 if (! $opexBudget) {
                     $opexBudgetStatus = 'no_budget';
                     $gate4Status = 'fail';
-                    $gate4Messages[] = "❌ Tidak ditemukan anggaran <strong>OPEX</strong> untuk kategori ini.";
+                    $gate4Messages[] = "[Gagal] Tidak ditemukan anggaran <strong>OPEX</strong> untuk kategori ini.";
                 } elseif ($opexTotal > $opexBudget->available_balance) {
                     $opexBudgetStatus = 'over_budget';
                     if ($gate4Status !== 'fail') $gate4Status = 'fail';
-                    $gate4Messages[] = "❌ Anggaran <strong>OPEX</strong> tidak mencukupi. "
+                    $gate4Messages[] = "[Gagal] Anggaran <strong>OPEX</strong> tidak mencukupi. "
                         . "Dibutuhkan: Rp " . number_format($opexTotal, 0, ',', '.');
                 } else {
                     $opexBudgetStatus = 'ok';
-                    $gate4Messages[] = "✅ Anggaran <strong>OPEX</strong> memadai.";
+                    $gate4Messages[] = "[Lolos] Anggaran <strong>OPEX</strong> memadai.";
                 }
             }
 

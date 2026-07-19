@@ -273,7 +273,7 @@
                 </span>
               @endif
               @if($ticket->is_cross_fund)
-                <br><span class="badge badge-cross-fund" style="margin-top:4px; font-size:10px; padding:2px 8px;">⇄ Silang Dana</span>
+                <br><span class="badge badge-cross-fund" style="margin-top:4px; font-size:10px; padding:2px 8px; display:inline-flex; align-items:center; gap:3px;"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg> Silang Dana</span>
               @endif
             </td>
             <td class="caption text-muted">{{ $ticket->created_at->format('d M Y') }}</td>
@@ -287,7 +287,7 @@
           <tr>
             <td colspan="{{ ($isBulkRole && $hasBulkTickets) ? 8 : 7 }}">
               <div class="empty-state">
-                <div class="empty-state-icon">📋</div>
+                <div class="empty-state-icon"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:var(--color-muted);"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg></div>
                 <h3>Belum ada tiket</h3>
                 <p>
                   @if(auth()->user()->isRequester())
