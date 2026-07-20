@@ -426,6 +426,13 @@
         <textarea name="notes" class="form-control" rows="2" placeholder="Tambahkan catatan untuk seluruh proses pemeriksaan ini..."></textarea>
       </div>
 
+      <div class="form-group" style="text-align:left; margin-bottom:var(--space-md); flex-shrink: 0;">
+        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:13px;">
+          <input type="checkbox" name="digital_signature_consent" required style="margin-top:2px;">
+          <span>Saya menyetujui syarat &amp; ketentuan dan menandatangani dokumen ini secara digital.</span>
+        </label>
+      </div>
+
       <div class="modal-footer" style="flex-shrink: 0; margin-top: auto;">
         <button type="button" onclick="closeModal('modal-review-documents')" class="btn btn-secondary">Batal</button>
         <button type="submit" class="btn btn-primary">Simpan Tinjauan</button>
