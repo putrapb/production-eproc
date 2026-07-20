@@ -411,18 +411,16 @@ class TicketController extends Controller
             }
 
             $ticket->update([
-                'pending_with_role' => 'none',
-                'status' => Ticket::STATUS_NEED_TO_VALIDATE
+                'pending_with_role' => 'requester',
+                'status'            => Ticket::STATUS_NEED_TO_VALIDATE,
             ]);
-            
+
             ApprovalLog::create([
                 'ticket_id' => $ticket->id,
                 'user_id'   => $request->user()->id,
                 'action'    => ApprovalLog::ACTION_FOLLOWED_UP,
-                'notes'     => $request->notes ?? 'Semua dokumen disetujui. Smart Validation dijalankan otomatis.',
+                'notes'     => $request->notes ?? 'Semua dokumen disetujui. Requester diminta menjalankan Smart Validation.',
             ]);
-
-            $result = $this->smartValidation->run($ticket, $request->user());
         });
 
         if ($hasRejected) {
@@ -445,51 +443,17 @@ class TicketController extends Controller
                 ->with('success', 'Beberapa dokumen memerlukan revisi. Tiket dikembalikan ke Requester.');
         }
 
-        if ($result['success']) {
-            // Bola pindah ke Department Head
-            $ticket->update(['pending_with_role' => 'department_head']);
-            Notification::notify(
-                $ticket->user_id,
-                'ticket_reviewed',
-                'Dokumen & Validasi Selesai',
-                "Dokumen tiket \"{$ticket->title}\" diterima dan validasi anggaran berhasil. Menunggu keputusan Department Head.",
-                $ticket->id
-            );
-            Notification::notifyRole(
-                'department_head',
-                'ticket_validated',
-                'Tiket Siap Disetujui',
-                "Tiket \"{$ticket->title}\" telah tervalidasi dan menunggu keputusan Department Head.",
-                $ticket->id
-            );
-            return redirect()->route('tickets.show', $ticket)
-                ->with('success', 'Semua dokumen diterima dan validasi anggaran berhasil. Tiket diteruskan ke Department Head.');
-        }
-
-        // Gate soft-warning: classification mismatch — requester must confirm
-        if ($result['needs_classification_confirmation'] ?? false) {
-            return redirect()->route('tickets.show', $ticket)
-                ->with('needs_classification_confirmation', true)
-                ->with('classification_warning', $result['message']);
-        }
-
-        // Gate 4: over budget — bola kembali ke requester untuk ajukan cross-fund
-        if ($result['over_budget']) {
-            $ticket->update(['pending_with_role' => 'requester']);
-            Notification::notify(
-                $ticket->user_id,
-                'ticket_over_budget',
-                'Anggaran Tidak Mencukupi',
-                "Tiket \"{$ticket->title}\" gagal validasi: saldo anggaran {$result['classified_type']} tidak mencukupi. Hubungi Team Leader.",
-                $ticket->id
-            );
-            return redirect()->route('tickets.show', $ticket)
-                ->with('over_budget', true)
-                ->with('warning', $result['message']);
-        }
+        // Semua dokumen diterima → notif ke Requester untuk jalankan Smart Validation
+        Notification::notify(
+            $ticket->user_id,
+            'ticket_reviewed',
+            'Dokumen Diterima — Jalankan Smart Validation',
+            "Dokumen tiket \"{$ticket->title}\" telah diterima oleh Team Leader. Silakan buka tiket dan jalankan Smart Validation.",
+            $ticket->id
+        );
 
         return redirect()->route('tickets.show', $ticket)
-            ->with('error', "Validasi gagal di Gate {$result['gate']}: {$result['message']}");
+            ->with('success', 'Semua dokumen diterima. Requester dapat menjalankan Smart Validation sekarang.');
     }
 
     /**
