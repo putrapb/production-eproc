@@ -13,10 +13,13 @@
     <p>Kelola semua pengajuan pengadaan</p>
   </div>
   <div style="display:flex; gap:12px;">
-    <a href="{{ request()->fullUrlWithQuery(['export' => 1]) }}" class="btn btn-secondary" onclick="event.preventDefault(); window.location.href='{{ route('tickets.export', request()->query()) }}'">
+    {{-- Export CSV: tersedia untuk semua role --}}
+    @if(auth()->user()->isTeamLeader() || auth()->user()->isDepartmentHead() || auth()->user()->isRequester())
+    <a href="{{ route('tickets.export', request()->query()) }}" class="btn btn-secondary">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
       Export CSV
     </a>
+    @endif
     @if(auth()->user()->isRequester())
       <a href="{{ route('tickets.create') }}" class="btn btn-primary">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>

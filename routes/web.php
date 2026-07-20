@@ -65,7 +65,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Daftar & detail tiket
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
     Route::get('/tickets/export', [TicketController::class, 'export'])
-        ->middleware('throttle:1,1')
+        ->middleware('throttle:5,1')
         ->name('tickets.export');
 
     // PENTING: Rute create harus di atas rute {ticket}
