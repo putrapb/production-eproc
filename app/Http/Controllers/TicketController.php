@@ -66,7 +66,7 @@ class TicketController extends Controller
      */
     public function export(Request $request)
     {
-        $tickets = Ticket::with(['user', 'items'])
+        $tickets = Ticket::with(['user'])
             ->when($request->user()->isRequester(), fn ($q) => $q->where('user_id', $request->user()->id))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->pending_with, function ($q, $p) {
@@ -129,7 +129,7 @@ class TicketController extends Controller
                     $ticket->id,
                     $ticket->created_at->format('Y-m-d H:i:s'),
                     $ticket->title,
-                    $ticket->items->pluck('item_name')->implode(', '),
+                    $ticket->item_name ?? '-',
                     $ticket->vendor_name,
                     config('eprocurement.categories.' . $ticket->category, $ticket->category),
                     $ticket->expenditure_type ?? '-',
@@ -156,7 +156,7 @@ class TicketController extends Controller
         // Pastikan user punya akses ke tiket ini
         $this->authorizeView($ticket, $user);
 
-        $ticket->load(['user', 'approvalLogs.user', 'items', 'documents']);
+        $ticket->load(['user', 'approvalLogs.user', 'documents']);
 
         return view('tickets.show', compact('ticket', 'user'));
     }
@@ -275,7 +275,7 @@ class TicketController extends Controller
 
         abort_unless(in_array($ticket->status, [Ticket::STATUS_REVISION, Ticket::STATUS_PENDING_REVIEW]), 403, 'Tiket tidak dapat diedit pada status ini.');
 
-        $ticket->load(['approvalLogs', 'documents', 'items']);
+        $ticket->load(['approvalLogs', 'documents']);
 
         return view('tickets.edit', compact('ticket'));
     }
@@ -600,16 +600,15 @@ class TicketController extends Controller
         $this->ensureStatus($ticket, Ticket::STATUS_NEED_TO_VALIDATE);
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($ticket, $request) {
-            $capexTotal = $ticket->items()->where('expenditure_type', Ticket::TYPE_CAPEX)->sum(\Illuminate\Support\Facades\DB::raw('quantity * unit_price'));
-            $opexTotal  = $ticket->items()->where('expenditure_type', Ticket::TYPE_OPEX)->sum(\Illuminate\Support\Facades\DB::raw('quantity * unit_price'));
+            $total = (float) $ticket->amount;
+            $type  = $ticket->expenditure_type;
 
-            if ($capexTotal > 0) {
+            if ($type === Ticket::TYPE_CAPEX && $total > 0) {
                 $budget = Budget::findForTicket(Ticket::TYPE_CAPEX, $ticket->category, now()->year);
-                if ($budget) $budget->unlock($capexTotal);
-            }
-            if ($opexTotal > 0) {
+                if ($budget) $budget->unlock($total);
+            } elseif ($total > 0) {
                 $budget = Budget::findForTicket(Ticket::TYPE_OPEX, $ticket->category, now()->year);
-                if ($budget) $budget->unlock($opexTotal);
+                if ($budget) $budget->unlock($total);
             }
 
             $ticket->update(['status' => Ticket::STATUS_DECLINED]);
@@ -734,15 +733,8 @@ class TicketController extends Controller
         $user = $request->user();
 
         $message = DB::transaction(function () use ($request, $ticket, $user) {
-            $capexTotal = 0;
-            $opexTotal = 0;
-            foreach ($ticket->items as $item) {
-                if ($item->effective_expenditure_type === Ticket::TYPE_CAPEX) {
-                    $capexTotal += $item->subtotal;
-                } else {
-                    $opexTotal += $item->subtotal;
-                }
-            }
+            $capexTotal = $ticket->expenditure_type === Ticket::TYPE_CAPEX ? (float) $ticket->amount : 0;
+            $opexTotal  = $ticket->expenditure_type === Ticket::TYPE_OPEX  ? (float) $ticket->amount : 0;
 
             if ($request->action === 'approve') {
                 if ($capexTotal > 0) {
@@ -844,15 +836,8 @@ class TicketController extends Controller
 
         DB::transaction(function () use ($tickets, $user, $request) {
             foreach ($tickets as $ticket) {
-                $capexTotal = 0;
-                $opexTotal = 0;
-                foreach ($ticket->items as $item) {
-                    if ($item->effective_expenditure_type === Ticket::TYPE_CAPEX) {
-                        $capexTotal += $item->subtotal;
-                    } else {
-                        $opexTotal += $item->subtotal;
-                    }
-                }
+                $capexTotal = $ticket->expenditure_type === Ticket::TYPE_CAPEX ? (float) $ticket->amount : 0;
+                $opexTotal  = $ticket->expenditure_type === Ticket::TYPE_OPEX  ? (float) $ticket->amount : 0;
 
                 if ($request->action === 'approve') {
                     if ($capexTotal > 0) {
