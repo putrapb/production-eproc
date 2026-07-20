@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\TicketItem;
+
 
 class Ticket extends Model
 {
@@ -241,25 +241,11 @@ class Ticket extends Model
     }
 
     /**
-     * Get total amount — sum of all ticket_items subtotals.
-     * Falls back to legacy (amount * quantity) if items relation not loaded.
+     * Get total amount — uses the amount field directly (single-item mode).
      */
     public function getTotalAmountAttribute(): float
     {
-        if ($this->relationLoaded('items') && $this->items->isNotEmpty()) {
-            return (float) $this->items->sum('subtotal');
-        }
-
-        // Fallback: load items and sum (avoids N+1 if called without eager-load)
-        if ($this->exists) {
-            $sum = $this->items()->sum('subtotal');
-            if ($sum > 0) {
-                return (float) $sum;
-            }
-        }
-
-        // Legacy fallback for old data without ticket_items
-        return (float) ($this->attributes['amount'] ?? 0) * ($this->attributes['quantity'] ?? 1);
+        return (float) ($this->attributes['amount'] ?? 0);
     }
 
     /**
