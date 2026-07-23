@@ -72,6 +72,11 @@ class Ticket extends Model
         return $this->hasMany(TicketDocument::class, 'ticket_id');
     }
 
+    public function items(): HasMany
+    {
+        return $this->hasMany(TicketItem::class, 'ticket_id');
+    }
+
 
 
     // Query scope
@@ -241,11 +246,16 @@ class Ticket extends Model
     }
 
     /**
-     * Get total amount — uses the amount field directly (single-item mode).
+     * Get total amount by summing up all items.
      */
     public function getTotalAmountAttribute(): float
     {
-        return (float) ($this->attributes['amount'] ?? 0);
+        // Avoid N+1 queries if items is already loaded
+        if ($this->relationLoaded('items')) {
+            return $this->items->sum('subtotal');
+        }
+        
+        return (float) $this->items()->sum('subtotal');
     }
 
     /**

@@ -26,10 +26,11 @@ class UpdateTicketRequest extends FormRequest
             'pic_name'                 => ['required', 'array', 'max:2'],
             'pic_name.*'               => ['required', 'string', 'max:255'],
 
-            // Detail item (maksimal 9) -> diganti kembali jadi single item
-            'item_name'                => ['required', 'string', 'max:255'],
-            'quantity'                 => ['required', 'integer', 'min:1'],
-            'amount'                   => ['required', 'numeric', 'min:1'],
+            // Detail item (maksimal 9)
+            'items'                    => ['required', 'array', 'min:1', 'max:9'],
+            'items.*.item_name'        => ['required', 'string', 'max:255'],
+            'items.*.quantity'         => ['required', 'integer', 'min:1', 'max:10000'],
+            'items.*.unit_price'       => ['required', 'numeric', 'min:0', 'max:9999999999'],
 
             // Dokumen pendukung (opsional saat edit jika tidak ada perubahan)
             'document_files'               => ['nullable', 'array'],
@@ -48,11 +49,14 @@ class UpdateTicketRequest extends FormRequest
             'category.required'                => 'Kategori pengadaan wajib dipilih.',
             'category.in'                      => 'Kategori tidak valid untuk jenis pengeluaran yang dipilih.',
             'vendor_name.required'             => 'Nama vendor wajib diisi.',
-            'item_name.required'               => 'Nama item wajib diisi.',
-            'quantity.required'                => 'Jumlah unit wajib diisi.',
-            'quantity.min'                     => 'Jumlah unit minimal 1.',
-            'amount.required'                  => 'Harga satuan wajib diisi.',
-            'amount.min'                       => 'Harga satuan harus lebih dari 0.',
+            'items.required'                   => 'Daftar item wajib diisi.',
+            'items.min'                        => 'Minimal harus ada 1 item pengadaan.',
+            'items.max'                        => 'Maksimal 9 item pengadaan.',
+            'items.*.item_name.required'       => 'Nama item wajib diisi.',
+            'items.*.quantity.required'        => 'Jumlah unit wajib diisi.',
+            'items.*.quantity.min'             => 'Jumlah unit minimal 1.',
+            'items.*.unit_price.required'      => 'Harga satuan wajib diisi.',
+            'items.*.unit_price.min'           => 'Harga satuan tidak boleh negatif.',
             'document_files.*.mimes'       => 'Semua dokumen harus dalam format PDF.',
             'document_files.*.mimetypes'   => 'Tipe file tidak valid. Hanya file PDF yang diperbolehkan.',
             'document_files.*.max'         => 'Ukuran dokumen maksimal 10 MB.',

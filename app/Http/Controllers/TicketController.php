@@ -202,24 +202,37 @@ class TicketController extends Controller
         $user = $request->user();
 
         // 1. Calculate total amount
-        $totalAmount = ($request->quantity ?? 1) * ($request->amount ?? 0);
+        $totalAmount = collect($request->items)->sum(function ($item) {
+            return ($item['quantity'] ?? 1) * ($item['unit_price'] ?? 0);
+        });
 
         // 2. Create the ticket
         $ticket = Ticket::create([
             'user_id'            => $user->id,
             'title'              => $request->title,
-            'item_name'          => $request->item_name,
-            'quantity'           => $request->quantity,
             'category'           => $request->category,
             'description'        => $request->description,
             'pic_name'           => empty(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n))))
                                     ? null
                                     : array_values(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n)))),
             'vendor_name'        => $request->vendor_name,
-            'amount'             => $totalAmount,
             'status'             => Ticket::STATUS_PENDING_REVIEW,
             'pending_with_role'  => 'team_leader', // Transkrip 2: track pending holder
         ]);
+
+        // 3. Save ticket items
+        if ($request->has('items') && is_array($request->items)) {
+            foreach ($request->items as $itemData) {
+                $qty = $itemData['quantity'] ?? 1;
+                $price = $itemData['unit_price'] ?? 0;
+                $ticket->items()->create([
+                    'item_name'  => $itemData['item_name'],
+                    'quantity'   => $qty,
+                    'unit_price' => $price,
+                    'subtotal'   => $qty * $price,
+                ]);
+            }
+        }
 
         // 4. Upload and save each document
         $folder = config('eprocurement.storage.izin_prinsip_folder', 'izin_prinsip');
@@ -290,21 +303,35 @@ class TicketController extends Controller
         $isRevision = $ticket->status === Ticket::STATUS_REVISION;
 
         // 1. Calculate new total amount
-        $totalAmount = ($request->quantity ?? 1) * ($request->amount ?? 0);
+        $totalAmount = collect($request->items)->sum(function ($item) {
+            return ($item['quantity'] ?? 1) * ($item['unit_price'] ?? 0);
+        });
 
         // 2. Update Ticket attributes
         $ticket->update([
             'title'            => $request->title,
-            'item_name'        => $request->item_name,
-            'quantity'         => $request->quantity,
             'category'         => $request->category,
             'description'      => $request->description,
             'pic_name'         => empty(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n))))
                                     ? null
                                     : array_values(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n)))),
             'vendor_name'      => $request->vendor_name,
-            'amount'           => $totalAmount,
         ]);
+
+        // 3. Update ticket items
+        $ticket->items()->delete();
+        if ($request->has('items') && is_array($request->items)) {
+            foreach ($request->items as $itemData) {
+                $qty = $itemData['quantity'] ?? 1;
+                $price = $itemData['unit_price'] ?? 0;
+                $ticket->items()->create([
+                    'item_name'  => $itemData['item_name'],
+                    'quantity'   => $qty,
+                    'unit_price' => $price,
+                    'subtotal'   => $qty * $price,
+                ]);
+            }
+        }
 
         $folder = config('eprocurement.storage.izin_prinsip_folder', 'izin_prinsip');
 
