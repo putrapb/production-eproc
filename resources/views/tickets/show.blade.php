@@ -22,10 +22,18 @@
       @endif
     </div>
   </div>
-  <a href="{{ route('tickets.index') }}" class="btn btn-secondary">
-    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-    Kembali
-  </a>
+  <div style="display:flex; gap:var(--space-sm); align-items:center;">
+    @if(auth()->user()->isRequester() && in_array($ticket->status, ['revision', 'pending_review']))
+      <a href="{{ route('tickets.edit', $ticket) }}" class="btn btn-primary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit Tiket
+      </a>
+    @endif
+    <a href="{{ route('tickets.index') }}" class="btn btn-secondary">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Kembali
+    </a>
+  </div>
 </div>
 
 {{-- Smart Validation Result Banner --}}
@@ -338,14 +346,6 @@
   </div>
 
   <div class="action-panel-buttons">
-    {{-- REQUESTER: Edit/Revision re-upload --}}
-    @if($user->isRequester() && in_array($status, ['revision', 'pending_review']))
-      <a href="{{ route('tickets.edit', $ticket) }}" class="btn btn-primary">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        Edit / Upload Ulang Dokumen
-      </a>
-    @endif
-
     {{-- TEAM LEADER: Document review --}}
     @if($user->isTeamLeader() && $status === 'pending_review')
       <button onclick="openModal('modal-review-documents')" class="btn btn-primary">
