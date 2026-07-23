@@ -31,6 +31,7 @@ class UpdateTicketRequest extends FormRequest
             'items.*.item_name'        => ['required', 'string', 'max:255'],
             'items.*.quantity'         => ['required', 'integer', 'min:1', 'max:10000'],
             'items.*.unit_price'       => ['required', 'numeric', 'min:0', 'max:9999999999'],
+            'items.*.expenditure_type' => ['nullable', 'string', 'in:CAPEX,OPEX'],
 
             // Dokumen pendukung (opsional saat edit jika tidak ada perubahan)
             'document_files'               => ['nullable', 'array'],

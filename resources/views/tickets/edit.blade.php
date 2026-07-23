@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Edit Tiket — Tiket #' . str_pad($ticket->id, 4, '0', STR_PAD_LEFT))
 
@@ -195,7 +195,6 @@
                   <td style="padding:6px 12px; text-align:right; font-size:13px; font-weight:600;" class="item-subtotal">
                     Rp {{ (isset($oldItem['unit_price']) && isset($oldItem['quantity'])) ? number_format($oldItem['unit_price'] * $oldItem['quantity'], 0, ',', '.') : '0' }}
                   </td>
-                  {{-- Editable: per-item CAPEX/OPEX classification --}}
                   <td style="padding:4px 6px;">
                     <select name="items[{{ $i }}][expenditure_type]" class="form-control" style="font-size:12px; padding:5px 8px; min-width:90px;" required
                       title="Klasifikasi anggaran untuk item ini">
@@ -342,14 +341,15 @@
       <td style="padding:6px 8px;">
         <input type="text" name="items[${nextIdx}][item_name]" class="form-control" placeholder="Nama barang / jasa" required maxlength="255">
       </td>
-      <td style="padding:6px 8px;">
-        <input type="number" name="items[${nextIdx}][quantity]" class="form-control item-qty" value="1" min="1" style="text-align:center;" onchange="recalcRow(this)" required>
-      </td>
-      <td style="padding:6px 8px;">
-        <input type="text" class="form-control item-price-display" placeholder="0" style="text-align:right;" oninput="formatItemPrice(this)">
-        <input type="hidden" name="items[${nextIdx}][unit_price]" class="item-price-raw" value="">
-      </td>
+      <td style="padding:6px 8px;"><input type="number" name="items[${nextIdx}][quantity]" class="form-control item-qty" value="1" min="1" style="text-align:center;" onchange="recalcRow(this)" required></td>
+      <td style="padding:6px 8px;"><input type="text" class="form-control item-price-display" placeholder="0" style="text-align:right;" oninput="formatItemPrice(this)"><input type="hidden" name="items[${nextIdx}][unit_price]" class="item-price-raw" value=""></td>
       <td style="padding:6px 12px; text-align:right; font-size:13px; font-weight:600;" class="item-subtotal">Rp 0</td>
+      <td style="padding:4px 6px;">
+        <select name="items[${nextIdx}][expenditure_type]" class="form-control" style="font-size:12px; padding:5px 8px; min-width:90px;" required>
+          <option value="CAPEX">CAPEX</option>
+          <option value="OPEX">OPEX</option>
+        </select>
+      </td>
       <td style="padding:6px 8px; text-align:center;">
         <button type="button" onclick="removeItemRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -380,6 +380,7 @@
       row.querySelector('input[name$="[item_name]"]').name = `items[${idx}][item_name]`;
       row.querySelector('input[name$="[quantity]"]').name = `items[${idx}][quantity]`;
       row.querySelector('input[name$="[unit_price]"]').name = `items[${idx}][unit_price]`;
+      row.querySelector('select[name$="[expenditure_type]"]').name = `items[${idx}][expenditure_type]`;
     });
   }
 

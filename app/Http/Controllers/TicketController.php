@@ -227,10 +227,11 @@ class TicketController extends Controller
                 $qty = $itemData['quantity'] ?? 1;
                 $price = $itemData['unit_price'] ?? 0;
                 $ticket->items()->create([
-                    'item_name'  => $itemData['item_name'],
-                    'quantity'   => $qty,
-                    'unit_price' => $price,
-                    'subtotal'   => $qty * $price,
+                    'item_name'        => $itemData['item_name'],
+                    'quantity'         => $qty,
+                    'unit_price'       => $price,
+                    'subtotal'         => $qty * $price,
+                    'expenditure_type' => $itemData['expenditure_type'] ?? null,
                 ]);
             }
         }
@@ -327,10 +328,11 @@ class TicketController extends Controller
                 $qty = $itemData['quantity'] ?? 1;
                 $price = $itemData['unit_price'] ?? 0;
                 $ticket->items()->create([
-                    'item_name'  => $itemData['item_name'],
-                    'quantity'   => $qty,
-                    'unit_price' => $price,
-                    'subtotal'   => $qty * $price,
+                    'item_name'        => $itemData['item_name'],
+                    'quantity'         => $qty,
+                    'unit_price'       => $price,
+                    'subtotal'         => $qty * $price,
+                    'expenditure_type' => $itemData['expenditure_type'] ?? null,
                 ]);
             }
         }

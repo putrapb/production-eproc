@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Pengajuan Pengadaan Baru')
 
@@ -163,6 +163,7 @@
                     value="{{ isset($oldItem['unit_price']) ? number_format($oldItem['unit_price'], 0, ',', '.') : '' }}"
                     placeholder="0" style="text-align:right;" oninput="formatItemPrice(this)">
                   <input type="hidden" name="items[{{ $i }}][unit_price]" class="item-price-raw" value="{{ $oldItem['unit_price'] ?? '' }}">
+                  <input type="hidden" name="items[{{ $i }}][expenditure_type]" class="item-exp-type" value="{{ $oldItem['expenditure_type'] ?? '' }}">
                 </td>
                 <td style="padding:6px 12px; text-align:right; font-size:13px; font-weight:600;" class="item-subtotal">
                   Rp {{ (isset($oldItem['unit_price']) && isset($oldItem['quantity'])) ? number_format($oldItem['unit_price'] * $oldItem['quantity'], 0, ',', '.') : '0' }}
@@ -344,7 +345,7 @@ function addItemRow() {
     <td style="padding:8px 12px; font-size:13px; color:var(--color-muted);" class="item-no"></td>
     <td style="padding:6px 8px;"><input type="text" name="items[${idx}][item_name]" class="form-control" placeholder="Nama barang / jasa" required maxlength="255"></td>
     <td style="padding:6px 8px;"><input type="number" name="items[${idx}][quantity]" class="form-control item-qty" value="1" min="1" style="text-align:center;" onchange="recalcRow(this)" required></td>
-    <td style="padding:6px 8px;"><input type="text" class="form-control item-price-display" placeholder="0" style="text-align:right;" oninput="formatItemPrice(this)"><input type="hidden" name="items[${idx}][unit_price]" class="item-price-raw" value=""></td>
+    <td style="padding:6px 8px;"><input type="text" class="form-control item-price-display" placeholder="0" style="text-align:right;" oninput="formatItemPrice(this)"><input type="hidden" name="items[${idx}][unit_price]" class="item-price-raw" value=""><input type="hidden" name="items[${idx}][expenditure_type]" class="item-exp-type" value=""></td>
     <td style="padding:6px 12px; text-align:right; font-size:13px; font-weight:600;" class="item-subtotal">Rp 0</td>
     <td style="padding:6px 8px; text-align:center;"><button type="button" onclick="removeItemRow(this)" class="btn btn-danger btn-icon btn-sm" title="Hapus"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></td>
   `;
@@ -519,13 +520,33 @@ function renderGateCardModal(data) {
   const perItems = data.per_item_classification || [];
   if (perItems.length > 0) {
     let rowHtml = '';
-    perItems.forEach(item => {
+    perItems.forEach((item, idx) => {
       const typeColor = item.suggested_type === 'CAPEX' ? 'var(--color-primary, #3b82f6)' : 'var(--color-warning, #f59e0b)';
+      
+      // Update hidden input in main form with AI suggestion initially
+      const rowInMainTable = document.querySelectorAll('#items-body .item-row')[idx];
+      if (rowInMainTable) {
+        const hiddenInput = rowInMainTable.querySelector('.item-exp-type');
+        if (hiddenInput && !hiddenInput.value) {
+          hiddenInput.value = item.suggested_type || '';
+        }
+      }
+
       rowHtml += `
         <tr>
           <td style="padding:7px 10px; border-bottom:1px solid var(--color-border);">${item.item_name || '-'}</td>
           <td style="padding:7px 10px; text-align:center; border-bottom:1px solid var(--color-border);">
-            <span style="font-size:11px; font-weight:700; color:${typeColor}; background:rgba(0,0,0,0.05); padding:2px 8px; border-radius:99px;">${item.suggested_type || '?'}</span>
+            <select class="form-control pv-override-select" data-idx="${idx}" style="font-size:11px; font-weight:700; padding:2px 6px; height:auto; color:${typeColor}; background:rgba(0,0,0,0.05); border-radius:4px; border:none; text-align:center;" onchange="
+              const row = document.querySelectorAll('#items-body .item-row')[this.getAttribute('data-idx')];
+              if (row) {
+                const hInput = row.querySelector('.item-exp-type');
+                if (hInput) hInput.value = this.value;
+              }
+              this.style.color = this.value === 'CAPEX' ? 'var(--color-primary, #3b82f6)' : 'var(--color-warning, #f59e0b)';
+            ">
+              <option value="CAPEX" ${item.suggested_type === 'CAPEX' ? 'selected' : ''}>CAPEX</option>
+              <option value="OPEX" ${item.suggested_type === 'OPEX' ? 'selected' : ''}>OPEX</option>
+            </select>
           </td>
           <td style="padding:7px 10px; text-align:right; border-bottom:1px solid var(--color-border); font-weight:600;">Rp ${parseInt(item.subtotal).toLocaleString('id-ID')}</td>
         </tr>`;

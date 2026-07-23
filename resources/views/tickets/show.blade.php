@@ -336,11 +336,11 @@
   </div>
 
   <div class="action-panel-buttons">
-    {{-- REQUESTER: Revision re-upload --}}
-    @if($user->isRequester() && $status === 'revision')
+    {{-- REQUESTER: Edit/Revision re-upload --}}
+    @if($user->isRequester() && in_array($status, ['revision', 'pending_review']))
       <a href="{{ route('tickets.edit', $ticket) }}" class="btn btn-primary">
         <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        Upload Ulang Dokumen
+        Edit / Upload Ulang Dokumen
       </a>
     @endif
 
