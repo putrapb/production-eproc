@@ -65,7 +65,7 @@
             <label class="form-label" for="expenditure_type">Jenis Pengeluaran <span class="required">*</span></label>
             <select id="expenditure_type" name="expenditure_type"
               class="form-control {{ $errors->has('expenditure_type') ? 'is-invalid' : '' }}"
-              onchange="filterCategories(this.value)" required style="pointer-events:none; background:var(--color-surface-soft);">
+              onchange="filterCategories(this.value)" style="pointer-events:none; background:var(--color-surface-soft);" tabindex="-1">
               <option value="" disabled {{ old('expenditure_type', $ticket->expenditure_type) ? '' : 'selected' }}>Pilih CAPEX / OPEX...</option>
               <option value="CAPEX" {{ old('expenditure_type', $ticket->expenditure_type) === 'CAPEX' ? 'selected' : '' }}>CAPEX — Aset / Investasi Baru</option>
               <option value="OPEX"  {{ old('expenditure_type', $ticket->expenditure_type) === 'OPEX'  ? 'selected' : '' }}>OPEX — Operasional / Pemeliharaan</option>
@@ -78,7 +78,7 @@
             <label class="form-label" for="category">Kategori <span class="required">*</span></label>
             <select id="category" name="category"
               class="form-control {{ $errors->has('category') ? 'is-invalid' : '' }}"
-              required style="pointer-events:none; background:var(--color-surface-soft);">
+              style="pointer-events:none; background:var(--color-surface-soft);" tabindex="-1">
               <option value="" disabled selected>Pilih jenis pengeluaran dulu...</option>
               @php
                 $capexCats = ['infrastruktur_utama' => 'Infrastruktur Utama', 'lisensi_sistem' => 'Lisensi Sistem'];
