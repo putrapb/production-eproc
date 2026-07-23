@@ -159,7 +159,11 @@
                 <th style="padding:10px 12px; text-align:center; border-bottom:1px solid var(--color-border); width:90px;">Qty <span class="required">*</span></th>
                 <th style="padding:10px 12px; text-align:right; border-bottom:1px solid var(--color-border); width:200px;">Harga Satuan (Rp) <span class="required">*</span></th>
                 <th style="padding:10px 12px; text-align:right; border-bottom:1px solid var(--color-border); width:140px;">Subtotal</th>
-                <th style="padding:10px 12px; text-align:center; border-bottom:1px solid var(--color-border); width:105px; white-space:nowrap;" title="Klasifikasi anggaran per item: CAPEX atau OPEX">Klasifikasi <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></th>
+                <th style="padding:10px 12px; border-bottom:1px solid var(--color-border); width:120px;" title="Klasifikasi anggaran per item: CAPEX atau OPEX">
+                  <div style="display:flex; align-items:center; justify-content:center; gap:4px; white-space:nowrap;">
+                    Klasifikasi <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                  </div>
+                </th>
                 <th style="padding:10px 12px; border-bottom:1px solid var(--color-border); width:50px;"></th>
               </tr>
             </thead>
