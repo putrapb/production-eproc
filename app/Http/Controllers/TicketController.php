@@ -210,6 +210,7 @@ class TicketController extends Controller
         $ticket = Ticket::create([
             'user_id'            => $user->id,
             'title'              => $request->title,
+            'expenditure_type'   => $request->expenditure_type,
             'category'           => $request->category,
             'description'        => $request->description,
             'pic_name'           => empty(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n))))
@@ -312,7 +313,8 @@ class TicketController extends Controller
         // 2. Update Ticket attributes
         $ticket->update([
             'title'            => $request->title,
-            'category'         => $request->category,
+            'expenditure_type' => $request->expenditure_type ?? $ticket->expenditure_type,
+            'category'         => $request->category ?? $ticket->category,
             'description'      => $request->description,
             'pic_name'         => empty(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n))))
                                     ? null

@@ -16,6 +16,7 @@ class StoreTicketRequest extends FormRequest
         return [
             // Data utama
             'title'                    => ['required', 'string', 'max:255'],
+            'expenditure_type'         => ['required', 'in:CAPEX,OPEX'],
             'category'                 => ['required', 'in:infrastruktur_utama,lisensi_sistem,layanan_pemeliharaan,perlengkapan_operasional'],
             'description'              => ['nullable', 'string', 'max:5000'],
             'vendor_name'              => ['required', 'string', 'max:255'],
@@ -41,6 +42,7 @@ class StoreTicketRequest extends FormRequest
     {
         return [
             'title.required'                   => 'Judul pengadaan wajib diisi.',
+            'expenditure_type.required'        => 'Jenis pengeluaran wajib dipilih.',
             'category.required'                => 'Kategori pengadaan wajib dipilih.',
             'category.in'                      => 'Kategori tidak valid untuk jenis pengeluaran yang dipilih.',
             'vendor_name.required'             => 'Nama vendor wajib diisi.',
