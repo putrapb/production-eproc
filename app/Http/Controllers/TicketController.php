@@ -216,6 +216,7 @@ class TicketController extends Controller
                                     ? null
                                     : array_values(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n)))),
             'vendor_name'        => $request->vendor_name,
+            'amount'             => $totalAmount,
             'status'             => Ticket::STATUS_PENDING_REVIEW,
             'pending_with_role'  => 'team_leader', // Transkrip 2: track pending holder
         ]);
@@ -316,6 +317,7 @@ class TicketController extends Controller
                                     ? null
                                     : array_values(array_filter((array) $request->pic_name, fn($n) => !empty(trim($n)))),
             'vendor_name'      => $request->vendor_name,
+            'amount'           => $totalAmount,
         ]);
 
         // 3. Update ticket items
