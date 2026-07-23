@@ -312,7 +312,7 @@
 @php $user = auth()->user(); $status = $ticket->status; @endphp
 
 @if(
-  ($user->isRequester() && in_array($status, ['need_to_validate', 'revision', 'form_generated'])) ||
+  ($user->isRequester() && in_array($status, ['need_to_validate', 'revision', 'pending_review', 'form_generated'])) ||
   ($user->isTeamLeader() && in_array($status, ['pending_review', 'approved', 'form_generated'])) ||
   ($user->isDepartmentHead() && $status === 'pending_dept_head')
 )
@@ -320,6 +320,8 @@
   <div class="action-panel-info">
     @if($user->isRequester() && $status === 'revision')
       Dokumen Anda memerlukan revisi. Unggah ulang dokumen untuk melanjutkan proses.
+    @elseif($user->isRequester() && $status === 'pending_review')
+      Tiket sedang menunggu pengecekan dokumen oleh Team Leader. Anda masih dapat mengedit tiket atau mengunggah ulang dokumen jika diperlukan.
     @elseif($user->isRequester() && $status === 'need_to_validate')
       Dokumen Pendukung Anda telah diterima oleh Team Leader. Jalankan Smart Validation untuk mengklasifikasikan anggaran.
     @elseif($user->isTeamLeader() && $status === 'pending_review')
