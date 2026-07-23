@@ -65,7 +65,7 @@
             <label class="form-label" for="expenditure_type">Jenis Pengeluaran <span class="required">*</span></label>
             <select id="expenditure_type" name="expenditure_type"
               class="form-control {{ $errors->has('expenditure_type') ? 'is-invalid' : '' }}"
-              onchange="filterCategories(this.value)" required>
+              onchange="filterCategories(this.value)" required style="pointer-events:none; background:var(--color-surface-soft);">
               <option value="" disabled {{ old('expenditure_type', $ticket->expenditure_type) ? '' : 'selected' }}>Pilih CAPEX / OPEX...</option>
               <option value="CAPEX" {{ old('expenditure_type', $ticket->expenditure_type) === 'CAPEX' ? 'selected' : '' }}>CAPEX — Aset / Investasi Baru</option>
               <option value="OPEX"  {{ old('expenditure_type', $ticket->expenditure_type) === 'OPEX'  ? 'selected' : '' }}>OPEX — Operasional / Pemeliharaan</option>
@@ -78,7 +78,7 @@
             <label class="form-label" for="category">Kategori <span class="required">*</span></label>
             <select id="category" name="category"
               class="form-control {{ $errors->has('category') ? 'is-invalid' : '' }}"
-              required>
+              required style="pointer-events:none; background:var(--color-surface-soft);">
               <option value="" disabled selected>Pilih jenis pengeluaran dulu...</option>
               @php
                 $capexCats = ['infrastruktur_utama' => 'Infrastruktur Utama', 'lisensi_sistem' => 'Lisensi Sistem'];
@@ -159,7 +159,7 @@
                 <th style="padding:10px 12px; text-align:center; border-bottom:1px solid var(--color-border); width:90px;">Qty <span class="required">*</span></th>
                 <th style="padding:10px 12px; text-align:right; border-bottom:1px solid var(--color-border); width:200px;">Harga Satuan (Rp) <span class="required">*</span></th>
                 <th style="padding:10px 12px; text-align:right; border-bottom:1px solid var(--color-border); width:140px;">Subtotal</th>
-                <th style="padding:10px 12px; text-align:center; border-bottom:1px solid var(--color-border); width:105px;" title="Klasifikasi anggaran per item: CAPEX atau OPEX">Klasifikasi <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></th>
+                <th style="padding:10px 12px; text-align:center; border-bottom:1px solid var(--color-border); width:105px; white-space:nowrap;" title="Klasifikasi anggaran per item: CAPEX atau OPEX">Klasifikasi <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></th>
                 <th style="padding:10px 12px; border-bottom:1px solid var(--color-border); width:50px;"></th>
               </tr>
             </thead>
