@@ -47,7 +47,7 @@ class SmartValidationService
         // Gate 1: cek duplikasi pengajuan yang mirip
         // Kalau sudah dikonfirmasi user, skip gate ini
         if (! $duplicateConfirmed) {
-            $gate1 = $this->gate1DuplicateCheck($ticket, $requester);
+            $gate1 = $this->gate1DuplicateCheck($ticket->title, $requester, $ticket->id);
             if ($gate1['has_duplicate']) {
                 return [
                     'success'                           => false,
@@ -65,7 +65,7 @@ class SmartValidationService
 
         // Gate 2: cek kewajaran nominal pengajuan
         if (! $nominalConfirmed) {
-            $gate2 = $this->gate2NominalValidation($ticket);
+            $gate2 = $this->gate2NominalValidation($ticket->total_amount);
             if ($gate2['hard_fail']) {
                 return $this->fail(2, $gate2['message']);
             }
@@ -278,14 +278,18 @@ class SmartValidationService
      * Tickets with status 'declined' are excluded from the check.
      * Returns has_duplicate: true if found — caller shows warning popup.
      */
-    private function gate1DuplicateCheck(Ticket $ticket, User $requester): array
+    private function gate1DuplicateCheck(string $title, User $requester, ?int $ticketId = null): array
     {
-        // Duplicate check by title (item_name column has been removed in favor of ticket_items table)
-        $duplicate = Ticket::where('user_id', $requester->id)
-            ->where('title', $ticket->title)
-            ->where('id', '!=', $ticket->id)
-            ->whereNotIn('status', [Ticket::STATUS_DECLINED])
-            ->first();
+        // Duplicate check by title
+        $query = Ticket::where('user_id', $requester->id)
+            ->where('title', $title)
+            ->whereNotIn('status', [Ticket::STATUS_DECLINED]);
+            
+        if ($ticketId) {
+            $query->where('id', '!=', $ticketId);
+        }
+        
+        $duplicate = $query->first();
 
         if ($duplicate) {
             return [
@@ -303,9 +307,8 @@ class SmartValidationService
      * Hard fail: amount <= 0
      * Soft warning: amount > max_reasonable (user can confirm to proceed)
      */
-    private function gate2NominalValidation(Ticket $ticket): array
+    private function gate2NominalValidation(float $amount): array
     {
-        $amount = $ticket->total_amount;
 
         // Hard fail: amount is zero or negative — cannot proceed
         if ($amount <= 0) {
@@ -531,30 +534,29 @@ class SmartValidationService
             $classifiedType = $capexTotal >= $opexTotal ? Ticket::TYPE_CAPEX : Ticket::TYPE_OPEX;
         }
 
+        // Gate 1: Duplicate Check
         $gate1 = ['status' => 'pass', 'message' => 'Tidak ditemukan tiket dengan judul serupa.'];
-        $hasDuplicate = false;
         if ($title) {
-            $existing = Ticket::where('user_id', $requester->id)
-                ->where('title', 'like', '%' . substr($title, 0, 20) . '%')
-                ->whereNotIn('status', [Ticket::STATUS_DECLINED])
-                ->exists();
-            if ($existing) {
-                $hasDuplicate = true;
+            $gate1Check = $this->gate1DuplicateCheck($title, $requester);
+            if ($gate1Check['has_duplicate']) {
                 $gate1 = [
                     'status'  => 'warning',
-                    'message' => 'Ditemukan tiket dengan judul serupa yang masih aktif di sistem. Pastikan ini bukan pengajuan duplikat.',
+                    'message' => $gate1Check['message'],
                 ];
             }
         }
 
-        $nominalWarning = null;
+        // Gate 2: Nominal Check
         $gate2 = ['status' => 'pass', 'message' => 'Nominal pengajuan valid.'];
-        if ($totalAmount <= 0) {
-            $nominalWarning = 'Total nominal harus lebih dari Rp 0.';
-            $gate2 = ['status' => 'fail', 'message' => $nominalWarning];
-        } elseif ($totalAmount > 99_000_000_000) {
-            $nominalWarning = 'Total nominal melebihi Rp 99 miliar. Pastikan sudah benar.';
-            $gate2 = ['status' => 'warning', 'message' => $nominalWarning];
+        if ($totalAmount > 0) {
+            $gate2Check = $this->gate2NominalValidation($totalAmount);
+            if ($gate2Check['hard_fail']) {
+                $gate2 = ['status' => 'fail', 'message' => $gate2Check['message']];
+            } elseif ($gate2Check['needs_confirmation']) {
+                $gate2 = ['status' => 'warning', 'message' => $gate2Check['message']];
+            }
+        } else {
+            $gate2 = ['status' => 'fail', 'message' => 'Total nominal harus lebih dari Rp 0.'];
         }
 
         $gate3 = ['status' => 'skipped', 'message' => 'Pilih kategori terlebih dahulu.'];

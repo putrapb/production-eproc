@@ -443,16 +443,21 @@ class TicketController extends Controller
                 return;
             }
 
+            $budget = \App\Models\Budget::findForTicket($ticket->expenditure_type, $ticket->category, now()->year);
+            if ($budget) {
+                $budget->lock($ticket->amount);
+            }
+
             $ticket->update([
-                'pending_with_role' => 'requester',
-                'status'            => Ticket::STATUS_NEED_TO_VALIDATE,
+                'pending_with_role' => 'department_head',
+                'status'            => Ticket::STATUS_PENDING_DEPT_HEAD,
             ]);
 
             ApprovalLog::create([
                 'ticket_id' => $ticket->id,
                 'user_id'   => $request->user()->id,
                 'action'    => ApprovalLog::ACTION_FOLLOWED_UP,
-                'notes'     => $request->notes ?? 'Semua dokumen disetujui. Requester diminta menjalankan Smart Validation.',
+                'notes'     => $request->notes ?? 'Dokumen disetujui. Meneruskan tiket ke Department Head dan mengunci anggaran.',
             ]);
         });
 
@@ -476,17 +481,16 @@ class TicketController extends Controller
                 ->with('success', 'Beberapa dokumen memerlukan revisi. Tiket dikembalikan ke Requester.');
         }
 
-        // Semua dokumen diterima → notif ke Requester untuk jalankan Smart Validation
         Notification::notify(
             $ticket->user_id,
-            'ticket_reviewed',
-            'Dokumen Diterima — Jalankan Smart Validation',
-            "Dokumen tiket \"{$ticket->title}\" telah diterima oleh Team Leader. Silakan buka tiket dan jalankan Smart Validation.",
+            'ticket_approved',
+            'Dokumen Disetujui',
+            'Semua dokumen untuk tiket Anda telah disetujui oleh Team Leader. Tiket diteruskan ke Department Head.',
             $ticket->id
         );
 
         return redirect()->route('tickets.show', $ticket)
-            ->with('success', 'Semua dokumen diterima. Requester dapat menjalankan Smart Validation sekarang.');
+            ->with('success', 'Dokumen berhasil disetujui. Tiket diteruskan ke Department Head.');
     }
 
     /**
