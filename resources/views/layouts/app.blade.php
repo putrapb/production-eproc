@@ -112,26 +112,6 @@
         Pengajuan Baru
       </a>
       @endif
-
-      <div class="caption-upper sidebar-section-label">Akun</div>
-
-      <a href="{{ route('profile.show') }}"
-         class="sidebar-nav-item {{ request()->routeIs('profile.*') ? 'active' : '' }}">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-        </svg>
-        Profil Saya
-      </a>
-
-      <form method="POST" action="{{ route('logout') }}" id="logout-form">
-        @csrf
-        <button type="submit" class="sidebar-nav-item" style="width:100%; text-align:left; background:none; border:none; cursor:pointer;">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-            <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>
-          </svg>
-          Keluar
-        </button>
-      </form>
     </nav>
 
     <!-- User Info -->
@@ -170,6 +150,16 @@
 
       <div class="topbar-actions">
 
+        {{-- Settings Icon --}}
+        <a href="{{ route('settings.index') }}" title="Pengaturan"
+          style="position:relative; background:none; border:none; cursor:pointer; padding:4px; color:#9ca3af; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:color 0.15s; text-decoration:none;"
+          onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9ca3af'">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+          </svg>
+        </a>
+
         <div style="position:relative; display:flex; align-items:center;">
           <button id="notif-bell" onclick="toggleNotifDropdown()" title="Notifikasi"
             style="position:relative; background:none; border:none; cursor:pointer; padding:4px; color:#9ca3af; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:color 0.15s;"
@@ -207,6 +197,12 @@
                 <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
               </svg>
               Profil Saya
+            </a>
+            <a href="{{ route('settings.index') }}" class="topbar-menu-item">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+              </svg>
+              Pengaturan
             </a>
             <hr class="topbar-menu-divider">
             <button onclick="document.getElementById('logout-form').submit()" class="topbar-menu-item" style="width:100%; border:none; background:none; cursor:pointer; text-align:left;">

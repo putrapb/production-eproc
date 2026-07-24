@@ -61,6 +61,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
+    // Pengaturan
+    Route::get('/settings', fn () => view('settings.index'))->name('settings.index');
+
 
     // Daftar & detail tiket
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
