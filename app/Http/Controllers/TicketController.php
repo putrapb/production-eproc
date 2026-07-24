@@ -903,6 +903,34 @@ class TicketController extends Controller
         return response()->file($path, $headers);
     }
 
+    /**
+     * Download Arsip Audit (DIP — Dissemination Information Package).
+     * Hanya tersedia untuk tiket berstatus final: approved atau declined.
+     */
+    public function downloadAudit(Request $request, Ticket $ticket)
+    {
+        $this->authorizeView($ticket, $request->user());
+
+        $finalStatuses = [Ticket::STATUS_APPROVED, Ticket::STATUS_DECLINED];
+        if (! in_array($ticket->status, $finalStatuses)) {
+            abort(403, 'Arsip hanya tersedia untuk tiket dengan status final (Disetujui atau Ditolak).');
+        }
+
+        $ticket->load(['user', 'items', 'approvalLogs.user', 'documents']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('tickets.audit-pdf', compact('ticket'))
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled'      => false,
+                'defaultFont'          => 'DejaVu Sans',
+            ]);
+
+        $filename = 'Arsip-Audit-Tiket-' . str_pad($ticket->id, 4, '0', STR_PAD_LEFT) . '.pdf';
+
+        return $pdf->download($filename);
+    }
+
     // Verifikasi publik (link QR code di dokumen)
 
     public function verifyPublic(Request $request, Ticket $ticket)

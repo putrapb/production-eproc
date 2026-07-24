@@ -64,7 +64,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Pengaturan
     Route::get('/settings', fn () => view('settings.index'))->name('settings.index');
 
-
     // Daftar & detail tiket
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
     Route::get('/tickets/export', [TicketController::class, 'export'])
@@ -97,6 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
     Route::get('/tickets/document/{ticketDocument}', [TicketController::class, 'streamDocument'])->name('tickets.document');
     Route::get('/tickets/{ticket}/download-po', [PurchaseOrderController::class, 'download'])->name('tickets.download-po');
+    Route::get('/tickets/{ticket}/download-audit', [TicketController::class, 'downloadAudit'])->name('tickets.download-audit');
 
     // Akses khusus Team Leader
     Route::middleware('role:team_leader')->group(function () {

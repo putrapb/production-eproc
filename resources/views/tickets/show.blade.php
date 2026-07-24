@@ -29,6 +29,16 @@
         Edit Tiket
       </a>
     @endif
+    @if(in_array($ticket->status, ['approved', 'declined']))
+      <a href="{{ route('tickets.download-audit', $ticket) }}" class="btn btn-secondary"
+         title="Download Arsip Audit (DIP)"
+         style="display:inline-flex; align-items:center; gap:6px;">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17v2a2 2 0 002 2h16a2 2 0 002-2v-2"/>
+        </svg>
+        Arsip Audit
+      </a>
+    @endif
     <a href="{{ route('tickets.index') }}" class="btn btn-secondary">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       Kembali
