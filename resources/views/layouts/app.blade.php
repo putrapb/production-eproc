@@ -8,6 +8,14 @@
   <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=2" type="image/x-icon">
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
+  {{-- Anti-flicker: apply saved theme BEFORE CSS renders --}}
+  <script>
+    (function() {
+      var theme = localStorage.getItem('eprocTheme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+
   <!-- Design System -->
   <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
 
