@@ -375,7 +375,12 @@ class SmartValidationService
             'support contract', 'maintenance fee', 'hosting', 'recurring',
         ];
 
-        $itemNames = strtolower($ticket->item_name);
+        // Read from items relation (ticket_items table), fallback to direct column
+        $itemNamesRaw = $ticket->items->pluck('item_name')->implode(' ');
+        if (empty(trim($itemNamesRaw)) && isset($ticket->item_name)) {
+            $itemNamesRaw = $ticket->item_name ?? '';
+        }
+        $itemNames = strtolower($itemNamesRaw);
 
         foreach ($opexSignals as $signal) {
             if (str_contains($itemNames, $signal)) {
