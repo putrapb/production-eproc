@@ -57,6 +57,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Bantuan & FAQ
+    Route::get('/faq', fn () => view('faq.index'))->name('faq.index');
+
     // Profil
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');

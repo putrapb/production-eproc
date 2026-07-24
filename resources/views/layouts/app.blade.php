@@ -120,6 +120,18 @@
         Pengajuan Baru
       </a>
       @endif
+
+      <div style="flex: 1;"></div> <!-- Spacer to push the next item to the bottom -->
+
+      <div style="margin: 12px 16px; border-top: 1px solid var(--color-hairline);"></div>
+      <a href="{{ route('faq.index') }}"
+         class="sidebar-nav-item {{ request()->routeIs('faq.index') ? 'active' : '' }}"
+         style="margin-bottom: 8px;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
+        </svg>
+        Bantuan & FAQ
+      </a>
     </nav>
 
     <!-- User Info -->
