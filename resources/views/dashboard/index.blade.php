@@ -59,7 +59,7 @@
         </div>
         <div class="stat-card-label">Ditolak</div>
         <div class="stat-card-value">{{ $s['declined'] ?? 0 }}</div>
-        <div class="stat-card-sub">Butuh tindak lanjut</div>
+        <div class="stat-card-sub">Pengadaan yang ditolak/dibatalkan</div>
       </div>
 
     @elseif(auth()->user()->isTeamLeader())
