@@ -540,10 +540,12 @@ class SmartValidationService
         }
 
         // Gate 1: Duplicate Check
+        $hasDuplicate = false;
         $gate1 = ['status' => 'pass', 'message' => 'Tidak ditemukan tiket dengan judul serupa.'];
         if ($title) {
             $gate1Check = $this->gate1DuplicateCheck($title, $requester);
             if ($gate1Check['has_duplicate']) {
+                $hasDuplicate = true;
                 $gate1 = [
                     'status'  => 'warning',
                     'message' => $gate1Check['message'],
@@ -552,12 +554,14 @@ class SmartValidationService
         }
 
         // Gate 2: Nominal Check
+        $nominalWarning = false;
         $gate2 = ['status' => 'pass', 'message' => 'Nominal pengajuan valid.'];
         if ($totalAmount > 0) {
             $gate2Check = $this->gate2NominalValidation($totalAmount);
             if ($gate2Check['hard_fail']) {
                 $gate2 = ['status' => 'fail', 'message' => $gate2Check['message']];
             } elseif ($gate2Check['needs_confirmation']) {
+                $nominalWarning = true;
                 $gate2 = ['status' => 'warning', 'message' => $gate2Check['message']];
             }
         } else {
