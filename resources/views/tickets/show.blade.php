@@ -29,7 +29,7 @@
         Edit Tiket
       </a>
     @endif
-    @if(in_array($ticket->status, ['approved', 'declined']))
+    @if(in_array($ticket->status, ['form_generated', 'declined']))
       <a href="{{ route('tickets.download-audit', $ticket) }}" class="btn btn-secondary"
          title="Download Arsip Audit (DIP)"
          style="display:inline-flex; align-items:center; gap:6px;">
