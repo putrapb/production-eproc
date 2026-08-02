@@ -343,33 +343,16 @@ class SmartValidationService
     {
         $category = $ticket->category;
 
-        // Infrastruktur Utama: server, storage, network hardware
-        // These are long-lived physical assets → PSAK 16 Aset Tetap
-        if ($category === Ticket::CATEGORY_INFRASTRUKTUR_UTAMA) {
-            return Ticket::TYPE_CAPEX;
-        }
-
-        // Layanan Pemeliharaan: maintenance contracts, managed services, ITSM
-        // Perlengkapan Operasional: consumables, ATK, spare parts
-        // These are recurring operational costs — never capitalized
-        if (in_array($category, [
-            Ticket::CATEGORY_LAYANAN_PEMELIHARAAN,
-            Ticket::CATEGORY_PERLENGKAPAN_OPERASIONAL,
-        ])) {
-            return Ticket::TYPE_OPEX;
-        }
-
-        // PSAK 19: Software licenses are intangible assets (CAPEX) IF perpetual.
-        // SaaS/cloud/subscription = no asset ownership → OPEX.
-        //
-        // Check item names from ticket_items for OPEX signals.
+        // PSAK 16 & 19: Cek nama item terlebih dahulu untuk sinyal operasional/jasa/sewa (OPEX)
+        // Berlaku untuk SEMUA kategori (bahkan di dalam Infrastruktur Utama maupun Lisensi Sistem).
         $opexSignals = [
-            'subscription', 'langganan', 'saas', 'cloud', 'tahunan', 'bulanan',
-            'monthly', 'annual', 'sewa', 'rental', 'as a service', 'managed service',
-            'support contract', 'maintenance fee', 'hosting', 'recurring',
+            'sewa', 'rental', 'listrik', 'daya', 'power', 'jasa', 'service', 'maintenance',
+            'langganan', 'subscription', 'saas', 'cloud', 'tahunan', 'bulanan',
+            'monthly', 'annual', 'as a service', 'managed service',
+            'hosting', 'recurring', 'support contract', 'maintenance fee',
+            'iuran', 'tagihan', 'konsultasi', 'training', 'pelatihan', 'biaya operasional',
         ];
 
-        // Read from items relation (ticket_items table), fallback to direct column
         $itemNamesRaw = $ticket->items->pluck('item_name')->implode(' ');
         if (empty(trim($itemNamesRaw)) && isset($ticket->item_name)) {
             $itemNamesRaw = $ticket->item_name ?? '';
@@ -382,7 +365,15 @@ class SmartValidationService
             }
         }
 
-        // Default for lisensi_sistem with no OPEX signals: perpetual license → CAPEX
+        // Layanan Pemeliharaan & Perlengkapan Operasional → selalu OPEX
+        if (in_array($category, [
+            Ticket::CATEGORY_LAYANAN_PEMELIHARAAN,
+            Ticket::CATEGORY_PERLENGKAPAN_OPERASIONAL,
+        ])) {
+            return Ticket::TYPE_OPEX;
+        }
+
+        // Infrastruktur Utama & Lisensi Sistem (tanpa kata kunci sewa/langganan/operasional) → Aset Tetap/Takberwujud (CAPEX)
         return Ticket::TYPE_CAPEX;
     }
 
@@ -466,12 +457,13 @@ class SmartValidationService
         $items       = $data['items'] ?? [];
         $suggestions = [];
 
-        // Aturan: category di level tiket menentukan basis CAPEX/OPEX,
-        // tapi item_name dari lisensi_sistem bisa override ke OPEX via keyword.
+        // PSAK 16 & 19: Cek kata kunci operasional/sewa/langganan di nama item (berlaku di semua kategori)
         $opexSignals = [
-            'subscription', 'langganan', 'saas', 'cloud', 'tahunan', 'bulanan',
-            'monthly', 'annual', 'sewa', 'rental', 'as a service', 'managed service',
+            'sewa', 'rental', 'listrik', 'daya', 'power', 'jasa', 'service', 'maintenance',
+            'langganan', 'subscription', 'saas', 'cloud', 'tahunan', 'bulanan',
+            'monthly', 'annual', 'as a service', 'managed service',
             'hosting', 'recurring', 'support contract', 'maintenance fee',
+            'iuran', 'tagihan', 'konsultasi', 'training', 'pelatihan', 'biaya operasional',
         ];
 
         $perItemClassification = [];
@@ -485,28 +477,30 @@ class SmartValidationService
             $subtotal  = $qty * $price;
             $itemLower = strtolower($itemName);
 
-            // Determine per-item type using same PSAK 16/19 rules as gate3Classification
+            // Determine per-item type using PSAK 16/19 keyword override first, then category fallbacks
             if (!empty($item['expenditure_type'])) {
                 $suggestedType = $item['expenditure_type'];
             } else {
-                if ($category === Ticket::CATEGORY_INFRASTRUKTUR_UTAMA) {
-                    $suggestedType = Ticket::TYPE_CAPEX;
-                } elseif (in_array($category, [
+                $isOpexKeyword = false;
+                foreach ($opexSignals as $signal) {
+                    if (str_contains($itemLower, $signal)) {
+                        $isOpexKeyword = true;
+                        break;
+                    }
+                }
+
+                if ($isOpexKeyword || in_array($category, [
                     Ticket::CATEGORY_LAYANAN_PEMELIHARAAN,
                     Ticket::CATEGORY_PERLENGKAPAN_OPERASIONAL,
                 ])) {
                     $suggestedType = Ticket::TYPE_OPEX;
-                } elseif ($category === Ticket::CATEGORY_LISENSI_SISTEM) {
-                    // Keyword-based: if item name has OPEX signals → OPEX, else CAPEX
+                } elseif (in_array($category, [
+                    Ticket::CATEGORY_INFRASTRUKTUR_UTAMA,
+                    Ticket::CATEGORY_LISENSI_SISTEM,
+                ])) {
                     $suggestedType = Ticket::TYPE_CAPEX;
-                    foreach ($opexSignals as $signal) {
-                        if (str_contains($itemLower, $signal)) {
-                            $suggestedType = Ticket::TYPE_OPEX;
-                            break;
-                        }
-                    }
                 } else {
-                    $suggestedType = null; // unknown category
+                    $suggestedType = null;
                 }
             }
 

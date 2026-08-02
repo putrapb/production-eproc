@@ -150,6 +150,7 @@
                   <input type="text" name="items[{{ $i }}][item_name]"
                     class="form-control {{ $errors->has("items.$i.item_name") ? 'is-invalid' : '' }}"
                     value="{{ $oldItem['item_name'] ?? '' }}"
+                    oninput="const r=this.closest('.item-row');if(r){const e=r.querySelector('.item-exp-type');if(e)e.value='';}"
                     placeholder="Nama barang / jasa" required maxlength="255">
                 </td>
                 <td style="padding:6px 8px;">
@@ -343,7 +344,7 @@ function addItemRow() {
   tr.className = 'item-row';
   tr.innerHTML = `
     <td style="padding:8px 12px; font-size:13px; color:var(--color-muted);" class="item-no"></td>
-    <td style="padding:6px 8px;"><input type="text" name="items[${idx}][item_name]" class="form-control" placeholder="Nama barang / jasa" required maxlength="255"></td>
+    <td style="padding:6px 8px;"><input type="text" name="items[${idx}][item_name]" class="form-control" placeholder="Nama barang / jasa" required maxlength="255" oninput="const r=this.closest('.item-row');if(r){const e=r.querySelector('.item-exp-type');if(e)e.value='';}"></td>
     <td style="padding:6px 8px;"><input type="number" name="items[${idx}][quantity]" class="form-control item-qty" value="1" min="1" style="text-align:center;" onchange="recalcRow(this)" required></td>
     <td style="padding:6px 8px;"><input type="text" class="form-control item-price-display" placeholder="0" style="text-align:right;" oninput="formatItemPrice(this)"><input type="hidden" name="items[${idx}][unit_price]" class="item-price-raw" value=""><input type="hidden" name="items[${idx}][expenditure_type]" class="item-exp-type" value=""></td>
     <td style="padding:6px 12px; text-align:right; font-size:13px; font-weight:600;" class="item-subtotal">Rp 0</td>
@@ -428,11 +429,13 @@ function runPreviewValidation() {
     const nameInput  = row.querySelector('input[name*="[item_name]"]');
     const qtyInput   = row.querySelector('input[name*="[quantity]"]');
     const priceInput = row.querySelector('.item-price-raw');
+    const typeInput  = row.querySelector('.item-exp-type');
     if (nameInput) {
       items.push({
-        item_name:  nameInput.value,
-        quantity:   qtyInput?.value || 1,
-        unit_price: priceInput?.value || 0,
+        item_name:        nameInput.value,
+        quantity:         qtyInput?.value || 1,
+        unit_price:       priceInput?.value || 0,
+        expenditure_type: typeInput?.value || '',
       });
     }
   });
@@ -543,6 +546,7 @@ function renderGateCardModal(data) {
                 if (hInput) hInput.value = this.value;
               }
               this.style.color = this.value === 'CAPEX' ? 'var(--color-primary, #3b82f6)' : 'var(--color-warning, #f59e0b)';
+              runPreviewValidation();
             ">
               <option value="CAPEX" ${item.suggested_type === 'CAPEX' ? 'selected' : ''}>CAPEX</option>
               <option value="OPEX" ${item.suggested_type === 'OPEX' ? 'selected' : ''}>OPEX</option>
