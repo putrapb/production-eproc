@@ -266,6 +266,42 @@ class Ticket extends Model
         return 'Rp ' . number_format($this->total_amount, 0, ',', '.');
     }
 
+    /**
+     * Hitung total nilai pengadaan untuk item klasifikasi CAPEX (sesuai PSAK per-item).
+     */
+    public function getCapexTotalAttribute(): float
+    {
+        $items = $this->relationLoaded('items') ? $this->items : $this->items()->get();
+        $total = 0.0;
+        foreach ($items as $item) {
+            if ($item->effective_expenditure_type === self::TYPE_CAPEX) {
+                $total += (float) ($item->subtotal ?: ($item->quantity * $item->unit_price));
+            }
+        }
+        if ($total === 0.0 && $items->isEmpty() && $this->expenditure_type === self::TYPE_CAPEX) {
+            return (float) $this->amount;
+        }
+        return $total;
+    }
+
+    /**
+     * Hitung total nilai pengadaan untuk item klasifikasi OPEX (sesuai PSAK per-item).
+     */
+    public function getOpexTotalAttribute(): float
+    {
+        $items = $this->relationLoaded('items') ? $this->items : $this->items()->get();
+        $total = 0.0;
+        foreach ($items as $item) {
+            if ($item->effective_expenditure_type === self::TYPE_OPEX) {
+                $total += (float) ($item->subtotal ?: ($item->quantity * $item->unit_price));
+            }
+        }
+        if ($total === 0.0 && $items->isEmpty() && $this->expenditure_type === self::TYPE_OPEX) {
+            return (float) $this->amount;
+        }
+        return $total;
+    }
+
     // Column Alias Accessors (for template readability)
 
     public function getIzinPrinsipPathAttribute(): ?string

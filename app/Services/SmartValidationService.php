@@ -117,15 +117,8 @@ class SmartValidationService
         // Budget dikunci di sini kalau lolos, bukan sebelumnya
         // Hitungan pakai aturan monthly limit: >30% dari batas bulanan = wajib silang dana
         $gate4Result = DB::transaction(function () use ($ticket, $requester) {
-            $capexTotal = 0.0;
-            $opexTotal  = 0.0;
-
-            $type = $classifiedType ?? $ticket->expenditure_type;
-            if ($type === Ticket::TYPE_CAPEX) {
-                $capexTotal = (float) $ticket->amount;
-            } else {
-                $opexTotal = (float) $ticket->amount;
-            }
+            $capexTotal = $ticket->capex_total;
+            $opexTotal  = $ticket->opex_total;
 
             $capexBudget = null;
             $opexBudget  = null;
@@ -242,6 +235,7 @@ class SmartValidationService
                 'is_cross_fund'    => true,
                 'status'           => Ticket::STATUS_PENDING_DEPT_HEAD,
             ]);
+            $ticket->items()->update(['expenditure_type' => $alternativeType]);
 
             // Budget lock happens here — after cross-fund decision confirmed
             $budget->lock($ticket->total_amount);

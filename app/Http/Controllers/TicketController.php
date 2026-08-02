@@ -443,9 +443,16 @@ class TicketController extends Controller
                 return;
             }
 
-            $budget = \App\Models\Budget::findForTicket($ticket->expenditure_type, $ticket->category, now()->year);
-            if ($budget) {
-                $budget->lock($ticket->amount);
+            $capexTotal = $ticket->capex_total;
+            $opexTotal  = $ticket->opex_total;
+
+            if ($capexTotal > 0) {
+                $budget = \App\Models\Budget::findForTicket(Ticket::TYPE_CAPEX, $ticket->category, now()->year);
+                if ($budget) $budget->lock($capexTotal);
+            }
+            if ($opexTotal > 0) {
+                $budget = \App\Models\Budget::findForTicket(Ticket::TYPE_OPEX, $ticket->category, now()->year);
+                if ($budget) $budget->lock($opexTotal);
             }
 
             $ticket->update([
@@ -601,15 +608,16 @@ class TicketController extends Controller
         $this->ensureStatus($ticket, Ticket::STATUS_NEED_TO_VALIDATE);
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($ticket, $request) {
-            $total = (float) $ticket->amount;
-            $type  = $ticket->expenditure_type;
+            $capexTotal = $ticket->capex_total;
+            $opexTotal  = $ticket->opex_total;
 
-            if ($type === Ticket::TYPE_CAPEX && $total > 0) {
+            if ($capexTotal > 0) {
                 $budget = Budget::findForTicket(Ticket::TYPE_CAPEX, $ticket->category, now()->year);
-                if ($budget) $budget->unlock($total);
-            } elseif ($total > 0) {
+                if ($budget) $budget->unlock($capexTotal);
+            }
+            if ($opexTotal > 0) {
                 $budget = Budget::findForTicket(Ticket::TYPE_OPEX, $ticket->category, now()->year);
-                if ($budget) $budget->unlock($total);
+                if ($budget) $budget->unlock($opexTotal);
             }
 
             $ticket->update(['status' => Ticket::STATUS_DECLINED]);
@@ -734,8 +742,8 @@ class TicketController extends Controller
         $user = $request->user();
 
         $message = DB::transaction(function () use ($request, $ticket, $user) {
-            $capexTotal = $ticket->expenditure_type === Ticket::TYPE_CAPEX ? (float) $ticket->amount : 0;
-            $opexTotal  = $ticket->expenditure_type === Ticket::TYPE_OPEX  ? (float) $ticket->amount : 0;
+            $capexTotal = $ticket->capex_total;
+            $opexTotal  = $ticket->opex_total;
 
             if ($request->action === 'approve') {
                 if ($capexTotal > 0) {
@@ -837,8 +845,8 @@ class TicketController extends Controller
 
         DB::transaction(function () use ($tickets, $user, $request) {
             foreach ($tickets as $ticket) {
-                $capexTotal = $ticket->expenditure_type === Ticket::TYPE_CAPEX ? (float) $ticket->amount : 0;
-                $opexTotal  = $ticket->expenditure_type === Ticket::TYPE_OPEX  ? (float) $ticket->amount : 0;
+                $capexTotal = $ticket->capex_total;
+                $opexTotal  = $ticket->opex_total;
 
                 if ($request->action === 'approve') {
                     if ($capexTotal > 0) {
