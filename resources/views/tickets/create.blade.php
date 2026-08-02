@@ -21,7 +21,7 @@
 </div>
 
 <div class="page-content">
-  <form method="POST" action="{{ route('tickets.store') }}" enctype="multipart/form-data" id="ticket-form">
+  <form method="POST" action="{{ route('tickets.store') }}" enctype="multipart/form-data" id="ticket-form" novalidate>
     @csrf
 
     <div class="card">
@@ -576,7 +576,10 @@ function toggleSubmitTicketBtn() {
 // btn-submit-ticket is now inside the modal — submit the form programmatically
 function submitTicketForm() {
   localStorage.removeItem('ticket_form_draft');
-  document.getElementById('ticket-form').submit();
+  const form = document.getElementById('ticket-form');
+  // Bypass browser HTML5 validation (server-side Laravel validation handles this)
+  form.noValidate = true;
+  form.submit();
 }
 
 // Reset validation state on form changes to enforce re-checking
