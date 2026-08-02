@@ -581,13 +581,17 @@ function submitTicketForm() {
 
 // Reset validation state on form changes to enforce re-checking
 document.getElementById('ticket-form').addEventListener('input', function(e) {
-  if (e.target.name === 'document_files[]' || e.target.name === 'document_descriptions[]') return; // documents don't affect budget
+  // Kecualikan: dokumen (tidak pengaruhi budget) dan checkbox consent
+  if (e.target.name === 'document_files[]' || e.target.name === 'document_descriptions[]') return;
+  if (e.target.id === 'ds-consent-create') return;
   document.getElementById('btn-submit-ticket').style.display = 'none';
   saveFormDraft();
 });
 
 document.getElementById('ticket-form').addEventListener('change', function(e) {
+  // Kecualikan: dokumen (tidak pengaruhi budget) dan checkbox consent
   if (e.target.name === 'document_files[]' || e.target.name === 'document_descriptions[]') return;
+  if (e.target.id === 'ds-consent-create') return;
   document.getElementById('btn-submit-ticket').style.display = 'none';
   saveFormDraft();
 });
