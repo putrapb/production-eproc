@@ -250,6 +250,11 @@
 <!-- ─── TOAST CONTAINER ───────────────────────── -->
 <div class="toast-container" id="toast-container"></div>
 
+<!-- ─── LOGOUT FORM (hidden) ─────────────────── -->
+<form id="logout-form" method="POST" action="{{ route('logout') }}" style="display:none;">
+  @csrf
+</form>
+
 <!-- ─── SCRIPTS ──────────────────────────────── -->
 <script>
 function openSidebar() {
