@@ -8,11 +8,18 @@
   <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=2" type="image/x-icon">
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
-  {{-- Anti-flicker: apply saved theme BEFORE CSS renders --}}
+  {{-- Anti-flicker: apply saved settings (theme, compact mode, font size) BEFORE CSS renders --}}
   <script>
     (function() {
       var theme = localStorage.getItem('eprocTheme') || 'light';
       document.documentElement.setAttribute('data-theme', theme);
+      if (localStorage.getItem('eprocCompact') === 'true') {
+        document.documentElement.setAttribute('data-compact', 'true');
+      }
+      var fontSize = localStorage.getItem('eprocFontSize');
+      if (fontSize) {
+        document.documentElement.style.fontSize = fontSize + 'px';
+      }
     })();
   </script>
 
@@ -376,14 +383,26 @@ function renderNotifications(data) {
 
   if (!notifList) return;
 
-  if (!data.notifications || data.notifications.length === 0) {
+  const notifPrefs = JSON.parse(localStorage.getItem('eprocNotifPrefs') || '{"approved":true,"rejected":true,"document":false,"incoming":true,"po":true}');
+  const activeNotifs = (data.notifications || []).filter(n => {
+    if (n.type === 'ticket_approved' && notifPrefs.approved === false) return false;
+    if ((n.type === 'ticket_declined' || n.type === 'ticket_revised') && notifPrefs.rejected === false) return false;
+    if ((n.type === 'ticket_reviewed' || n.type === 'ticket_validated') && notifPrefs.document === false) return false;
+    if ((n.type === 'ticket_submitted' || n.type === 'ticket_forwarded') && notifPrefs.incoming === false) return false;
+    if (n.type === 'po_generated' && notifPrefs.po === false) return false;
+    return true;
+  });
+
+  if (activeNotifs.length === 0) {
     notifList.innerHTML = '<div style="padding:32px 16px; text-align:center; color:var(--color-muted); font-size:13px;"><div style="margin-bottom:8px; display:flex; justify-content:center;"><svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color:#9ca3af;"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>Belum ada notifikasi di sini.</div>';
     return;
   }
 
-  notifList.innerHTML = data.notifications.map(n => `
+  const compactMode = localStorage.getItem('eprocCompact') === 'true';
+
+  notifList.innerHTML = activeNotifs.map(n => `
     <div class="notif-item ${n.read ? '' : 'unread'}" data-id="${n.id}"
-       style="position:relative; display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-bottom:1px solid #f9fafb; cursor:pointer;"
+       style="position:relative; display:flex; align-items:flex-start; gap:10px; padding:${compactMode ? '8px 12px' : '12px 16px'}; border-bottom:1px solid #f9fafb; cursor:pointer;"
        onclick="handleNotifClick(${n.id}, '${n.ticket_url || '#'}', this)">
       <span style="flex-shrink:0; display:flex; align-items:center; color:var(--color-primary);">${typeIcon[n.type] || '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>'}</span>
       <div style="flex:1; min-width:0;">

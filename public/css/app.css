@@ -1627,3 +1627,18 @@ select.form-control {
 .settings-row-label { font-size: 14px; font-weight: 500; color: var(--color-ink); }
 .settings-row-desc  { font-size: 12px; color: var(--color-muted); margin-top: 2px; }
 
+/* ── Global Compact Mode ([data-compact="true"]) ── */
+[data-compact="true"] table th,
+[data-compact="true"] table td {
+  padding: 8px 12px !important;
+}
+[data-compact="true"] .card {
+  margin-bottom: 14px !important;
+}
+[data-compact="true"] .stat-card {
+  padding: 14px !important;
+}
+[data-compact="true"] .btn {
+  padding: 6px 14px !important;
+}
+
