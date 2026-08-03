@@ -3,32 +3,23 @@
 @section('title', 'Pengaturan')
 
 @section('breadcrumb')
-  <span class="breadcrumb-item">Pengaturan</span>
+  <span class="breadcrumb-active">Pengaturan</span>
 @endsection
 
 @section('content')
 <style>
-  /* ── Settings Page UI Styling ── */
-  .settings-container {
-    max-width: 760px;
-    margin: 0 auto;
-    padding-top: 8px;
-    padding-bottom: 48px;
+  /* ── Responsive Settings Page UI Styling ── */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Default Mobile/Tablet: 1 Column vertikal seperti HP */
+    gap: 28px;
+    align-items: start;
   }
-  .settings-header {
-    margin-bottom: 28px;
-  }
-  .settings-header h1 {
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--color-ink, #0f172a);
-    margin: 0 0 6px;
-    letter-spacing: -0.5px;
-  }
-  .settings-header p {
-    font-size: 14px;
-    color: var(--color-muted, #64748b);
-    margin: 0;
+  @media (min-width: 992px) {
+    .settings-grid {
+      grid-template-columns: 1fr 1.2fr; /* Desktop: 2 Kolom bersisian yang proporsional & mewah */
+      gap: 32px;
+    }
   }
 
   /* Cards */
@@ -37,12 +28,12 @@
     border: 1px solid var(--color-border, #e2e8f0);
     border-radius: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.04);
-    margin-bottom: 24px;
     overflow: hidden;
+    width: 100%;
   }
   .settings-card-header {
     background: #FFF8F3;
-    padding: 16px 24px;
+    padding: 18px 24px;
     border-bottom: 1px solid #FFECE0;
     display: flex;
     align-items: center;
@@ -173,7 +164,7 @@
     color: #0E7490; /* Teal tone matching screenshot */
     border: 1px solid #0E7490;
     border-radius: 8px;
-    padding: 9px 20px;
+    padding: 10px 24px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -193,141 +184,148 @@
   }
 </style>
 
-<div class="settings-container">
-
-  {{-- Page Header --}}
-  <div class="settings-header">
+{{-- Standard Left-Aligned Page Header --}}
+<div class="page-header">
+  <div class="page-header-left">
     <h1>Pengaturan</h1>
     <p>Sesuaikan tampilan dan preferensi notifikasi</p>
   </div>
+</div>
 
-  {{-- ── SECTION 1: TAMPILAN (APPEARANCE) ── --}}
-  <div class="settings-card">
-    <div class="settings-card-header">
-      <span class="settings-card-icon">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-        </svg>
-      </span>
-      <span class="settings-card-title">Tampilan (Appearance)</span>
+{{-- Main Responsive Content Area --}}
+<div class="page-content" style="padding-bottom: 60px;">
+
+  <div class="settings-grid">
+    
+    {{-- ── COLUMN 1: TAMPILAN (APPEARANCE) ── --}}
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="settings-card-icon">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        </span>
+        <span class="settings-card-title">Tampilan (Appearance)</span>
+      </div>
+
+      <div class="settings-card-body">
+
+        {{-- Dark Mode Toggle --}}
+        <div class="settings-item-row">
+          <div>
+            <div class="settings-item-label">Dark Mode</div>
+            <div class="settings-item-desc">Aktifkan tema gelap untuk kenyamanan mata</div>
+          </div>
+          <label class="custom-switch switch-dark" title="Toggle dark mode">
+            <input type="checkbox" id="toggle-dark-mode" onchange="applyTheme(this.checked)">
+            <span class="custom-slider"></span>
+          </label>
+        </div>
+
+        {{-- Compact Mode Toggle --}}
+        <div class="settings-item-row">
+          <div>
+            <div class="settings-item-label">Compact Mode</div>
+            <div class="settings-item-desc">Tampilkan lebih banyak data dalam satu layar</div>
+          </div>
+          <label class="custom-switch" title="Toggle compact mode">
+            <input type="checkbox" id="toggle-compact" onchange="applyCompact(this.checked)">
+            <span class="custom-slider"></span>
+          </label>
+        </div>
+
+        {{-- Ukuran Teks --}}
+        <div class="settings-item-row">
+          <div>
+            <div class="settings-item-label">Ukuran Teks</div>
+            <div class="settings-item-desc">Pilih ukuran teks default aplikasi</div>
+          </div>
+          <select id="select-fontsize" class="settings-select" onchange="applyFontSize(this.value)">
+            <option value="13">Kecil</option>
+            <option value="14">Sedang</option>
+            <option value="16">Besar</option>
+          </select>
+        </div>
+
+      </div>
     </div>
 
-    <div class="settings-card-body">
-
-      {{-- Dark Mode Toggle --}}
-      <div class="settings-item-row">
-        <div>
-          <div class="settings-item-label">Dark Mode</div>
-          <div class="settings-item-desc">Aktifkan tema gelap untuk kenyamanan mata</div>
-        </div>
-        <label class="custom-switch switch-dark" title="Toggle dark mode">
-          <input type="checkbox" id="toggle-dark-mode" onchange="applyTheme(this.checked)">
-          <span class="custom-slider"></span>
-        </label>
+    {{-- ── COLUMN 2: PREFERENSI NOTIFIKASI ── --}}
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <span class="settings-card-icon">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+        </span>
+        <span class="settings-card-title">Preferensi Notifikasi</span>
       </div>
 
-      {{-- Compact Mode Toggle --}}
-      <div class="settings-item-row">
-        <div>
-          <div class="settings-item-label">Compact Mode</div>
-          <div class="settings-item-desc">Tampilkan lebih banyak data dalam satu layar</div>
-        </div>
-        <label class="custom-switch" title="Toggle compact mode">
-          <input type="checkbox" id="toggle-compact" onchange="applyCompact(this.checked)">
-          <span class="custom-slider"></span>
-        </label>
-      </div>
+      <div class="settings-card-body">
 
-      {{-- Ukuran Teks --}}
-      <div class="settings-item-row">
-        <div>
-          <div class="settings-item-label">Ukuran Teks</div>
-          <div class="settings-item-desc">Pilih ukuran teks default aplikasi</div>
+        {{-- Ticket Approved --}}
+        <div class="settings-item-row">
+          <div>
+            <div class="settings-item-label">Ticket Approved</div>
+            <div class="settings-item-desc">Notifikasi saat tiket disetujui</div>
+          </div>
+          <label class="custom-switch">
+            <input type="checkbox" id="notif-approved" onchange="saveNotifPref('approved', this.checked)">
+            <span class="custom-slider"></span>
+          </label>
         </div>
-        <select id="select-fontsize" class="settings-select" onchange="applyFontSize(this.value)">
-          <option value="13">Kecil</option>
-          <option value="14">Sedang</option>
-          <option value="16">Besar</option>
-        </select>
-      </div>
 
+        {{-- Declined / Revision Request --}}
+        <div class="settings-item-row">
+          <div>
+            <div class="settings-item-label">Declined / Revision Request</div>
+            <div class="settings-item-desc">Pemberitahuan ketika tiket ditolak atau butuh revisi</div>
+          </div>
+          <label class="custom-switch">
+            <input type="checkbox" id="notif-rejected" onchange="saveNotifPref('rejected', this.checked)">
+            <span class="custom-slider"></span>
+          </label>
+        </div>
+
+        {{-- Document Review Complete --}}
+        <div class="settings-item-row">
+          <div>
+            <div class="settings-item-label">Document Review Complete</div>
+            <div class="settings-item-desc">Saat dokumen pengadaan selesai direview</div>
+          </div>
+          <label class="custom-switch">
+            <input type="checkbox" id="notif-document" onchange="saveNotifPref('document', this.checked)">
+            <span class="custom-slider"></span>
+          </label>
+        </div>
+
+        {{-- New Ticket (Team Leader Only) --}}
+        <div class="settings-item-row">
+          <div>
+            <div class="settings-item-label">New Ticket (Team Leader Only)</div>
+            <div class="settings-item-desc">Notifikasi pengajuan tiket baru dari tim</div>
+          </div>
+          <label class="custom-switch">
+            <input type="checkbox" id="notif-incoming" onchange="saveNotifPref('incoming', this.checked)">
+            <span class="custom-slider"></span>
+          </label>
+        </div>
+
+        {{-- Form Generated --}}
+        <div class="settings-item-row">
+          <div>
+            <div class="settings-item-label">Form Generated</div>
+            <div class="settings-item-desc">Saat dokumen final (PDF) berhasil dibuat sistem</div>
+          </div>
+          <label class="custom-switch">
+            <input type="checkbox" id="notif-po" onchange="saveNotifPref('po', this.checked)">
+            <span class="custom-slider"></span>
+          </label>
+        </div>
+
+      </div>
     </div>
-  </div>
 
-  {{-- ── SECTION 2: PREFERENSI NOTIFIKASI ── --}}
-  <div class="settings-card">
-    <div class="settings-card-header">
-      <span class="settings-card-icon">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
-        </svg>
-      </span>
-      <span class="settings-card-title">Preferensi Notifikasi</span>
-    </div>
-
-    <div class="settings-card-body">
-
-      {{-- Ticket Approved --}}
-      <div class="settings-item-row">
-        <div>
-          <div class="settings-item-label">Ticket Approved</div>
-          <div class="settings-item-desc">Notifikasi saat tiket disetujui</div>
-        </div>
-        <label class="custom-switch">
-          <input type="checkbox" id="notif-approved" onchange="saveNotifPref('approved', this.checked)">
-          <span class="custom-slider"></span>
-        </label>
-      </div>
-
-      {{-- Declined / Revision Request --}}
-      <div class="settings-item-row">
-        <div>
-          <div class="settings-item-label">Declined / Revision Request</div>
-          <div class="settings-item-desc">Pemberitahuan ketika tiket ditolak atau butuh revisi</div>
-        </div>
-        <label class="custom-switch">
-          <input type="checkbox" id="notif-rejected" onchange="saveNotifPref('rejected', this.checked)">
-          <span class="custom-slider"></span>
-        </label>
-      </div>
-
-      {{-- Document Review Complete --}}
-      <div class="settings-item-row">
-        <div>
-          <div class="settings-item-label">Document Review Complete</div>
-          <div class="settings-item-desc">Saat dokumen pengadaan selesai direview</div>
-        </div>
-        <label class="custom-switch">
-          <input type="checkbox" id="notif-document" onchange="saveNotifPref('document', this.checked)">
-          <span class="custom-slider"></span>
-        </label>
-      </div>
-
-      {{-- New Ticket (Team Leader Only) --}}
-      <div class="settings-item-row">
-        <div>
-          <div class="settings-item-label">New Ticket (Team Leader Only)</div>
-          <div class="settings-item-desc">Notifikasi pengajuan tiket baru dari tim</div>
-        </div>
-        <label class="custom-switch">
-          <input type="checkbox" id="notif-incoming" onchange="saveNotifPref('incoming', this.checked)">
-          <span class="custom-slider"></span>
-        </label>
-      </div>
-
-      {{-- Form Generated --}}
-      <div class="settings-item-row">
-        <div>
-          <div class="settings-item-label">Form Generated</div>
-          <div class="settings-item-desc">Saat dokumen final (PDF) berhasil dibuat sistem</div>
-        </div>
-        <label class="custom-switch">
-          <input type="checkbox" id="notif-po" onchange="saveNotifPref('po', this.checked)">
-          <span class="custom-slider"></span>
-        </label>
-      </div>
-
-    </div>
   </div>
 
   {{-- Reset Button --}}
