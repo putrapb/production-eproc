@@ -8,32 +8,42 @@
 
 @section('content')
 <style>
-  /* ── Responsive Settings Page UI Styling ── */
-  .settings-grid {
-    display: grid;
-    grid-template-columns: 1fr; /* Default Mobile/Tablet: 1 Column vertikal seperti HP */
-    gap: 28px;
-    align-items: start;
+  /* ── Settings Page UI Styling (Presisi sesuai desain) ── */
+  .settings-wrapper {
+    max-width: 960px;
+    margin: 0; /* Rata kiri menyatu elegan dengan kontainer utama di desktop */
+    padding-top: 8px;
+    padding-bottom: 50px;
   }
-  @media (min-width: 992px) {
-    .settings-grid {
-      grid-template-columns: 1fr 1.2fr; /* Desktop: 2 Kolom bersisian yang proporsional & mewah */
-      gap: 32px;
-    }
+  .settings-header {
+    margin-bottom: 28px;
+  }
+  .settings-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--color-ink, #111827);
+    margin: 0 0 6px;
+    letter-spacing: -0.5px;
+  }
+  .settings-header p {
+    font-size: 14px;
+    color: var(--color-muted, #6b7280);
+    margin: 0;
   }
 
-  /* Cards */
+  /* Cards (Lebak, proporsional, vertikal bertumpuk) */
   .settings-card {
     background: var(--color-surface, #ffffff);
     border: 1px solid var(--color-border, #e2e8f0);
     border-radius: 16px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.04);
+    margin-bottom: 24px;
     overflow: hidden;
     width: 100%;
   }
   .settings-card-header {
     background: #FFF8F3;
-    padding: 18px 24px;
+    padding: 18px 28px;
     border-bottom: 1px solid #FFECE0;
     display: flex;
     align-items: center;
@@ -52,21 +62,21 @@
   .settings-card-title {
     font-size: 16px;
     font-weight: 700;
-    color: var(--color-ink, #1e293b);
+    color: var(--color-ink, #1f2937);
   }
 
   .settings-card-body {
-    padding: 8px 24px 16px;
+    padding: 8px 28px 16px;
   }
 
-  /* Row Item */
+  /* Row Item (Jarak kiri-kanan lega di desktop) */
   .settings-item-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 18px 0;
-    border-bottom: 1px solid var(--color-hairline, #f1f5f9);
-    gap: 24px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--color-hairline, #f3f4f6);
+    gap: 32px;
   }
   .settings-item-row:last-child {
     border-bottom: none;
@@ -74,21 +84,21 @@
   .settings-item-label {
     font-size: 15px;
     font-weight: 600;
-    color: var(--color-ink, #1e293b);
+    color: var(--color-ink, #1f2937);
     margin-bottom: 4px;
   }
   .settings-item-desc {
     font-size: 13px;
-    color: var(--color-muted, #64748b);
+    color: var(--color-muted, #6b7280);
     line-height: 1.4;
   }
 
-  /* Custom Toggle Switch (Orange Theme) */
+  /* Custom Toggle Switch (Orange Theme & Slate Dark Mode) */
   .custom-switch {
     position: relative;
     display: inline-block;
-    width: 48px;
-    height: 26px;
+    width: 50px;
+    height: 28px;
     flex-shrink: 0;
     cursor: pointer;
   }
@@ -110,8 +120,8 @@
   .custom-slider:before {
     content: '';
     position: absolute;
-    height: 20px;
-    width: 20px;
+    height: 22px;
+    width: 22px;
     left: 3px;
     top: 3px;
     background: #ffffff;
@@ -126,31 +136,31 @@
     transform: translateX(22px);
   }
 
-  /* Specific styling for Dark Mode switch (Dark Slate when checked) */
+  /* Specific styling for Dark Mode switch (Dark Slate Navy when checked) */
   .switch-dark input:checked + .custom-slider {
-    background: #334155;
+    background: #475569;
   }
   [data-theme="dark"] .switch-dark input:checked + .custom-slider {
-    background: #475569;
+    background: #64748B;
   }
 
   /* Select Dropdown */
   .settings-select {
     height: 38px;
-    padding: 0 32px 0 16px;
+    padding: 0 34px 0 16px;
     font-size: 14px;
     font-weight: 500;
     color: var(--color-ink, #334155);
     background-color: var(--color-surface, #ffffff);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 10px center;
+    background-position: right 12px center;
     border: 1px solid var(--color-border, #cbd5e1);
     border-radius: 8px;
     appearance: none;
     cursor: pointer;
     transition: border-color 0.2s, box-shadow 0.2s;
-    min-width: 120px;
+    min-width: 130px;
   }
   .settings-select:focus {
     outline: none;
@@ -158,13 +168,13 @@
     box-shadow: 0 0 0 3px rgba(255, 90, 31, 0.1);
   }
 
-  /* Reset Button */
+  /* Reset Button (Teal Border & Text) */
   .btn-reset-settings {
     background: var(--color-surface, #ffffff);
-    color: #0E7490; /* Teal tone matching screenshot */
+    color: #0E7490;
     border: 1px solid #0E7490;
     border-radius: 8px;
-    padding: 10px 24px;
+    padding: 9px 22px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -184,20 +194,16 @@
   }
 </style>
 
-{{-- Standard Left-Aligned Page Header --}}
-<div class="page-header">
-  <div class="page-header-left">
-    <h1>Pengaturan</h1>
-    <p>Sesuaikan tampilan dan preferensi notifikasi</p>
-  </div>
-</div>
+<div class="page-content">
+  <div class="settings-wrapper">
 
-{{-- Main Responsive Content Area --}}
-<div class="page-content" style="padding-bottom: 60px;">
+    {{-- Page Header --}}
+    <div class="settings-header">
+      <h1>Pengaturan</h1>
+      <p>Sesuaikan tampilan dan preferensi notifikasi</p>
+    </div>
 
-  <div class="settings-grid">
-    
-    {{-- ── COLUMN 1: TAMPILAN (APPEARANCE) ── --}}
+    {{-- ── SECTION 1: TAMPILAN (APPEARANCE) ── --}}
     <div class="settings-card">
       <div class="settings-card-header">
         <span class="settings-card-icon">
@@ -250,7 +256,7 @@
       </div>
     </div>
 
-    {{-- ── COLUMN 2: PREFERENSI NOTIFIKASI ── --}}
+    {{-- ── SECTION 2: PREFERENSI NOTIFIKASI ── --}}
     <div class="settings-card">
       <div class="settings-card-header">
         <span class="settings-card-icon">
@@ -326,15 +332,14 @@
       </div>
     </div>
 
-  </div>
+    {{-- Reset Button --}}
+    <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+      <button type="button" onclick="resetAllSettings()" class="btn-reset-settings">
+        Reset ke Default
+      </button>
+    </div>
 
-  {{-- Reset Button --}}
-  <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
-    <button type="button" onclick="resetAllSettings()" class="btn-reset-settings">
-      Reset ke Default
-    </button>
   </div>
-
 </div>
 
 @push('scripts')
