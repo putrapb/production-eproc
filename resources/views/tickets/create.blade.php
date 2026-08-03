@@ -116,11 +116,12 @@
           @error('description') <div class="form-error">{{ $message }}</div> @enderror
         </div>
 
-        <hr class="divider">
+        {{-- SECTION: Daftar Item (Temporarily hidden for screenshot per user request) --}}
+        <div id="section-daftar-item-container" style="display: none;">
+          <hr class="divider">
 
-        {{-- SECTION: Daftar Item --}}
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
-          <div class="detail-section-title" style="margin-bottom:0;">Daftar Item Pengadaan <span class="required">*</span></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
+            <div class="detail-section-title" style="margin-bottom:0;">Daftar Item Pengadaan <span class="required">*</span></div>
           <button type="button" id="btn-add-item" onclick="addItemRow()" class="btn btn-outline btn-sm" style="padding:4px 12px; font-size:12px;">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
             Tambah Item
@@ -187,6 +188,7 @@
           </table>
         </div>
         <div style="font-size:11px; color:var(--color-muted); margin-top:6px;">Maksimal 9 item. Total dihitung otomatis dari Qty × Harga Satuan.</div>
+        </div>
 
         <hr class="divider">
 
